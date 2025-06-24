@@ -14,8 +14,6 @@ import { useDisclosure } from "@mantine/hooks";
 import * as React from "react";
 import { useForm, zodResolver } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import { updateUser } from "../services/user-service";
-import { notifications } from "@mantine/notifications";
 
 export default function ChangeEmail() {
   const { t } = useTranslation();
@@ -31,42 +29,36 @@ export default function ChangeEmail() {
         </Text>
       </div>
 
+      {/*
       <Button onClick={open} variant="default">
         {t("Change email")}
       </Button>
+      */}
 
-      <Modal
-        opened={opened}
-        onClose={close}
-        title={t("Change email")}
-        centered
-      >
+      <Modal opened={opened} onClose={close} title={t("Change email")} centered>
         <Text mb="md">
           {t(
             "To change your email, you have to enter your password and new email.",
           )}
         </Text>
-        <ChangeEmailForm onClose={close} />
+        <ChangeEmailForm />
       </Modal>
     </Group>
   );
 }
 
 const formSchema = z.object({
-  email: z
-    .string({ required_error: "New email is required" })
-    .email({ message: "Please enter a valid email address" }),
+  email: z.string({ required_error: "New email is required" }).email(),
   password: z
-    .string({ required_error: "Your current password is required" })
-    .min(8, { message: "Password must be at least 8 characters long" }),
+    .string({ required_error: "your current password is required" })
+    .min(8),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-function ChangeEmailForm({ onClose }: { onClose: () => void }) {
+function ChangeEmailForm() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
-  const [, setCurrentUser] = useAtom(currentUserAtom);
 
   const form = useForm<FormValues>({
     validate: zodResolver(formSchema),
@@ -76,39 +68,8 @@ function ChangeEmailForm({ onClose }: { onClose: () => void }) {
     },
   });
 
-  async function handleSubmit(data: FormValues) {
+  function handleSubmit(data: FormValues) {
     setIsLoading(true);
-    try {
-      const updatedUser = await updateUser({
-        email: data.email,
-        confirmPassword: data.password,
-      });
-
-      setCurrentUser((prev) => (prev ? { ...prev, user: updatedUser } : prev));
-
-      notifications.show({
-        message: t("Email updated successfully"),
-      });
-
-      onClose();
-    } catch (err: any) {
-      let errorMessage = t("Failed to update email");
-
-      if (err?.response) {
-        if (err.response.status === 401) {
-          errorMessage = t("Incorrect password. Please try again.");
-        } else if (err.response.data?.message) {
-          errorMessage = err.response.data.message;
-        }
-      }
-
-      notifications.show({
-        message: errorMessage,
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
   }
 
   return (
@@ -131,11 +92,9 @@ function ChangeEmailForm({ onClose }: { onClose: () => void }) {
         {...form.getInputProps("email")}
       />
 
-      <Group justify="flex-end" mt="md">
-        <Button type="submit" disabled={isLoading} loading={isLoading}>
-          {t("Change email")}
-        </Button>
-      </Group>
+      <Button type="submit" disabled={isLoading} loading={isLoading}>
+        {t("Change email")}
+      </Button>
     </form>
   );
 }

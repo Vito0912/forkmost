@@ -3,12 +3,8 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { comparePasswordHash } from 'src/common/helpers/utils';
-import { Workspace } from '@docmost/db/types/entity.types';
-import { validateSsoEnforcement } from '../auth/auth.util';
 
 @Injectable()
 export class UserService {
@@ -21,14 +17,9 @@ export class UserService {
   async update(
     updateUserDto: UpdateUserDto,
     userId: string,
-    workspace: Workspace,
+    workspaceId: string,
   ) {
-    const includePassword =
-      updateUserDto.email != null && updateUserDto.confirmPassword != null;
-
-    const user = await this.userRepo.findById(userId, workspace.id, {
-      includePassword,
-    });
+    const user = await this.userRepo.findById(userId, workspaceId);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -56,27 +47,9 @@ export class UserService {
     }
 
     if (updateUserDto.email && user.email != updateUserDto.email) {
-      validateSsoEnforcement(workspace);
-
-      if (!updateUserDto.confirmPassword) {
-        throw new BadRequestException(
-          'You must provide a password to change your email',
-        );
-      }
-
-      const isPasswordMatch = await comparePasswordHash(
-        updateUserDto.confirmPassword,
-        user.password,
-      );
-
-      if (!isPasswordMatch) {
-        throw new BadRequestException('You must provide the correct password to change your email');
-      }
-
-      if (await this.userRepo.findByEmail(updateUserDto.email, workspace.id)) {
+      if (await this.userRepo.findByEmail(updateUserDto.email, workspaceId)) {
         throw new BadRequestException('A user with this email already exists');
       }
-
       user.email = updateUserDto.email;
     }
 
@@ -88,9 +61,7 @@ export class UserService {
       user.locale = updateUserDto.locale;
     }
 
-    delete updateUserDto.confirmPassword;
-
-    await this.userRepo.updateUser(updateUserDto, userId, workspace.id);
+    await this.userRepo.updateUser(updateUserDto, userId, workspaceId);
     return user;
   }
 }
