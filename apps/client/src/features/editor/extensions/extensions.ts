@@ -16,6 +16,8 @@ import SlashCommand from "@/features/editor/extensions/slash-command";
 import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCursor } from "@tiptap/extension-collaboration-cursor";
 import { HocuspocusProvider } from "@hocuspocus/provider";
+import UniqueID from '@tiptap/extension-unique-id'
+import { isChangeOrigin } from '@tiptap/extension-collaboration'
 import {
   Comment,
   Details,
@@ -76,6 +78,7 @@ import { CharacterCount } from "@tiptap/extension-character-count";
 import Heading from "@tiptap/extension-heading";
 import HeadingView from "../components/heading/heading-view";
 import { countWords } from "alfaaz";
+import {generateSlugId} from "@/features/editor/utils/nanoid.ts";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
@@ -224,6 +227,11 @@ export const mainExtensions = [
   }),
   CharacterCount.configure({
     wordCounter: (text) => countWords(text),
+  }),
+  UniqueID.configure({
+    types: ['heading'],
+    attributeName: 'uid',
+    generateID: () => generateSlugId(),
   }),
 ] as any;
 
