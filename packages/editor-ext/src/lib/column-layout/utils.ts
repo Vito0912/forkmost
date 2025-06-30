@@ -9,7 +9,7 @@ export const newColumnContent = {
       content: [
         {
           type: "text",
-          text: "New Column",
+          text: "Column",
         },
       ],
     },

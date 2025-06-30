@@ -30,6 +30,7 @@ marked.use({
   },
 });
 
+// Compiles markdown to HTML
 marked.use({
   extensions: [calloutExtension, mathBlockExtension, mathInlineExtension, columnContainerExtension, columnExtension],
 });

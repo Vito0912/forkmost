@@ -325,7 +325,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           .chain()
           .focus()
           .deleteRange(range)
-          .clAddColumnLayout("Column 1", "Column 2")
+          .clAddColumnLayout("Column", "Column")
           .run(),
     },
     {
