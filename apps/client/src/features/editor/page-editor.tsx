@@ -31,11 +31,13 @@ import {
 } from "@/features/comment/atoms/comment-atom";
 import CommentDialog from "@/features/comment/components/comment-dialog";
 import { EditorBubbleMenu } from "@/features/editor/components/bubble-menu/bubble-menu";
+import ColumnLayoutMenu from "@/features/editor/components/column-layout/column-layout-menu";
 import TableCellMenu from "@/features/editor/components/table/table-cell-menu.tsx";
 import TableMenu from "@/features/editor/components/table/table-menu.tsx";
 import ImageMenu from "@/features/editor/components/image/image-menu.tsx";
 import CalloutMenu from "@/features/editor/components/callout/callout-menu.tsx";
 import VideoMenu from "@/features/editor/components/video/video-menu.tsx";
+import AudioMenu from "@/features/editor/components/audio/audio-menu.tsx";
 import {
   handleFileDrop,
   handlePaste,
@@ -44,6 +46,7 @@ import LinkMenu from "@/features/editor/components/link/link-menu.tsx";
 import ExcalidrawMenu from "./components/excalidraw/excalidraw-menu";
 import DrawioMenu from "./components/drawio/drawio-menu";
 import { useCollabToken } from "@/features/auth/queries/auth-query.tsx";
+import SearchAndReplaceDialog from "@/features/editor/components/search-and-replace/search-and-replace-dialog.tsx";
 import { useDebouncedCallback, useDocumentVisibility } from "@mantine/hooks";
 import { useIdle } from "@/hooks/use-idle.ts";
 import { queryClient } from "@/main.tsx";
@@ -53,6 +56,7 @@ import { extractPageSlugId } from "@/lib";
 import { FIVE_MINUTES } from "@/lib/constants.ts";
 import { PageEditMode } from "@/features/user/types/user.types.ts";
 import { jwtDecode } from "jwt-decode";
+import { useAnchorScroll } from "./components/heading/use-anchor-scroll";
 
 interface PageEditorProps {
   pageId: string;
@@ -89,8 +93,11 @@ export default function PageEditor({
   const [isCollabReady, setIsCollabReady] = useState(false);
   const { pageSlug } = useParams();
   const slugId = extractPageSlugId(pageSlug);
+  useAnchorScroll();
   const userPageEditMode =
     currentUser?.user?.settings?.preferences?.pageEditMode ?? PageEditMode.Edit;
+
+  const userSpellcheckPref = currentUser?.user?.settings?.preferences?.spellcheck ?? true;
 
   // Providers only created once per pageId
   const providersRef = useRef<{
@@ -198,6 +205,10 @@ export default function PageEditor({
         scrollMargin: 80,
         handleDOMEvents: {
           keydown: (_view, event) => {
+            if ((event.ctrlKey || event.metaKey) && event.code === 'KeyS') {
+              event.preventDefault();
+              return true;
+            }
             if (["ArrowUp", "ArrowDown", "Enter"].includes(event.key)) {
               const slashCommand = document.querySelector("#slash-command");
               if (slashCommand) {
@@ -280,7 +291,6 @@ export default function PageEditor({
   useEffect(() => {
     setActiveCommentId(null);
     setShowCommentPopup(false);
-    setAsideState({ tab: "", isAsideOpen: false });
   }, [pageId]);
 
   useEffect(() => {
@@ -349,14 +359,19 @@ export default function PageEditor({
   return (
     <div style={{ position: "relative" }}>
       <div ref={menuContainerRef}>
-        <EditorContent editor={editor} />
+
+        <EditorContent editor={editor} spellCheck={userSpellcheckPref} />
+        <SearchAndReplaceDialog editor={editor} />
+        
         {editor && editor.isEditable && (
           <div>
             <EditorBubbleMenu editor={editor} />
             <TableMenu editor={editor} />
             <TableCellMenu editor={editor} appendTo={menuContainerRef} />
+            <ColumnLayoutMenu editor={editor} appendTo={menuContainerRef} />
             <ImageMenu editor={editor} />
             <VideoMenu editor={editor} />
+            <AudioMenu editor={editor} />
             <CalloutMenu editor={editor} />
             <ExcalidrawMenu editor={editor} />
             <DrawioMenu editor={editor} />

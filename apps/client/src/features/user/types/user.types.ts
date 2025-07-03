@@ -20,6 +20,7 @@ export interface IUser {
   deletedAt: Date;
   fullPageWidth: boolean; // used for update
   pageEditMode: string; // used for update
+  spellcheck: boolean; // used for update
   totpEnabled: boolean; // TOTP status
 }
 
@@ -32,6 +33,7 @@ export interface IUserSettings {
   preferences: {
     fullPageWidth: boolean;
     pageEditMode: string;
+    spellcheck: boolean;
   };
 }
 
