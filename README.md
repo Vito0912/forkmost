@@ -35,6 +35,7 @@ To get started with Forkmost, please refer to the Docmost [documentation](https:
 - File attachments
 - Embeds (Airtable, Loom, Miro and more)
 - Translations (10+ languages)
+- 2FA (TOTP)
 
 > [!NOTE]
 > The following features or changes have been added to this fork:
