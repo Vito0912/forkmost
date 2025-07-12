@@ -2,18 +2,19 @@ import { type Kysely } from 'kysely';
 
 export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
-    .alterTable('users')
-    .addColumn('totp_enabled', 'boolean', (col) => col.defaultTo(false).notNull())
-    .addColumn('totp_secret', 'varchar', (col) => col)
-    .addColumn('totp_backup_codes', 'jsonb', (col) => col)
+  .createTable('2fa')
+    .addColumn('user_id', 'uuid', (col) =>
+      col.notNull().references('users.id').onDelete('cascade'),
+    )
+    .addColumn('enabled', 'boolean', (col) => col.notNull().defaultTo(false))
+    .addColumn('type', 'varchar', (col) => col.notNull().defaultTo('totp'))
+    .addColumn('secret', 'varchar')
+    .addColumn('backup_codes','jsonb')
     .execute();
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
   await db.schema
-    .alterTable('users')
-    .dropColumn('totp_enabled')
-    .dropColumn('totp_secret')
-    .dropColumn('totp_backup_codes')
+    .dropTable('2fa')
     .execute();
 }
