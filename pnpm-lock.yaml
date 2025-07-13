@@ -299,9 +299,6 @@ importers:
       posthog-js:
         specifier: ^1.255.1
         version: 1.255.1
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -366,9 +363,6 @@ importers:
       '@types/node':
         specifier: 22.10.0
         version: 22.10.0
-      '@types/qrcode':
-        specifier: ^1.5.5
-        version: 1.5.5
       '@types/react':
         specifier: ^18.3.12
         version: 18.3.12

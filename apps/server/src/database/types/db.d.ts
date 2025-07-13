@@ -165,6 +165,14 @@ export interface GroupUsers {
   userId: string;
 }
 
+export interface Mfa {
+  backupCodes: Json | null;
+  enabled: Generated<boolean>;
+  secret: string | null;
+  type: Generated<string>;
+  userId: string;
+}
+
 export interface PageHistory {
   content: Json | null;
   coverPhoto: string | null;
@@ -265,9 +273,6 @@ export interface Users {
   role: string | null;
   settings: Json | null;
   timezone: string | null;
-  totpBackupCodes: Json | null;
-  totpEnabled: Generated<boolean>;
-  totpSecret: string | null;
   updatedAt: Generated<Timestamp>;
   workspaceId: string | null;
 }
@@ -328,6 +333,7 @@ export interface DB {
   fileTasks: FileTasks;
   groups: Groups;
   groupUsers: GroupUsers;
+  mfa: Mfa;
   pageHistory: PageHistory;
   pages: Pages;
   shares: Shares;

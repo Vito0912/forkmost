@@ -2,7 +2,7 @@ import { type Kysely } from 'kysely';
 
 export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
-  .createTable('2fa')
+    .createTable('mfa')
     .addColumn('user_id', 'uuid', (col) =>
       col.notNull().references('users.id').onDelete('cascade'),
     )
@@ -15,6 +15,6 @@ export async function up(db: Kysely<any>): Promise<void> {
 
 export async function down(db: Kysely<any>): Promise<void> {
   await db.schema
-    .dropTable('2fa')
+    .dropTable('mfa')
     .execute();
 }

@@ -7,7 +7,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
+import { InitMfaDto, LoginDto } from './dto/login.dto';
 import { AuthService } from './services/auth.service';
 import { SetupGuard } from './guards/setup.guard';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
@@ -40,6 +40,14 @@ export class AuthController {
     validateSsoEnforcement(workspace);
 
     const authToken = await this.authService.login(loginInput, workspace.id);
+
+    if (!authToken) {
+      return {
+        message: 'MFA verification required',
+        mfaRequired: true,
+      }
+    }
+
     this.setAuthCookie(res, authToken);
   }
 
@@ -116,6 +124,16 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: FastifyReply) {
     res.clearCookie('authToken');
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('init-mfa')
+  async initMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+    @Body() initMfaDto: InitMfaDto,
+  ) {
+    return this.authService.initMfa(user.id, workspace.id, initMfaDto);
   }
 
   setAuthCookie(res: FastifyReply, token: string) {

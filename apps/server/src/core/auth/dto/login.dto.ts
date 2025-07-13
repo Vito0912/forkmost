@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginDto {
   @IsNotEmpty()
@@ -8,4 +8,18 @@ export class LoginDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+
+  @IsArray()
+  codes?: string[];
+}
+
+export enum MfaType {
+  TOTP = 'totp',
+  EMAIL = 'email',
+}
+
+export class InitMfaDto {
+  @IsNotEmpty()
+  @IsEnum(MfaType)
+  type: MfaType;
 }

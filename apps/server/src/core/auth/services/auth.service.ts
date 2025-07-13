@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LoginDto } from '../dto/login.dto';
+import { InitMfaDto, LoginDto, MfaType } from '../dto/login.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { TokenService } from './token.service';
 import { SignupService } from './signup.service';
@@ -59,6 +59,15 @@ export class AuthService {
 
     if (!isPasswordMatch) {
       throw new UnauthorizedException(errorMessage);
+    }
+
+    if (user.mfa && user.mfa.some((mfa) => mfa.enabled)) {
+
+      if (!loginDto.codes) {
+        // TODO: Implement MFA code verification
+      }
+
+      return null;
     }
 
     user.lastLoginAt = new Date();
@@ -228,5 +237,16 @@ export class AuthService {
       workspaceId,
     );
     return { token };
+  }
+
+  async initMfa(userId: string, workspaceId: string, initMfaDto: InitMfaDto) {
+    switch (initMfaDto.type) {
+      case MfaType.TOTP: {
+        throw new Error('Method not implemented.');
+      }
+      case MfaType.EMAIL: {
+        throw new Error('Method not implemented.');
+      }
+    }
   }
 }
