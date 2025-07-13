@@ -12,6 +12,8 @@ import {
   Group,
   Alert,
   Text,
+  Divider,
+  Stack,
 } from "@mantine/core";
 import classes from "./auth.module.css";
 import { useRedirectIfAuthenticated } from "@/features/auth/hooks/use-redirect-if-authenticated.ts";
@@ -24,6 +26,9 @@ import React, { useState } from "react";
 import { IconShield } from "@tabler/icons-react";
 import { login } from "@/features/auth/services/auth-service";
 import { notifications } from "@mantine/notifications";
+import { OidcButton } from "@/features/auth/components/oidc-button";
+import { useOidcConfigQuery } from "@/features/auth/queries/oidc-query";
+import { useOidcAuth } from "@/features/auth/hooks/use-oidc-auth";
 
 const formSchema = z.object({
   email: z
@@ -34,11 +39,14 @@ const formSchema = z.object({
   totpToken: z.string().optional(),
 });
 
+// TOOD: FIXES!
 export function LoginForm() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showTotpInput, setShowTotpInput] = useState(false);
   const [loginData, setLoginData] = useState<ILogin | null>(null);
+  const { signIn, isLoading } = useAuth();
+  const { startOidcAuth } = useOidcAuth();
   useRedirectIfAuthenticated();
   const {
     data,
@@ -46,6 +54,7 @@ export function LoginForm() {
     isError,
     error,
   } = useWorkspacePublicDataQuery();
+  const { data: oidcConfig } = useOidcConfigQuery();
 
   const form = useForm<ILogin & { totpToken?: string }>({
     validate: zodResolver(formSchema),
@@ -110,6 +119,13 @@ export function LoginForm() {
     }
   }
 
+  // Auto-redirect to OIDC if enabled and enforced
+  useEffect(() => {
+    if (data?.enforceSso && data.authProviders?.length > 0 && oidcConfig?.autoRedirect) {
+      startOidcAuth();
+    }
+  }, [data, oidcConfig, startOidcAuth]);
+
   if (isDataLoading) {
    return null;
   }
@@ -118,6 +134,8 @@ export function LoginForm() {
     return <Error404 />;
   }
 
+  const hasOidcProvider = data?.authProviders?.some((provider: any) => provider.type === 'oidc');
+
   return (
     <Container size={420} className={classes.container}>
       <Box p="xl" className={classes.containerBox}>
@@ -125,8 +143,15 @@ export function LoginForm() {
           {t("Login")}
         </Title>
 
-        {!data?.enforceSso && (
-          <>
+        <Stack gap="md">
+          {hasOidcProvider && (
+            <>
+              <OidcButton fullWidth />
+              {!data?.enforceSso && <Divider label={t("Or continue with")} />}
+            </>
+          )}
+
+          {!data?.enforceSso && (
             <form onSubmit={form.onSubmit(onSubmit)}>
               {showTotpInput && (
                 <Alert icon={<IconShield size={16} />} mb="md" color="blue">
@@ -207,8 +232,8 @@ export function LoginForm() {
                 {showTotpInput ? t("Verify") : t("Sign In")}
               </Button>
             </form>
-          </>
-        )}
+          )}
+        </Stack>
       </Box>
     </Container>
   );
