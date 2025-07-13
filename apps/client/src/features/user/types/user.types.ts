@@ -21,7 +21,6 @@ export interface IUser {
   fullPageWidth: boolean; // used for update
   pageEditMode: string; // used for update
   spellcheck: boolean; // used for update
-  totpEnabled: boolean; // TOTP status
 }
 
 export interface ICurrentUser {
