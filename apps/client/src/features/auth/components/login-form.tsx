@@ -22,13 +22,14 @@ import APP_ROUTE from "@/lib/app-route.ts";
 import { useTranslation } from "react-i18next";
 import { useWorkspacePublicDataQuery } from "@/features/workspace/queries/workspace-query.ts";
 import { Error404 } from "@/components/ui/error-404.tsx";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IconShield } from "@tabler/icons-react";
 import { login } from "@/features/auth/services/auth-service";
 import { notifications } from "@mantine/notifications";
 import { OidcButton } from "@/features/auth/components/oidc-button";
 import { useOidcConfigQuery } from "@/features/auth/queries/oidc-query";
 import { useOidcAuth } from "@/features/auth/hooks/use-oidc-auth";
+import useAuth from "../hooks/use-auth";
 
 const formSchema = z.object({
   email: z
@@ -45,8 +46,9 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showTotpInput, setShowTotpInput] = useState(false);
   const [loginData, setLoginData] = useState<ILogin | null>(null);
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading: isAuthLoading } = useAuth();
   const { startOidcAuth } = useOidcAuth();
+  
   useRedirectIfAuthenticated();
   const {
     data,
