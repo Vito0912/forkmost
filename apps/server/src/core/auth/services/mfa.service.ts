@@ -19,7 +19,7 @@ export interface TotpSetup {
 export class MfaService {
   constructor(private readonly environmentService: EnvironmentService, @InjectKysely() private readonly db: KyselyDB,) {}
 
-    async initMfa(userId: string, workspaceId: string, initMfaDto: InitMfaDto) {
+  async initMfa(userId: string, workspaceId: string, initMfaDto: InitMfaDto) {
 
     let payload: {secret?: string, image?: string};
 
@@ -51,7 +51,7 @@ export class MfaService {
           .values({
             userId: userId,
             type: initMfaDto.type,
-            secret: payload.secret,
+            secret: this.encrypt(payload.secret),
             enabled: false,
             verified: false,
           })
@@ -156,6 +156,27 @@ export class MfaService {
     } catch {
       return false;
     }
+  }
+
+  verifyTotpWithSecret(token: string, secret: string, backupCodes: any[]): boolean {
+
+    console.log('Verifying TOTP with secret:', secret);
+
+    const decodedSecret = this.decrypt(secret);
+
+    console.log('Decoded Secret:', decodedSecret);
+
+    if (this.verifyTotp(token, decodedSecret)) {
+      return true;
+    }
+
+    for (const code of backupCodes) {
+      if (this.verifyTotp(token, code)) {
+        return true;
+      }
+    }
+
+    return false;    
   }
 
   generateBackupCodes(): string[] {

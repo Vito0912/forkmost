@@ -29,6 +29,7 @@ import { InjectKysely } from 'nestjs-kysely';
 import { executeTx } from '@docmost/db/utils';
 import { VerifyUserTokenDto } from '../dto/verify-user-token.dto';
 import { DomainService } from '../../../integrations/environment/domain.service';
+import { MfaService } from './mfa.service';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +40,7 @@ export class AuthService {
     private userTokenRepo: UserTokenRepo,
     private mailService: MailService,
     private domainService: DomainService,
+    private mfaService: MfaService,
     @InjectKysely() private readonly db: KyselyDB,
   ) {}
 
@@ -64,9 +66,38 @@ export class AuthService {
     if (user.mfas && user.mfas.some((mfa) => mfa.enabled)) {
 
       if (loginDto.codes && loginDto.codes.length > 0) {
-        // TODO: Implement MFA code verification
+        for (const mfas of user.mfas) {
+          const mfaCode = loginDto.codes.find(
+            (code) => code.type === (mfas.type as unknown as MfaType),
+          );
+
+          if (mfaCode) {
+            switch ((mfas.type as unknown as MfaType)) {
+              case MfaType.TOTP: {
+                const isValidTotp = await this.mfaService.verifyTotpWithSecret(
+                  mfaCode.code,
+                  mfas.secret,
+                  mfas.backupCodes as any[],
+                );
+                if (!isValidTotp) {
+                  return null;
+                }
+                break;
+              }
+              case MfaType.EMAIL: {
+                return null;
+                break;
+              }
+              default:
+                return null;
+            }
+          } else {
+              return null;
+          }
+        }
+      } else {
+        return null;
       }
-      return null;
     }
 
     user.lastLoginAt = new Date();

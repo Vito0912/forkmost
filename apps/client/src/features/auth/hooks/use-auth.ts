@@ -38,11 +38,6 @@ export default function useAuth() {
 
     try {
       const result = await login(data);
-      notifications.show({
-        message: t("Login successful"),
-        color: "green",
-      });
-      
       setIsLoading(false);
       if (!result) return navigate(APP_ROUTE.HOME);
       setOpenMfaModal(true);

@@ -26,6 +26,7 @@ import React, { useEffect, useState } from "react";
 import { OidcButton } from "@/features/auth/components/oidc-button";
 import { useOidcConfigQuery } from "@/features/auth/queries/oidc-query";
 import { useOidcAuth } from "@/features/auth/hooks/use-oidc-auth";
+import { MfaType } from "@/features/user/types/mfa.types";
 
 const formSchema = z.object({
   email: z
@@ -128,31 +129,31 @@ export function LoginForm() {
 
               <Modal opened={openMfaModal} onClose={() => setOpenMfaModal(false)} title="Enter Codes">
                 <TextInput
-                  id="code1"
+                  id="totpCode"
                   type="number"
-                  label="Code 1"
-                  placeholder="Enter first code"
+                  label="TOTP Code"
+                  placeholder="Enter TOTP code"
                   variant="filled"
                   mt="md"
                 />
                 <TextInput
-                  id="code2"
+                  id="emailCode"
                   type="number"
-                  label="Code 2"
-                  placeholder="Enter second code"
+                  label="Email Code"
+                  placeholder="Enter Email code"
                   variant="filled"
                   mt="md"
                 />
                 <Button
                   onClick={() => {
-                    const code1 = (document.getElementById("code1") as HTMLInputElement)?.value;
-                    const code2 = (document.getElementById("code2") as HTMLInputElement)?.value;
+                    const totpCode = (document.getElementById("totpCode") as HTMLInputElement)?.value;
+                    const emailCode = (document.getElementById("emailCode") as HTMLInputElement)?.value;
                     setOpenMfaModal(false);
                     // Submit the form again with codes array
                     onSubmit({
                       email: form.values.email,
                       password: form.values.password,
-                      codes: [code1, code2],
+                      codes: [{ type: MfaType.TOTP, code: totpCode }, { type: MfaType.EMAIL, code: emailCode }],
                     });
                   }}
                 >

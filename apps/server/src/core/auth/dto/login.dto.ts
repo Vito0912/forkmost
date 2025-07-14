@@ -11,7 +11,7 @@ export class LoginDto {
 
   @IsArray()
   @IsOptional()
-  codes?: string[];
+  codes?: VerifyMfaDto[];
 }
 
 export enum MfaType {
