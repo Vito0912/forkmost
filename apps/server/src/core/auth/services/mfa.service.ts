@@ -1,10 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TOTP, Secret } from 'otpauth';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { EnvironmentService } from '../../../integrations/environment/environment.service';
 import { hashFastCodes, hashPassword } from '../../../common/helpers/utils';
+import { executeTx } from '@docmost/db/utils';
+import { InitMfaDto, MfaType, VerifyMfaDto } from '../dto/login.dto';
+import { KyselyDB } from '@docmost/db/types/kysely.types';
+import { InjectKysely } from 'nestjs-kysely';
 
 export interface TotpSetup {
   secret: string;
@@ -13,7 +17,110 @@ export interface TotpSetup {
 
 @Injectable()
 export class MfaService {
-  constructor(private readonly environmentService: EnvironmentService) {}
+  constructor(private readonly environmentService: EnvironmentService, @InjectKysely() private readonly db: KyselyDB,) {}
+
+    async initMfa(userId: string, workspaceId: string, initMfaDto: InitMfaDto) {
+
+    let payload: {secret?: string, image?: string};
+
+    switch (initMfaDto.type) {
+      case MfaType.TOTP: {
+        payload = await this.generateTotp(userId, workspaceId);
+        break;
+      }
+      case MfaType.EMAIL: {
+        throw new Error('Method not implemented.');
+      }
+    }
+
+    if (!payload || !payload.secret) {
+      throw new BadRequestException('Failed to generate MFA secret');
+    }
+
+    try {
+      await executeTx(this.db, async (trx) => {
+        await this.db
+          .deleteFrom('mfa')
+          .where('userId', '=', userId)
+          .where('type', '=', initMfaDto.type)
+          .where('enabled', '=', false)
+          .execute();
+
+        await this.db
+          .insertInto('mfa')
+          .values({
+            userId: userId,
+            type: initMfaDto.type,
+            secret: payload.secret,
+            enabled: false,
+            verified: false,
+          })
+          .executeTakeFirstOrThrow();
+      });
+    } catch (error) {
+      throw new BadRequestException('MFA already exists for this user');
+    }
+
+    return {
+      type: initMfaDto.type,
+      ...payload,
+    } 
+  }
+
+  getMfa(userId: string, workspaceId: string) {
+    return this.db
+      .selectFrom('mfa')
+      .select(['enabled', 'verified', 'type'])
+      .where('userId', '=', userId)
+      .where('enabled', '=', true)
+      .where('verified', '=', true)
+      .execute();
+  }
+
+  async verifyMfa(
+    userId: string,
+    workspaceId: string,
+    verifyMfaDto: VerifyMfaDto,
+  ) {
+    // Get last MFA record for the user with given type
+    // @ts-ignore
+    const mfa: Mfa | null = await this.db
+      .selectFrom('mfa')
+      .selectAll()
+      .where('userId', '=', userId)
+      .where('type', '=', verifyMfaDto.type)
+      .limit(1)
+      .executeTakeFirst();
+
+    if (!mfa || !mfa.secret) {
+      throw new NotFoundException('MFA not found for this user');
+    }
+
+    switch (verifyMfaDto.type) {
+      case MfaType.TOTP: {
+        const isValid = this.verifyTotp(
+          verifyMfaDto.code,
+          mfa.secret,
+        );
+
+        if (!isValid) {
+          throw new BadRequestException('Invalid TOTP code');
+        }
+
+        await this.db
+          .updateTable('mfa')
+          .set({ enabled: true, verified: true })
+          .where('userId', '=', userId)
+          .where('type', '=', MfaType.TOTP)
+          .executeTakeFirst();
+
+        return { success: true, message: 'TOTP MFA enabled successfully' };
+      }
+      case MfaType.EMAIL: {
+        throw new Error('Method not implemented.');
+      }
+    }
+  }
 
   async generateTotp(userEmail: string, serviceName = 'Forkmost'): Promise<TotpSetup> {
     const secret = new Secret().base32;

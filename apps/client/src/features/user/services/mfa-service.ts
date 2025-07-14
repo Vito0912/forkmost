@@ -1,5 +1,5 @@
 import api from "@/lib/api-client";
-import { ITotpInitResponse } from "../types/mfa.types";
+import { IMfa, ITotpInitResponse } from "../types/mfa.types";
 
 export async function getTotpInit(): Promise<ITotpInitResponse> {
   const req = await api.post<ITotpInitResponse>("/auth/init-mfa", {
@@ -10,5 +10,14 @@ export async function getTotpInit(): Promise<ITotpInitResponse> {
 }
 
 export async function verifyTotpCode(code: string): Promise<void> {
-  await api.post("/auth/verify-totp", { code });
+  await api.post("/auth/verify-mfa", { code, type: "totp" });
+}
+
+export async function getActiveMfa(): Promise<IMfa[]> {
+  const req = await api.post("/auth/mfa");
+  return req.data as IMfa[];
+}
+
+export async function deleteMfa(type: string): Promise<void> {
+  await api.delete(`/auth/mfa/${type}`);
 }

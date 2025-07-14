@@ -22,11 +22,13 @@ import { PasswordResetDto } from './dto/password-reset.dto';
 import { VerifyUserTokenDto } from './dto/verify-user-token.dto';
 import { FastifyReply } from 'fastify';
 import { validateSsoEnforcement } from './auth.util';
+import { MfaService } from './services/mfa.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private mfaService: MfaService,
     private environmentService: EnvironmentService,
   ) {}
 
@@ -134,7 +136,7 @@ export class AuthController {
     @AuthWorkspace() workspace: Workspace,
     @Body() initMfaDto: InitMfaDto,
   ) {
-    return this.authService.initMfa(user.id, workspace.id, initMfaDto);
+    return this.mfaService.initMfa(user.id, workspace.id, initMfaDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -145,7 +147,17 @@ export class AuthController {
     @AuthWorkspace() workspace: Workspace,
     @Body() verifyMfaDto: VerifyMfaDto,
   ) {
-    return this.authService.verifyMfa(user.id, workspace.id, verifyMfaDto);
+    return this.mfaService.verifyMfa(user.id, workspace.id, verifyMfaDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('mfa')
+  async getMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    return this.mfaService.getMfa(user.id, workspace.id);
   }
 
   setAuthCookie(res: FastifyReply, token: string) {
