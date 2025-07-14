@@ -13,6 +13,7 @@ import {
   Group,
   Divider,
   Stack,
+  Modal,
 } from "@mantine/core";
 import classes from "./auth.module.css";
 import { useRedirectIfAuthenticated } from "@/features/auth/hooks/use-redirect-if-authenticated.ts";
@@ -21,7 +22,7 @@ import APP_ROUTE from "@/lib/app-route.ts";
 import { useTranslation } from "react-i18next";
 import { useWorkspacePublicDataQuery } from "@/features/workspace/queries/workspace-query.ts";
 import { Error404 } from "@/components/ui/error-404.tsx";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { OidcButton } from "@/features/auth/components/oidc-button";
 import { useOidcConfigQuery } from "@/features/auth/queries/oidc-query";
 import { useOidcAuth } from "@/features/auth/hooks/use-oidc-auth";
@@ -36,7 +37,7 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const { t } = useTranslation();
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, openMfaModal, setOpenMfaModal } = useAuth();
   const { startOidcAuth } = useOidcAuth();
   useRedirectIfAuthenticated();
   const {
@@ -124,6 +125,40 @@ export function LoginForm() {
               <Button type="submit" fullWidth mt="md" loading={isLoading}>
                 {t("Sign In")}
               </Button>
+
+              <Modal opened={openMfaModal} onClose={() => setOpenMfaModal(false)} title="Enter Codes">
+                <TextInput
+                  id="code1"
+                  type="number"
+                  label="Code 1"
+                  placeholder="Enter first code"
+                  variant="filled"
+                  mt="md"
+                />
+                <TextInput
+                  id="code2"
+                  type="number"
+                  label="Code 2"
+                  placeholder="Enter second code"
+                  variant="filled"
+                  mt="md"
+                />
+                <Button
+                  onClick={() => {
+                    const code1 = (document.getElementById("code1") as HTMLInputElement)?.value;
+                    const code2 = (document.getElementById("code2") as HTMLInputElement)?.value;
+                    setOpenMfaModal(false);
+                    // Submit the form again with codes array
+                    onSubmit({
+                      email: form.values.email,
+                      password: form.values.password,
+                      codes: [code1, code2],
+                    });
+                  }}
+                >
+                  Save
+                </Button>
+              </Modal>
             </form>
           )}
         </Stack>

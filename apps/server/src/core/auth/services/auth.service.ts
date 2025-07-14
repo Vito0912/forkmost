@@ -61,12 +61,11 @@ export class AuthService {
       throw new UnauthorizedException(errorMessage);
     }
 
-    if (user.mfa && user.mfa.some((mfa) => mfa.enabled)) {
+    if (user.mfas && user.mfas.some((mfa) => mfa.enabled)) {
 
-      if (!loginDto.codes) {
+      if (loginDto.codes && loginDto.codes.length > 0) {
         // TODO: Implement MFA code verification
       }
-
       return null;
     }
 

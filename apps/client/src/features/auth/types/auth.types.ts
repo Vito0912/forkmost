@@ -1,6 +1,7 @@
 export interface ILogin {
   email: string;
   password: string;
+  codes?: string[];
 }
 
 export interface IRegister {

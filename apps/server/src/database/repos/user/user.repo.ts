@@ -43,16 +43,29 @@ export class UserRepo {
       includePassword?: boolean;
       trx?: KyselyTransaction;
     },
-  ): Promise<User> {
+  ): Promise<User & { mfas?: Mfa[] }> {
     const db = dbOrTx(this.db, opts?.trx);
-    return db
+    const user = await db
       .selectFrom('users')
       .select(this.baseFields)
-      .$if(opts?.includePassword, (qb) => qb.leftJoin('mfa', 'mfa.userId', 'users.id').select(['mfa.enabled', 'mfa.secret', 'mfa.type', 'mfa.backupCodes']))
       .$if(opts?.includePassword, (qb) => qb.select(['password']))
       .where('id', '=', userId)
       .where('workspaceId', '=', workspaceId)
       .executeTakeFirst();
+
+    if (!user) return user;
+
+    const mfas = await db
+      .selectFrom('mfa')
+      .select(['enabled', 'secret', 'type', 'backupCodes', 'createdAt as mfaCreatedAt'])
+      .where('userId', '=', user.id)
+      .where('enabled', '=', true)
+      .execute();
+
+    // @ts-ignore
+    user.mfas = mfas;
+
+    return user;
   }
 
   async findByEmail(
@@ -62,16 +75,29 @@ export class UserRepo {
       includePassword?: boolean;
       trx?: KyselyTransaction;
     },
-  ): Promise<User & { mfa?: Mfa[]}> {
+  ): Promise<User & { mfas?: Mfa[]}> {
     const db = dbOrTx(this.db, opts?.trx);
-    return db
+    const user = await db
       .selectFrom('users')
       .select(this.baseFields)
-      .$if(opts?.includePassword, (qb) => qb.leftJoin('mfa', 'mfa.userId', 'users.id').select(['mfa.enabled', 'mfa.secret', 'mfa.type', 'mfa.backupCodes']))
       .$if(opts?.includePassword, (qb) => qb.select(['password']))
       .where(sql`LOWER(email)`, '=', sql`LOWER(${email})`)
       .where('workspaceId', '=', workspaceId)
       .executeTakeFirst();
+
+    if (!user) return user;
+
+    const mfas = await db
+      .selectFrom('mfa')
+      .select(['enabled', 'secret', 'type', 'backupCodes', 'createdAt as mfaCreatedAt'])
+      .where('userId', '=', user.id)
+      .where('enabled', '=', true)
+      .execute();
+
+    // @ts-ignore
+    user.mfas = mfas;
+
+    return user;
   }
 
   async updateUser(

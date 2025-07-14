@@ -10,8 +10,8 @@ import {
 } from "@/features/auth/types/auth.types";
 import { IWorkspace } from "@/features/workspace/types/workspace.types.ts";
 
-export async function login(data: ILogin): Promise<void> {
-  await api.post<void>("/auth/login", data);
+export async function login(data: ILogin): Promise<any> {
+  await api.post<any>("/auth/login", data);
 }
 
 export async function logout(): Promise<void> {
