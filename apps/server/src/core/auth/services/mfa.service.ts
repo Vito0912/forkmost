@@ -12,10 +12,10 @@ export interface TotpSetup {
 }
 
 @Injectable()
-export class TotpService {
+export class MfaService {
   constructor(private readonly environmentService: EnvironmentService) {}
 
-  async generateTotpSetup(userEmail: string, serviceName = 'Docmost'): Promise<TotpSetup> {
+  async generateTotp(userEmail: string, serviceName = 'Forkmost'): Promise<TotpSetup> {
     const secret = new Secret().base32;
     
     const totp = new TOTP({
@@ -35,7 +35,7 @@ export class TotpService {
     };
   }
 
-  verifyToken(token: string, secret: string): boolean {
+  verifyTotp(token: string, secret: string): boolean {
     try {
       const totp = new TOTP({
         algorithm: 'SHA1',

@@ -7,7 +7,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { InitMfaDto, LoginDto } from './dto/login.dto';
+import { InitMfaDto, LoginDto, VerifyMfaDto } from './dto/login.dto';
 import { AuthService } from './services/auth.service';
 import { SetupGuard } from './guards/setup.guard';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
@@ -126,6 +126,7 @@ export class AuthController {
     res.clearCookie('authToken');
   }
 
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('init-mfa')
   async initMfa(
@@ -134,6 +135,17 @@ export class AuthController {
     @Body() initMfaDto: InitMfaDto,
   ) {
     return this.authService.initMfa(user.id, workspace.id, initMfaDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('verify-mfa')
+  async verifyMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+    @Body() verifyMfaDto: VerifyMfaDto,
+  ) {
+    return this.authService.verifyMfa(user.id, workspace.id, verifyMfaDto);
   }
 
   setAuthCookie(res: FastifyReply, token: string) {

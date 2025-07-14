@@ -167,10 +167,13 @@ export interface GroupUsers {
 
 export interface Mfa {
   backupCodes: Json | null;
+  createdAt: Generated<Timestamp>;
   enabled: Generated<boolean>;
   secret: string | null;
   type: Generated<string>;
+  updatedAt: Generated<Timestamp>;
   userId: string;
+  verified: Generated<boolean>;
 }
 
 export interface PageHistory {
