@@ -1,13 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { InitMfaDto, LoginDto, VerifyMfaDto } from './dto/login.dto';
+import { InitMfaDto, LoginDto, MfaType, VerifyMfaDto } from './dto/login.dto';
 import { AuthService } from './services/auth.service';
 import { SetupGuard } from './guards/setup.guard';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
@@ -43,7 +45,7 @@ export class AuthController {
 
     const authToken = await this.authService.login(loginInput, workspace.id);
 
-    if (!authToken) {
+    if (authToken === null) {
       return {
         message: 'MFA verification required',
         mfaRequired: true,
@@ -158,6 +160,17 @@ export class AuthController {
     @AuthWorkspace() workspace: Workspace,
   ) {
     return this.mfaService.getMfa(user.id, workspace.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Delete('mfa/:type')
+  async deleteMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+    @Param('type') type: MfaType,
+  ) {
+    return this.mfaService.deleteMfa(user.id, workspace.id, type);
   }
 
   setAuthCookie(res: FastifyReply, token: string) {

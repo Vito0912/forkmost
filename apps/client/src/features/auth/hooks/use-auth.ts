@@ -39,7 +39,7 @@ export default function useAuth() {
     try {
       const result = await login(data);
       setIsLoading(false);
-      if (!result) return navigate(APP_ROUTE.HOME);
+      if (!result || !result.data) return navigate(APP_ROUTE.HOME);
       setOpenMfaModal(true);
     } catch (err) {
       setIsLoading(false);

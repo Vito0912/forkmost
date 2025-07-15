@@ -100,7 +100,7 @@ export class MfaService {
       case MfaType.TOTP: {
         const isValid = this.verifyTotp(
           verifyMfaDto.code,
-          mfa.secret,
+          this.decrypt(mfa.secret),
         );
 
         if (!isValid) {
@@ -142,7 +142,7 @@ export class MfaService {
     };
   }
 
-  verifyTotp(token: string, secret: string): boolean {
+  verifyTotp(code: string, secret: string): boolean {
     try {
       const totp = new TOTP({
         algorithm: 'SHA1',
@@ -151,30 +151,26 @@ export class MfaService {
         secret: secret,
       });
 
-      // Validate token with a window of +-1 period (90 seconds total)
-      return totp.validate({ token, window: 1 }) !== null;
+      // Validate code with a window of +-1 period (90 seconds total)
+      return totp.validate({ token: code, window: 1 }) !== null;
     } catch {
       return false;
     }
   }
 
-  verifyTotpWithSecret(token: string, secret: string, backupCodes: any[]): boolean {
-
-    console.log('Verifying TOTP with secret:', secret);
+  verifyTotpWithSecret(code: string, secret: string, backupCodes: any[]): boolean {
 
     const decodedSecret = this.decrypt(secret);
 
-    console.log('Decoded Secret:', decodedSecret);
-
-    if (this.verifyTotp(token, decodedSecret)) {
+    if (this.verifyTotp(code, decodedSecret)) {
       return true;
     }
 
-    for (const code of backupCodes) {
+    /*for (const code of backupCodes) {
       if (this.verifyTotp(token, code)) {
         return true;
       }
-    }
+    }*/
 
     return false;    
   }
@@ -254,5 +250,13 @@ export class MfaService {
       return hashedCodes.filter((_, index) => index !== codeIndex);
     }
     return hashedCodes;
+  }
+
+  async deleteMfa(userId: string, workspaceId: string, type: MfaType): Promise<void> {
+    await this.db
+      .deleteFrom('mfa')
+      .where('userId', '=', userId)
+      .where('type', '=', type)
+      .execute();
   }
 }

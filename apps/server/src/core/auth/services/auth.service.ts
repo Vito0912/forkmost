@@ -74,7 +74,7 @@ export class AuthService {
           if (mfaCode) {
             switch ((mfas.type as unknown as MfaType)) {
               case MfaType.TOTP: {
-                const isValidTotp = await this.mfaService.verifyTotpWithSecret(
+                const isValidTotp = this.mfaService.verifyTotpWithSecret(
                   mfaCode.code,
                   mfas.secret,
                   mfas.backupCodes as any[],
