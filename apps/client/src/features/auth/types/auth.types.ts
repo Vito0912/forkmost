@@ -1,6 +1,9 @@
+import { IVerifyMfaDto } from "@/features/user/types/mfa.types";
+
 export interface ILogin {
   email: string;
   password: string;
+  codes?: IVerifyMfaDto[];
 }
 
 export interface IRegister {

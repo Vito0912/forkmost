@@ -11,6 +11,7 @@ import { OidcController } from './controllers/oidc.controller';
 import { OidcProviderController } from './controllers/oidc-provider.controller';
 import { AuthProviderRepo } from '../../database/repos/auth-provider/auth-provider.repo';
 import { AuthAccountRepo } from '../../database/repos/auth-account/auth-account.repo';
+import { MfaService } from './services/mfa.service';
 
 @Module({
   imports: [TokenModule, WorkspaceModule],
@@ -23,6 +24,7 @@ import { AuthAccountRepo } from '../../database/repos/auth-account/auth-account.
     OidcConfigService,
     AuthProviderRepo,
     AuthAccountRepo,
+    MfaService
   ],
   exports: [SignupService, OidcService],
 })

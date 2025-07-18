@@ -1,13 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
+import { InitMfaDto, LoginDto, MfaType, VerifyMfaDto } from './dto/login.dto';
 import { AuthService } from './services/auth.service';
 import { SetupGuard } from './guards/setup.guard';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
@@ -22,11 +24,13 @@ import { PasswordResetDto } from './dto/password-reset.dto';
 import { VerifyUserTokenDto } from './dto/verify-user-token.dto';
 import { FastifyReply } from 'fastify';
 import { validateSsoEnforcement } from './auth.util';
+import { MfaService } from './services/mfa.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private mfaService: MfaService,
     private environmentService: EnvironmentService,
   ) {}
 
@@ -40,6 +44,14 @@ export class AuthController {
     validateSsoEnforcement(workspace);
 
     const authToken = await this.authService.login(loginInput, workspace.id);
+
+    if (authToken === null) {
+      return {
+        message: 'MFA verification required',
+        mfaRequired: true,
+      }
+    }
+
     this.setAuthCookie(res, authToken);
   }
 
@@ -116,6 +128,49 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: FastifyReply) {
     res.clearCookie('authToken');
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('init-mfa')
+  async initMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+    @Body() initMfaDto: InitMfaDto,
+  ) {
+    return this.mfaService.initMfa(user.id, workspace.id, initMfaDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('verify-mfa')
+  async verifyMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+    @Body() verifyMfaDto: VerifyMfaDto,
+  ) {
+    return this.mfaService.verifyMfa(user.id, workspace.id, verifyMfaDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('mfa')
+  async getMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    return this.mfaService.getMfa(user.id, workspace.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Delete('mfa/:type')
+  async deleteMfa(
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+    @Param('type') type: MfaType,
+  ) {
+    return this.mfaService.deleteMfa(user.id, workspace.id, type);
   }
 
   setAuthCookie(res: FastifyReply, token: string) {

@@ -26,11 +26,10 @@ import {
 import APP_ROUTE from "@/lib/app-route.ts";
 import { RESET } from "jotai/utils";
 import { useTranslation } from "react-i18next";
-import { isCloud } from "@/lib/config.ts";
-
 export default function useAuth() {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [openMfaModal, setOpenMfaModal] = useState(false);
   const navigate = useNavigate();
   const [, setCurrentUser] = useAtom(currentUserAtom);
 
@@ -38,11 +37,13 @@ export default function useAuth() {
     setIsLoading(true);
 
     try {
-      await login(data);
+      const result = await login(data);
       setIsLoading(false);
-      navigate(APP_ROUTE.HOME);
+      if (!result || !result.data) return navigate(APP_ROUTE.HOME);
+      setOpenMfaModal(true);
     } catch (err) {
       setIsLoading(false);
+      setOpenMfaModal(false);
       console.log(err);
       notifications.show({
         message: err.response?.data.message,
@@ -153,5 +154,7 @@ export default function useAuth() {
     verifyUserToken: handleVerifyUserToken,
     logout: handleLogout,
     isLoading,
+    openMfaModal,
+    setOpenMfaModal,
   };
 }

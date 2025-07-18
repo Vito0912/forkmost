@@ -165,6 +165,17 @@ export interface GroupUsers {
   userId: string;
 }
 
+export interface Mfa {
+  backupCodes: Json | null;
+  createdAt: Generated<Timestamp>;
+  enabled: Generated<boolean>;
+  secret: string | null;
+  type: Generated<string>;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  verified: Generated<boolean>;
+}
+
 export interface PageHistory {
   content: Json | null;
   coverPhoto: string | null;
@@ -325,6 +336,7 @@ export interface DB {
   fileTasks: FileTasks;
   groups: Groups;
   groupUsers: GroupUsers;
+  mfa: Mfa;
   pageHistory: PageHistory;
   pages: Pages;
   shares: Shares;

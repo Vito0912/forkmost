@@ -52,6 +52,7 @@ For Docker, these tags are available:
 - Translations (10+ languages)
 - public sharing (with optional password protection)
 - free SSO with **OIDC** (tested with Authentik)
+- 2FA (TOTP, E-Mail)
 
 ---
 

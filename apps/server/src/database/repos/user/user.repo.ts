@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectKysely } from 'nestjs-kysely';
 import { KyselyDB, KyselyTransaction } from '@docmost/db/types/kysely.types';
-import { Users } from '@docmost/db/types/db';
+import { Mfa, Users } from '@docmost/db/types/db';
 import { hashPassword } from '../../../common/helpers';
 import { dbOrTx } from '@docmost/db/utils';
 import {
@@ -43,15 +43,29 @@ export class UserRepo {
       includePassword?: boolean;
       trx?: KyselyTransaction;
     },
-  ): Promise<User> {
+  ): Promise<User & { mfas?: Mfa[] }> {
     const db = dbOrTx(this.db, opts?.trx);
-    return db
+    const user = await db
       .selectFrom('users')
       .select(this.baseFields)
-      .$if(opts?.includePassword, (qb) => qb.select('password'))
+      .$if(opts?.includePassword, (qb) => qb.select(['password']))
       .where('id', '=', userId)
       .where('workspaceId', '=', workspaceId)
       .executeTakeFirst();
+
+    if (!user) return user;
+
+    const mfas = await db
+      .selectFrom('mfa')
+      .select(['enabled', 'secret', 'type', 'backupCodes', 'createdAt as mfaCreatedAt'])
+      .where('userId', '=', user.id)
+      .where('enabled', '=', true)
+      .execute();
+
+    // @ts-ignore
+    user.mfas = mfas;
+
+    return user;
   }
 
   async findByEmail(
@@ -61,15 +75,29 @@ export class UserRepo {
       includePassword?: boolean;
       trx?: KyselyTransaction;
     },
-  ): Promise<User> {
+  ): Promise<User & { mfas?: Mfa[]}> {
     const db = dbOrTx(this.db, opts?.trx);
-    return db
+    const user = await db
       .selectFrom('users')
       .select(this.baseFields)
-      .$if(opts?.includePassword, (qb) => qb.select('password'))
+      .$if(opts?.includePassword, (qb) => qb.select(['password']))
       .where(sql`LOWER(email)`, '=', sql`LOWER(${email})`)
       .where('workspaceId', '=', workspaceId)
       .executeTakeFirst();
+
+    if (!user) return user;
+
+    const mfas = await db
+      .selectFrom('mfa')
+      .select(['enabled', 'secret', 'type', 'backupCodes', 'createdAt as mfaCreatedAt'])
+      .where('userId', '=', user.id)
+      .where('enabled', '=', true)
+      .execute();
+
+    // @ts-ignore
+    user.mfas = mfas;
+
+    return user;
   }
 
   async updateUser(
