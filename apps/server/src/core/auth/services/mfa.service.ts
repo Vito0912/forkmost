@@ -9,27 +9,41 @@ import { executeTx } from '@docmost/db/utils';
 import { InitMfaDto, MfaType, VerifyMfaDto } from '../dto/login.dto';
 import { KyselyDB } from '@docmost/db/types/kysely.types';
 import { InjectKysely } from 'nestjs-kysely';
+import { MailService } from 'src/integrations/mail/mail.service';
+import MfaCodeEmail from '@docmost/transactional/emails/mfa-code-email';
+import { User } from '@docmost/db/types/entity.types';
 
 export interface TotpSetup {
   secret: string;
   qrCodeDataUrl: string;
 }
 
+export interface EmailSetup {
+  secret: string;
+  expiresAt: Date;
+}
+
 @Injectable()
 export class MfaService {
-  constructor(private readonly environmentService: EnvironmentService, @InjectKysely() private readonly db: KyselyDB,) {}
+  constructor(
+    private readonly environmentService: EnvironmentService, 
+    private mailService: MailService,
+    @InjectKysely() private readonly db: KyselyDB,) {}
 
   async initMfa(userId: string, workspaceId: string, initMfaDto: InitMfaDto) {
 
-    let payload: {secret?: string, image?: string};
+    let sharedPayload: TotpSetup | EmailSetup;
+    let payload = sharedPayload;
 
     switch (initMfaDto.type) {
       case MfaType.TOTP: {
         payload = await this.generateTotp(userId, workspaceId);
+        sharedPayload = payload;
         break;
       }
       case MfaType.EMAIL: {
-        throw new Error('Method not implemented.');
+        payload = await this.generateEmailSetup();
+        break;
       }
     }
 
@@ -44,6 +58,7 @@ export class MfaService {
           .where('userId', '=', userId)
           .where('type', '=', initMfaDto.type)
           .where('enabled', '=', false)
+          .where('verified', '=', false)
           .execute();
 
         await this.db
@@ -63,7 +78,7 @@ export class MfaService {
 
     return {
       type: initMfaDto.type,
-      ...payload,
+      ...sharedPayload,
     } 
   }
 
@@ -117,7 +132,22 @@ export class MfaService {
         return { success: true, message: 'TOTP MFA enabled successfully' };
       }
       case MfaType.EMAIL: {
-        throw new Error('Method not implemented.');
+        const isValid = await this.verifyEmailCode(
+          verifyMfaDto.code,
+          this.decrypt(mfa.secret),
+          userId
+        );
+
+        if (!isValid) {
+          throw new BadRequestException('Invalid email code');
+        }
+
+        await this.db
+          .updateTable('mfa')
+          .set({ enabled: true, verified: true })
+          .where('userId', '=', userId)
+          .where('type', '=', MfaType.EMAIL)
+          .executeTakeFirst();
       }
     }
   }
@@ -140,6 +170,39 @@ export class MfaService {
       secret,
       qrCodeDataUrl,
     };
+  }
+
+  async generateEmailSetup(user: User): Promise<EmailSetup> {
+    const secret = crypto.randomBytes(3).toString('hex');
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const payload: EmailSetup = {
+      secret,
+      expiresAt,
+    };
+
+    const mfaMail = MfaCodeEmail({
+      code: secret,
+    });
+
+    await this.db
+      .updateTable('mfa')
+      .set({
+        secret: this.encrypt(JSON.stringify(payload)),
+      })
+      .where('userId', '=', user.id)
+      .where('type', '=', MfaType.EMAIL)
+      .where('enabled', '=', false)
+      .where('verified', '=', false)
+      .executeTakeFirstOrThrow();
+
+    await this.mailService.sendToQueue({
+      to: user.email,
+      subject: `Your MFA code`,
+      template: mfaMail,
+    });
+
+    return payload;
   }
 
   verifyTotp(code: string, secret: string): boolean {
@@ -175,43 +238,29 @@ export class MfaService {
     return false;    
   }
 
+  async verifyEmailCode(code: string, secret: string, userId: string): Promise<boolean> {
+    const decryptedSecret = this.decrypt(secret) as unknown as EmailSetup;
+    if (decryptedSecret && decryptedSecret.expiresAt && new Date() < decryptedSecret.expiresAt) {
+      const result = (decryptedSecret.secret === code);
+      if (result) {
+        await this.db
+          .updateTable('mfa')
+          .set({ secret: null })
+          .where('userId', '=', userId)
+          .where('type', '=', MfaType.EMAIL)
+          .executeTakeFirst();
+      }
+      return result;
+    }
+    return false;
+  }
+
   generateBackupCodes(): string[] {
     const codes: string[] = [];
     for (let i = 0; i < 8; i++) {
       codes.push(crypto.randomBytes(4).toString('hex').toUpperCase());
     }
     return codes;
-  }
-
-  encrypt(text: string): string {
-    const algorithm = 'aes-256-gcm';
-    const secret = this.environmentService.getAppSecret();
-    const key = crypto.scryptSync(secret, 'salt', 32);
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-    
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    const authTag = cipher.getAuthTag();
-    
-    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
-  }
-
-  decrypt(encryptedText: string): string {
-    const algorithm = 'aes-256-gcm';
-    const secret = this.environmentService.getAppSecret();
-    const key = crypto.scryptSync(secret, 'salt', 32);
-    
-    const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    decipher.setAuthTag(authTag);
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
   }
 
   async hashBackupCodes(codes: string[]): Promise<string[]> {
@@ -259,4 +308,40 @@ export class MfaService {
       .where('type', '=', type)
       .execute();
   }
+
+  /**
+   * Helper functions
+   */
+
+  encrypt(text: string): string {
+    const algorithm = 'aes-256-gcm';
+    const secret = this.environmentService.getAppSecret();
+    const key = crypto.scryptSync(secret, 'salt', 32);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag();
+    
+    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
+  }
+
+  decrypt(encryptedText: string): string {
+    const algorithm = 'aes-256-gcm';
+    const secret = this.environmentService.getAppSecret();
+    const key = crypto.scryptSync(secret, 'salt', 32);
+    
+    const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
+    decipher.setAuthTag(authTag);
+    
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+  }
+
 }
