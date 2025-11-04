@@ -12,6 +12,7 @@ import { Pool, types } from 'pg';
 import { GroupRepo } from '@docmost/db/repos/group/group.repo';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
+import { GroupMemberRepo } from '@docmost/db/repos/group/group-member.repo';
 import { GroupUserRepo } from '@docmost/db/repos/group/group-user.repo';
 import { SpaceRepo } from '@docmost/db/repos/space/space.repo';
 import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
@@ -66,6 +67,7 @@ types.setTypeParser(types.builtins.INT8, (val) => Number(val));
     WorkspaceRepo,
     UserRepo,
     GroupRepo,
+    GroupMemberRepo,
     GroupUserRepo,
     SpaceRepo,
     SpaceMemberRepo,
@@ -81,6 +83,7 @@ types.setTypeParser(types.builtins.INT8, (val) => Number(val));
     WorkspaceRepo,
     UserRepo,
     GroupRepo,
+    GroupMemberRepo,
     GroupUserRepo,
     SpaceRepo,
     SpaceMemberRepo,

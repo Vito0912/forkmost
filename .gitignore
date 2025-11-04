@@ -2,6 +2,8 @@
 .env.dev
 .env.prod
 data
+*.md
+
 # compiled output
 /dist
 /node_modules

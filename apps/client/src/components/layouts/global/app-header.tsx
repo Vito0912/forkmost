@@ -12,7 +12,7 @@ import {
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
 import SidebarToggle from "@/components/ui/sidebar-toggle-button.tsx";
 import { useTranslation } from "react-i18next";
-import { isCloud } from "@/lib/config.ts";
+import { getAppName, isCloud } from "@/lib/config.ts";
 import {
   SearchControl,
   SearchMobileControl,
@@ -77,7 +77,7 @@ export function AppHeader() {
             component={Link}
             to="/home"
           >
-            {import.meta.env.VITE_APP_NAME || "Forkmost"}
+            {getAppName()}
           </Text>
 
           <Group ml={50} gap={5} className={classes.links} visibleFrom="sm">

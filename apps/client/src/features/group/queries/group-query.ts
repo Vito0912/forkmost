@@ -5,13 +5,14 @@ import {
   UseQueryResult,
   keepPreviousData,
 } from "@tanstack/react-query";
-import { IGroup } from "@/features/group/types/group.types";
+import { IGroup, IGroupMember } from "@/features/group/types/group.types";
 import {
   addGroupMember,
   createGroup,
   deleteGroup,
   getGroupById,
   getGroupMembers,
+  getGroupMembersRecursive,
   getGroups,
   removeGroupMember,
   updateGroup,
@@ -108,10 +109,22 @@ export function useDeleteGroupMutation() {
 export function useGroupMembersQuery(
   groupId: string,
   params?: QueryParams,
-): UseQueryResult<IPagination<IUser>, Error> {
+): UseQueryResult<IPagination<IGroupMember>, Error> {
   return useQuery({
     queryKey: ["groupMembers", groupId, params],
     queryFn: () => getGroupMembers(groupId, params),
+    enabled: !!groupId,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useGroupMembersRecursiveQuery(
+  groupId: string,
+  params?: QueryParams,
+): UseQueryResult<IPagination<IUser>, Error> {
+  return useQuery({
+    queryKey: ["groupMembersRecursive", groupId, params],
+    queryFn: () => getGroupMembersRecursive(groupId, params),
     enabled: !!groupId,
     placeholderData: keepPreviousData,
   });
@@ -126,6 +139,12 @@ export function useAddGroupMemberMutation() {
       notifications.show({ message: "Added successfully" });
       queryClient.invalidateQueries({
         queryKey: ["groupMembers", variables.groupId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["groupMembersRecursive", variables.groupId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["groups"],
       });
     },
     onError: () => {
@@ -145,7 +164,8 @@ export function useRemoveGroupMemberMutation() {
     Error,
     {
       groupId: string;
-      userId: string;
+      userId?: string;
+      memberGroupId?: string;
     }
   >({
     mutationFn: (data) => removeGroupMember(data),
@@ -153,6 +173,12 @@ export function useRemoveGroupMemberMutation() {
       notifications.show({ message: "Removed successfully" });
       queryClient.invalidateQueries({
         queryKey: ["groupMembers", variables.groupId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["groupMembersRecursive", variables.groupId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["groups"],
       });
     },
     onError: (error) => {

@@ -186,10 +186,10 @@ export class UserRepo {
 
         const viaGroup = this.db
           .selectFrom('spaceMembers')
-          .innerJoin('groupUsers', 'groupUsers.groupId', 'spaceMembers.groupId')
+          .innerJoin('groupMembers', 'groupMembers.groupId', 'spaceMembers.groupId')
           .select('spaceMembers.spaceId')
           .where('spaceMembers.role', '!=', 'reader')
-          .where('groupUsers.userId', '=', userId);
+          .where('groupMembers.userId', '=', userId);
 
         return direct.union(viaGroup).as('my_spaces');
       })
@@ -204,8 +204,8 @@ export class UserRepo {
 
     const groupPairs = this.db
       .selectFrom('spaceMembers')
-      .innerJoin('groupUsers', 'groupUsers.groupId', 'spaceMembers.groupId')
-      .select(['groupUsers.userId as user_id', 'spaceMembers.spaceId'])
+      .innerJoin('groupMembers', 'groupMembers.groupId', 'spaceMembers.groupId')
+      .select(['groupMembers.userId as user_id', 'spaceMembers.spaceId'])
       .where('spaceMembers.groupId', 'is not', null);
 
     const memberIds = this.db

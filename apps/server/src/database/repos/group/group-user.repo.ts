@@ -28,7 +28,7 @@ export class GroupUserRepo {
   ) {
     const db = dbOrTx(this.db, trx);
     return db
-      .selectFrom('groupUsers')
+      .selectFrom('groupMembers')
       .selectAll()
       .where('userId', '=', userId)
       .where('groupId', '=', groupId)
@@ -41,7 +41,7 @@ export class GroupUserRepo {
   ): Promise<GroupUser> {
     const db = dbOrTx(this.db, trx);
     return db
-      .insertInto('groupUsers')
+      .insertInto('groupMembers')
       .values(insertableGroupUser)
       .returningAll()
       .executeTakeFirst();
@@ -49,8 +49,8 @@ export class GroupUserRepo {
 
   async getGroupUsersPaginated(groupId: string, pagination: PaginationOptions) {
     let query = this.db
-      .selectFrom('groupUsers')
-      .innerJoin('users', 'users.id', 'groupUsers.userId')
+      .selectFrom('groupMembers')
+      .innerJoin('users', 'users.id', 'groupMembers.userId')
       .selectAll('users')
       .where('groupId', '=', groupId)
       .orderBy('createdAt', 'asc');
@@ -147,7 +147,7 @@ export class GroupUserRepo {
 
   async delete(userId: string, groupId: string): Promise<void> {
     await this.db
-      .deleteFrom('groupUsers')
+      .deleteFrom('groupMembers')
       .where('userId', '=', userId)
       .where('groupId', '=', groupId)
       .execute();

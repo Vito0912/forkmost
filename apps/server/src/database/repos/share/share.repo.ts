@@ -192,13 +192,13 @@ export class ShareRepo {
             eb
               .selectFrom('spaceMembers')
               .innerJoin(
-                'groupUsers',
-                'groupUsers.groupId',
+                'groupMembers',
+                'groupMembers.groupId',
                 'spaceMembers.groupId',
               )
               .select(['spaceMembers.role'])
               .whereRef('spaceMembers.spaceId', '=', 'spaces.id')
-              .where('groupUsers.userId', '=', userId),
+              .where('groupMembers.userId', '=', userId),
           )
           .as('roles_union'),
       )

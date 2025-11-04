@@ -107,6 +107,8 @@ export class GroupRepo {
     let query = this.db
       .selectFrom('groups')
       .selectAll('groups')
+      .select((eb) => this.withDirectMemberCount(eb))
+      .select((eb) => this.withDirectUserCount(eb))
       .select((eb) => this.withMemberCount(eb))
       .where('workspaceId', '=', workspaceId)
       .orderBy('memberCount', 'desc')
@@ -130,12 +132,38 @@ export class GroupRepo {
     return result;
   }
 
+  withDirectMemberCount(eb: ExpressionBuilder<DB, 'groups'>) {
+    return sql<number>`(
+      SELECT COUNT(*)
+      FROM "group_members"
+      WHERE "group_id" = ${eb.ref('groups.id')}
+    )`.as('directMemberCount');
+  }
+
+  withDirectUserCount(eb: ExpressionBuilder<DB, 'groups'>) {
+    return sql<number>`(
+      SELECT COUNT(*)
+      FROM "group_members"
+      WHERE "group_id" = ${eb.ref('groups.id')}
+      AND "user_id" IS NOT NULL
+    )`.as('directUserCount');
+  }
+
   withMemberCount(eb: ExpressionBuilder<DB, 'groups'>) {
-    return eb
-      .selectFrom('groupUsers')
-      .select((eb) => eb.fn.countAll().as('count'))
-      .whereRef('groupUsers.groupId', '=', 'groups.id')
-      .as('memberCount');
+    return sql<number>`(
+      WITH RECURSIVE group_hierarchy AS (
+        SELECT "group_id", "member_group_id", "user_id"
+        FROM "group_members"
+        WHERE "group_id" = ${eb.ref('groups.id')}
+        UNION ALL
+        SELECT gm."group_id", gm."member_group_id", gm."user_id"
+        FROM "group_members" gm
+        INNER JOIN group_hierarchy gh ON gh."member_group_id" = gm."group_id"
+      )
+      SELECT COUNT(DISTINCT "user_id")
+      FROM group_hierarchy
+      WHERE "user_id" IS NOT NULL
+    )`.as('memberCount');
   }
 
   async delete(groupId: string, workspaceId: string): Promise<void> {

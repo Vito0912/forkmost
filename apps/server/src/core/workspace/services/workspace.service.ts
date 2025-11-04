@@ -16,7 +16,7 @@ import { KyselyDB, KyselyTransaction } from '@docmost/db/types/kysely.types';
 import { executeTx } from '@docmost/db/utils';
 import { InjectKysely } from 'nestjs-kysely';
 import { User } from '@docmost/db/types/entity.types';
-import { GroupUserRepo } from '@docmost/db/repos/group/group-user.repo';
+import { GroupMemberRepo } from '@docmost/db/repos/group/group-member.repo';
 import { GroupRepo } from '@docmost/db/repos/group/group.repo';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
 import { PaginationResult } from '@docmost/db/pagination/pagination';
@@ -48,7 +48,7 @@ export class WorkspaceService {
     private spaceService: SpaceService,
     private spaceMemberService: SpaceMemberService,
     private groupRepo: GroupRepo,
-    private groupUserRepo: GroupUserRepo,
+    private groupMemberRepo: GroupMemberRepo,
     private userRepo: UserRepo,
     private environmentService: EnvironmentService,
     private domainService: DomainService,
@@ -164,7 +164,7 @@ export class WorkspaceService {
           .execute();
 
         // add user to default group created above
-        await this.groupUserRepo.insertGroupUser(
+        await this.groupMemberRepo.insertGroupMember(
           {
             userId: user.id,
             groupId: group.id,
@@ -478,7 +478,7 @@ export class WorkspaceService {
         trx,
       );
 
-      await trx.deleteFrom('groupUsers').where('userId', '=', userId).execute();
+      await trx.deleteFrom('groupMembers').where('userId', '=', userId).execute();
       await trx
         .deleteFrom('spaceMembers')
         .where('userId', '=', userId)

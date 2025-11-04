@@ -25,6 +25,12 @@ export class CreateGroupDto {
   @ArrayMaxSize(50)
   @IsUUID('all', { each: true })
   userIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('all', { each: true })
+  groupIds?: string[];
 }
 
 export enum DefaultGroup {

@@ -1,5 +1,5 @@
 import api from "@/lib/api-client";
-import { IGroup } from "@/features/group/types/group.types";
+import { IGroup, IGroupMember } from "@/features/group/types/group.types";
 import { IPagination, QueryParams } from "@/lib/types.ts";
 import { IUser } from "@/features/user/types/user.types.ts";
 
@@ -32,8 +32,16 @@ export async function deleteGroup(data: { groupId: string }): Promise<void> {
 export async function getGroupMembers(
   groupId: string,
   params?: QueryParams,
-): Promise<IPagination<IUser>> {
+): Promise<IPagination<IGroupMember>> {
   const req = await api.post("/groups/members", { groupId, ...params });
+  return req.data;
+}
+
+export async function getGroupMembersRecursive(
+  groupId: string,
+  params?: QueryParams,
+): Promise<IPagination<IUser>> {
+  const req = await api.post("/groups/members/recursive", { groupId, ...params });
   return req.data;
 }
 
@@ -46,7 +54,8 @@ export async function addGroupMember(data: {
 
 export async function removeGroupMember(data: {
   groupId: string;
-  userId: string;
+  userId?: string;
+  memberGroupId?: string;
 }): Promise<void> {
   await api.post("/groups/members/remove", data);
 }

@@ -63,7 +63,7 @@ export class GroupUserService {
 
     // batch insert new group users
     await this.db
-      .insertInto('groupUsers')
+      .insertInto('groupMembers')
       .values(groupUsersToInsert)
       .onConflict((oc) => oc.columns(['userId', 'groupId']).doNothing())
       .execute();

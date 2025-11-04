@@ -6,16 +6,17 @@ import {
   HttpCode,
   HttpStatus,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { GroupService } from './services/group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { AuthUser } from '../../common/decorators/auth-user.decorator';
 import { AuthWorkspace } from '../../common/decorators/auth-workspace.decorator';
-import { GroupUserService } from './services/group-user.service';
+import { GroupMemberService } from './services/group-member.service';
 import { GroupIdDto } from './dto/group-id.dto';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
-import { AddGroupUserDto } from './dto/add-group-user.dto';
-import { RemoveGroupUserDto } from './dto/remove-group-user.dto';
+import { AddGroupMemberDto } from './dto/add-group-member.dto';
+import { RemoveGroupMemberDto } from './dto/remove-group-member.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { User, Workspace } from '@docmost/db/types/entity.types';
@@ -30,7 +31,7 @@ import {
 export class GroupController {
   constructor(
     private readonly groupService: GroupService,
-    private readonly groupUserService: GroupUserService,
+    private readonly groupMemberService: GroupMemberService,
     private readonly workspaceAbility: WorkspaceAbilityFactory,
   ) {}
 
@@ -109,17 +110,35 @@ export class GroupController {
       throw new ForbiddenException();
     }
 
-    return this.groupUserService.getGroupUsers(
+    return this.groupMemberService.getGroupMembers(
       groupIdDto.groupId,
-      workspace.id,
+      pagination,
+    );
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('members/recursive')
+  getGroupMembersRecursive(
+    @Body() groupIdDto: GroupIdDto,
+    @Body() pagination: PaginationOptions,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const ability = this.workspaceAbility.createForUser(user, workspace);
+    if (ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.Group)) {
+      throw new ForbiddenException();
+    }
+
+    return this.groupMemberService.getGroupMembersRecursive(
+      groupIdDto.groupId,
       pagination,
     );
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('members/add')
-  addGroupMember(
-    @Body() addGroupUserDto: AddGroupUserDto,
+  async addGroupMember(
+    @Body() addGroupMemberDto: AddGroupMemberDto,
     @AuthUser() user: User,
     @AuthWorkspace() workspace: Workspace,
   ) {
@@ -130,17 +149,37 @@ export class GroupController {
       throw new ForbiddenException();
     }
 
-    return this.groupUserService.addUsersToGroupBatch(
-      addGroupUserDto.userIds,
-      addGroupUserDto.groupId,
-      workspace.id,
-    );
+    // Validate that at least one of userIds or groupIds is provided
+    if (
+      (!addGroupMemberDto.userIds || addGroupMemberDto.userIds.length === 0) &&
+      (!addGroupMemberDto.groupIds || addGroupMemberDto.groupIds.length === 0)
+    ) {
+      throw new BadRequestException('userIds or groupIds is required');
+    }
+
+    // Add users if provided
+    if (addGroupMemberDto.userIds && addGroupMemberDto.userIds.length > 0) {
+      await this.groupMemberService.addUsersToGroupBatch(
+        addGroupMemberDto.userIds,
+        addGroupMemberDto.groupId,
+        workspace.id,
+      );
+    }
+
+    // Add groups if provided
+    if (addGroupMemberDto.groupIds && addGroupMemberDto.groupIds.length > 0) {
+      await this.groupMemberService.addGroupsToGroupBatch(
+        addGroupMemberDto.groupIds,
+        addGroupMemberDto.groupId,
+        workspace.id,
+      );
+    }
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('members/remove')
   removeGroupMember(
-    @Body() removeGroupUserDto: RemoveGroupUserDto,
+    @Body() removeGroupMemberDto: RemoveGroupMemberDto,
     @AuthUser() user: User,
     @AuthWorkspace() workspace: Workspace,
   ) {
@@ -151,11 +190,28 @@ export class GroupController {
       throw new ForbiddenException();
     }
 
-    return this.groupUserService.removeUserFromGroup(
-      removeGroupUserDto.userId,
-      removeGroupUserDto.groupId,
-      workspace.id,
-    );
+    // Validate that either userId or memberGroupId is provided
+    if (!removeGroupMemberDto.userId && !removeGroupMemberDto.memberGroupId) {
+      throw new BadRequestException('userId or memberGroupId is required');
+    }
+
+    if (removeGroupMemberDto.userId && removeGroupMemberDto.memberGroupId) {
+      throw new BadRequestException(
+        'please provide either a userId or memberGroupId, not both',
+      );
+    }
+
+    if (removeGroupMemberDto.userId) {
+      return this.groupMemberService.removeUserFromGroup(
+        removeGroupMemberDto.userId,
+        removeGroupMemberDto.groupId,
+      );
+    } else {
+      return this.groupMemberService.removeGroupFromGroup(
+        removeGroupMemberDto.memberGroupId,
+        removeGroupMemberDto.groupId,
+      );
+    }
   }
 
   @HttpCode(HttpStatus.OK)

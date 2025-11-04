@@ -12,14 +12,14 @@ import { KyselyTransaction } from '@docmost/db/types/kysely.types';
 import { GroupRepo } from '@docmost/db/repos/group/group.repo';
 import { Group, InsertableGroup, User } from '@docmost/db/types/entity.types';
 import { PaginationResult } from '@docmost/db/pagination/pagination';
-import { GroupUserService } from './group-user.service';
+import { GroupMemberService } from './group-member.service';
 
 @Injectable()
 export class GroupService {
   constructor(
     private groupRepo: GroupRepo,
-    @Inject(forwardRef(() => GroupUserService))
-    private groupUserService: GroupUserService,
+    @Inject(forwardRef(() => GroupMemberService))
+    private groupMemberService: GroupMemberService,
   ) {}
 
   async getGroupInfo(groupId: string, workspaceId: string): Promise<Group> {
@@ -58,8 +58,16 @@ export class GroupService {
     const createdGroup = await this.groupRepo.insertGroup(insertableGroup, trx);
 
     if (createGroupDto?.userIds && createGroupDto.userIds.length > 0) {
-      await this.groupUserService.addUsersToGroupBatch(
+      await this.groupMemberService.addUsersToGroupBatch(
         createGroupDto.userIds,
+        createdGroup.id,
+        workspaceId,
+      );
+    }
+
+    if (createGroupDto?.groupIds && createGroupDto.groupIds.length > 0) {
+      await this.groupMemberService.addGroupsToGroupBatch(
+        createGroupDto.groupIds,
         createdGroup.id,
         workspaceId,
       );

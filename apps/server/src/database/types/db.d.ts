@@ -173,12 +173,13 @@ export interface Groups {
   workspaceId: string;
 }
 
-export interface GroupUsers {
+export interface GroupMembers {
   createdAt: Generated<Timestamp>;
   groupId: string;
   id: Generated<string>;
+  memberGroupId: string | null;
   updatedAt: Generated<Timestamp>;
-  userId: string;
+  userId: string | null;
 }
 
 export interface Mfa {
@@ -365,7 +366,7 @@ export interface DB {
   comments: Comments;
   fileTasks: FileTasks;
   groups: Groups;
-  groupUsers: GroupUsers;
+  groupMembers: GroupMembers;
   mfa: Mfa;
   pageHistory: PageHistory;
   pages: Pages;

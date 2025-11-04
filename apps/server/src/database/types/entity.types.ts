@@ -8,7 +8,7 @@ import {
   Users,
   Workspaces,
   PageHistory as History,
-  GroupUsers,
+  GroupMembers,
   SpaceMembers,
   WorkspaceInvitations,
   UserTokens,
@@ -62,16 +62,21 @@ export type InsertableSpaceMember = Insertable<SpaceMembers>;
 export type UpdatableSpaceMember = Updateable<Omit<SpaceMembers, 'id'>>;
 
 // Group
-export type ExtendedGroup = Groups & { memberCount: number };
+export type ExtendedGroup = Groups & { memberCount: number; directMemberCount: number; directUserCount: number };
 
 export type Group = Selectable<Groups>;
 export type InsertableGroup = Insertable<Groups>;
 export type UpdatableGroup = Updateable<Omit<Groups, 'id'>>;
 
-// GroupUser
-export type GroupUser = Selectable<GroupUsers>;
-export type InsertableGroupUser = Insertable<GroupUsers>;
-export type UpdatableGroupUser = Updateable<Omit<GroupUsers, 'id'>>;
+// GroupMember
+export type GroupMember = Selectable<GroupMembers>;
+export type InsertableGroupMember = Insertable<GroupMembers>;
+export type UpdatableGroupMember = Updateable<Omit<GroupMembers, 'id'>>;
+
+// GroupUser (alias for GroupMember for backward compatibility)
+export type GroupUser = GroupMember;
+export type InsertableGroupUser = InsertableGroupMember;
+export type UpdatableGroupUser = UpdatableGroupMember;
 
 // Page
 export type Page = Selectable<Pages>;

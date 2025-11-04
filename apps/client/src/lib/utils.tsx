@@ -4,12 +4,42 @@ import { IconFileDescription } from "@tabler/icons-react";
 import { ReactNode } from "react";
 import { TFunction } from "i18next";
 
-export function formatMemberCount(memberCount: number, t: TFunction): string {
-  if (memberCount === 1) {
-    return `1 ${t("member")}`;
-  } else {
-    return `${memberCount} ${t("members")}`;
+export function formatMemberCount(
+  memberCount: number,
+  t: TFunction,
+  directMemberCount?: number,
+  directUserCount?: number
+): string {
+  // If directMemberCount is not provided, use simple format
+  if (directMemberCount === undefined) {
+    if (memberCount === 1) {
+      return `1 ${t("member")}`;
+    } else {
+      return `${memberCount} ${t("members")}`;
+    }
   }
+
+  // Check if there are any group members (not just user members)
+  const hasGroupMembers = directUserCount !== undefined && directUserCount < directMemberCount;
+
+  // If no group members, use simple format
+  if (!hasGroupMembers) {
+    if (memberCount === 1) {
+      return `1 ${t("member")}`;
+    } else {
+      return `${memberCount} ${t("members")}`;
+    }
+  }
+
+  // Show both counts when there are nested groups
+  const directText =
+    directMemberCount === 1
+      ? `1 ${t("member")}`
+      : `${directMemberCount} ${t("members")}`;
+  const userText =
+    memberCount === 1 ? `1 ${t("user")}` : `${memberCount} ${t("users")}`;
+
+  return `${directText} (${userText})`;
 }
 
 export function extractPageSlugId(slug: string): string {

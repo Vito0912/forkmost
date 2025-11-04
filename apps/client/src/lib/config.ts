@@ -9,7 +9,7 @@ declare global {
 }
 
 export function getAppName(): string {
-  return "Forkmost";
+  return getConfigValue("APP_NAME", "Forkmost");
 }
 
 export function getAppUrl(): string {

@@ -9,7 +9,7 @@ import { IGroup } from "@/features/group/types/group.types.ts";
 import Paginate from "@/components/common/paginate.tsx";
 import { queryClient } from "@/main.tsx";
 import { getSpaces } from "@/features/space/services/space-service.ts";
-import { getGroupMembers } from "@/features/group/services/group-service.ts";
+import { getGroupMembersRecursive } from "@/features/group/services/group-service.ts";
 import useUserRole from "@/hooks/use-user-role.tsx";
 
 export default function GroupList() {
@@ -20,8 +20,8 @@ export default function GroupList() {
 
   const prefetchGroupMembers = (groupId: string) => {
     queryClient.prefetchQuery({
-      queryKey: ["groupMembers", groupId, { page: 1 }],
-      queryFn: () => getGroupMembers(groupId, { page: 1 }),
+      queryKey: ["groupMembersRecursive", groupId, { page: 1 }],
+      queryFn: () => getGroupMembersRecursive(groupId, { page: 1 }),
     });
   };
 
@@ -85,10 +85,10 @@ export default function GroupList() {
                         component={Link}
                         to={`/settings/groups/${group.id}`}
                       >
-                        {formatMemberCount(group.memberCount, t)}
+                        {formatMemberCount(group.memberCount, t, group.directMemberCount, group.directUserCount)}
                       </Anchor>
                     ) : (
-                      formatMemberCount(group.memberCount, t)
+                      formatMemberCount(group.memberCount, t, group.directMemberCount, group.directUserCount)
                     )}
                   </Table.Td>
                 </Table.Tr>

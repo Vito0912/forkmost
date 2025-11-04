@@ -178,7 +178,7 @@ export class SpaceMemberRepo {
 
   /*
    * we want to get a user's role in a space.
-   * they user can be a member either directly or via a group
+   * they user can be a member either directly or via a group (including nested groups)
    * we will pass the user id and space id to return the user's roles
    * if the user is a member of the space via multiple groups
    * if the user has no space permission it should return an empty array,
@@ -189,16 +189,33 @@ export class SpaceMemberRepo {
     spaceId: string,
   ): Promise<UserSpaceRole[]> {
     const roles = await this.db
+      .withRecursive('user_groups', (db) =>
+        db
+          .selectFrom('groupMembers')
+          .select(['groupMembers.groupId'])
+          .where('groupMembers.userId', '=', userId)
+          .unionAll(
+            db
+              .selectFrom('groupMembers')
+              .innerJoin(
+                'user_groups',
+                'user_groups.groupId',
+                'groupMembers.memberGroupId',
+              )
+              .select(['groupMembers.groupId'])
+              .where('groupMembers.memberGroupId', 'is not', null),
+          ),
+      )
       .selectFrom('spaceMembers')
       .select(['userId', 'role'])
       .where('userId', '=', userId)
       .where('spaceId', '=', spaceId)
-      .unionAll(
-        this.db
+      .unionAll((eb) =>
+        // Get roles from direct group membership and nested groups
+        eb
           .selectFrom('spaceMembers')
-          .innerJoin('groupUsers', 'groupUsers.groupId', 'spaceMembers.groupId')
-          .select(['groupUsers.userId', 'spaceMembers.role'])
-          .where('groupUsers.userId', '=', userId)
+          .innerJoin('user_groups', 'user_groups.groupId', 'spaceMembers.groupId')
+          .select([sql<string>`${userId}`.as('userId'), 'spaceMembers.role'])
           .where('spaceMembers.spaceId', '=', spaceId),
       )
       .execute();
@@ -211,17 +228,34 @@ export class SpaceMemberRepo {
 
   async getUserSpaceIds(userId: string): Promise<string[]> {
     const membership = await this.db
+      .withRecursive('user_groups', (db) =>
+        db
+          .selectFrom('groupMembers')
+          .select(['groupMembers.groupId'])
+          .where('groupMembers.userId', '=', userId)
+          .unionAll(
+            db
+              .selectFrom('groupMembers')
+              .innerJoin(
+                'user_groups',
+                'user_groups.groupId',
+                'groupMembers.memberGroupId',
+              )
+              .select(['groupMembers.groupId'])
+              .where('groupMembers.memberGroupId', 'is not', null),
+          ),
+      )
       .selectFrom('spaceMembers')
       .innerJoin('spaces', 'spaces.id', 'spaceMembers.spaceId')
       .select(['spaces.id'])
       .where('userId', '=', userId)
-      .union(
-        this.db
+      .union((eb) =>
+        // Get spaces from direct group membership and nested groups
+        eb
           .selectFrom('spaceMembers')
-          .innerJoin('groupUsers', 'groupUsers.groupId', 'spaceMembers.groupId')
+          .innerJoin('user_groups', 'user_groups.groupId', 'spaceMembers.groupId')
           .innerJoin('spaces', 'spaces.id', 'spaceMembers.spaceId')
-          .select(['spaces.id'])
-          .where('groupUsers.userId', '=', userId),
+          .select(['spaces.id']),
       )
       .execute();
 

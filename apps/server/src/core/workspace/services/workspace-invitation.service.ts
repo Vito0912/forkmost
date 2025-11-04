@@ -249,7 +249,7 @@ export class WorkspaceInvitationService {
 
             // add user to groups specified during invite
             await trx
-              .insertInto('groupUsers')
+              .insertInto('groupMembers')
               .values(groupUsersToInsert)
               .onConflict((oc) => oc.columns(['userId', 'groupId']).doNothing())
               .execute();

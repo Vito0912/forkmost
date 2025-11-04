@@ -165,8 +165,8 @@ export class SpaceRepo {
           .selectFrom('spaceMembers')
           .where('spaceMembers.groupId', 'is not', null)
           .leftJoin('groups', 'groups.id', 'spaceMembers.groupId')
-          .leftJoin('groupUsers', 'groupUsers.groupId', 'groups.id')
-          .select('groupUsers.userId')
+          .leftJoin('groupMembers', 'groupMembers.groupId', 'groups.id')
+          .select('groupMembers.userId')
           .whereRef('spaceMembers.spaceId', '=', 'spaces.id'),
       )
       .as('userId');

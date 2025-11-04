@@ -213,4 +213,8 @@ export class EnvironmentService {
   getPostHogKey(): string {
     return this.configService.get<string>('POSTHOG_KEY');
   }
+
+  getAppName(): string {
+    return this.configService.get<string>('APP_NAME', 'Forkmost');
+  }
 }

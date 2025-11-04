@@ -11,6 +11,7 @@ interface MultiGroupSelectProps {
   label?: string;
   description?: string;
   mt?: string;
+  excludeGroupId?: string;
 }
 
 const renderMultiSelectOption: MultiSelectProps["renderOption"] = ({
@@ -29,6 +30,7 @@ export function MultiGroupSelect({
   label,
   description,
   mt,
+  excludeGroupId,
 }: MultiGroupSelectProps) {
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
@@ -43,6 +45,7 @@ export function MultiGroupSelect({
     if (groups) {
       const groupsData = groups?.items
         .filter((group: IGroup) => group.name.toLowerCase() !== 'everyone')
+        .filter((group: IGroup) => !excludeGroupId || group.id !== excludeGroupId)
         .map((group: IGroup) => {
           return {
             value: group.id,
@@ -59,7 +62,7 @@ export function MultiGroupSelect({
       // Combine existing data with new search data
       setData((prevData) => [... prevData, ... filteredGroupData]);
     }
-  }, [groups]);
+  }, [groups, excludeGroupId]);
 
   return (
     <MultiSelect
