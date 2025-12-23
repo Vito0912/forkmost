@@ -13,6 +13,8 @@ import {
   IconStrikethrough,
   IconUnderline,
   IconMessage,
+  IconSubscript,
+  IconSuperscript,
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import classes from "./bubble-menu.module.css";
@@ -64,6 +66,8 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
         isItalic: ctx.editor.isActive("italic"),
         isUnderline: ctx.editor.isActive("underline"),
         isStrike: ctx.editor.isActive("strike"),
+        isSubscript: ctx.editor.isActive("subscript"),
+        isSuperscript: ctx.editor.isActive("superscript"),
         isCode: ctx.editor.isActive("code"),
         isComment: ctx.editor.isActive("comment"),
       };
@@ -94,6 +98,18 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
       isActive: () => editorState?.isStrike,
       command: () => props.editor.chain().focus().toggleStrike().run(),
       icon: IconStrikethrough,
+    },
+    {
+      name: "Subscript",
+      isActive: () => editorState?.isSubscript,
+      command: () => props.editor.chain().focus().toggleSubscript().run(),
+      icon: IconSubscript,
+    },
+    {
+      name: "Superscript",
+      isActive: () => editorState?.isSuperscript,
+      command: () => props.editor.chain().focus().toggleSuperscript().run(),
+      icon: IconSuperscript,
     },
     {
       name: "Code",

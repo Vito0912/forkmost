@@ -305,6 +305,8 @@
   "Italic": "기울임",
   "Underline": "밑줄",
   "Strike": "취소선",
+  "Subscript": "아래 첨자",
+  "Superscript": "위 첨자",
   "Code": "코드",
   "Comment": "댓글",
   "Text": "텍스트",

@@ -305,6 +305,8 @@
   "Italic": "Corsivo",
   "Underline": "Sottolineato",
   "Strike": "Barrato",
+  "Subscript": "Indice",
+  "Superscript": "Esponente",
   "Code": "Codice",
   "Comment": "Commento",
   "Text": "Testo",

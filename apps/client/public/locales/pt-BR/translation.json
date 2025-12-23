@@ -305,6 +305,8 @@
   "Italic": "Itálico",
   "Underline": "Sublinhado",
   "Strike": "Tracejado",
+  "Subscript": "Subscrito",
+  "Superscript": "Sobrescrito",
   "Code": "Código",
   "Comment": "Comentário",
   "Text": "Texto",

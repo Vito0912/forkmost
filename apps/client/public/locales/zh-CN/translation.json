@@ -305,6 +305,8 @@
   "Italic": "斜体",
   "Underline": "下划线",
   "Strike": "删除线",
+  "Subscript": "下标",
+  "Superscript": "上标",
   "Code": "代码",
   "Comment": "评论",
   "Text": "文字",
