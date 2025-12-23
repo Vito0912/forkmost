@@ -305,6 +305,8 @@
   "Italic": "Schuingedrukt",
   "Underline": "Onderstrepen",
   "Strike": "Doorhalen",
+  "Subscript": "Subscript",
+  "Superscript": "Superscript",
   "Code": "Code",
   "Comment": "Reactie",
   "Text": "Tekst",

@@ -303,6 +303,8 @@
   "Italic": "Kursiv",
   "Underline": "Unterstreichen",
   "Strike": "Durchstreichen",
+  "Subscript": "Tiefgestellt",
+  "Superscript": "Hochgestellt",
   "Code": "Code",
   "Comment": "Kommentar",
   "Text": "Text",

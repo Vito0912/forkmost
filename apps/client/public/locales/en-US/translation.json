@@ -317,6 +317,8 @@
   "Italic": "Italic",
   "Underline": "Underline",
   "Strike": "Strike",
+  "Subscript": "Subscript",
+  "Superscript": "Superscript",
   "Code": "Code",
   "Comment": "Comment",
   "Text": "Text",
