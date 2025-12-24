@@ -14,6 +14,7 @@ import { SearchModule } from './search/search.module';
 import { SpaceModule } from './space/space.module';
 import { GroupModule } from './group/group.module';
 import { CaslModule } from './casl/casl.module';
+import { AiModule } from './ai/ai.module';
 import { DomainMiddleware } from '../common/middlewares/domain.middleware';
 import { ShareModule } from './share/share.module';
 
@@ -30,6 +31,7 @@ import { ShareModule } from './share/share.module';
     GroupModule,
     CaslModule,
     ShareModule,
+    AiModule,
   ],
 })
 export class CoreModule implements NestModule {
