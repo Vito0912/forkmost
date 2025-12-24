@@ -160,12 +160,16 @@ export function AiSearchToggle({ size, label, status }: AiSearchToggleProps) {
   const { t } = useTranslation();
   const [workspace, setWorkspace] = useAtom(workspaceAtom);
   const [checked, setChecked] = useState(workspace?.settings?.ai?.search);
+  const isDisabled = status?.embeddingsTable === false;
 
   const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isDisabled) {
+      return;
+    }
     const value = event.currentTarget.checked;
     setChecked(value);
     const updatedWorkspace = await updateWorkspace({
-      settings: { ...workspace.settings, ai: { search: value } },
+      aiSearch: value,
     });
     setWorkspace(updatedWorkspace);
     notifications.show({
@@ -179,8 +183,9 @@ export function AiSearchToggle({ size, label, status }: AiSearchToggleProps) {
         size={size}
         label={label}
         labelPosition="left"
-        defaultChecked={checked}
+        checked={!!checked}
         onChange={handleChange}
+        disabled={isDisabled}
         aria-label={t("Toggle AI search")}
       />
       <Text size="xs" c="dimmed" mt={4}>

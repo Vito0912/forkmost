@@ -26,6 +26,7 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
     contentType: "page",
   });
   const [isAiMode, setIsAiMode] = useState(false);
+  const [submittedQuery, setSubmittedQuery] = useState("");
 
   // Build unified search params
   const searchParams = useMemo(() => {
@@ -77,17 +78,22 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
   };
 
   const handleAskClick = () => {
-    setIsAiMode(!isAiMode);
-    if (!isAiMode) {
+    const nextIsAiMode = !isAiMode;
+    setIsAiMode(nextIsAiMode);
+    if (nextIsAiMode) {
       clearStreaming();
+      const trimmed = query.trim();
+      if (trimmed && trimmed !== submittedQuery) {
+        setSubmittedQuery(trimmed);
+      }
     }
   };
 
   useEffect(() => {
-    if (isAiMode && debouncedSearchQuery.length > 0) {
-      performAiSearch(searchParams);
+    if (isAiMode && submittedQuery.length > 0) {
+      performAiSearch({ ...searchParams, query: submittedQuery });
     }
-  }, [isAiMode, debouncedSearchQuery, searchParams.spaceId]);
+  }, [isAiMode, submittedQuery, searchParams.spaceId]);
 
   return (
     <>
@@ -106,6 +112,18 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
           <Spotlight.Search
             placeholder={t("Search...")}
             leftSection={<IconSearch size={20} stroke={1.5} />}
+            onKeyDown={(event) => {
+              if (!isAiMode) {
+                return;
+              }
+              if (event.key === "Enter") {
+                const trimmed = query.trim();
+                if (!trimmed || trimmed === submittedQuery) {
+                  return;
+                }
+                setSubmittedQuery(trimmed);
+              }
+            }}
           />
           {isAiMode && <div></div>}
         </Group>
@@ -127,7 +145,9 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
           {isAiMode ? (
             <>
               {query.length === 0 && (
-                <Spotlight.Empty>{t("Ask a question...")}</Spotlight.Empty>
+                <Spotlight.Empty>
+                  {t("Ask a question... Press Enter to run.")}
+                </Spotlight.Empty>
               )}
               {query.length > 0 && (
                 <AiSearchResult

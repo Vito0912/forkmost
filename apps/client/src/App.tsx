@@ -30,6 +30,7 @@ import SpaceGraph from "./pages/space/space-graph";
 import OidcSettingsPage from "@/pages/settings/oidc.tsx";
 import SpaceTrash from "@/pages/space/space-trash.tsx";
 import SpacesPage from "@/pages/spaces/spaces.tsx";
+import AiSettings from "@/features/ai/pages/ai-settings.tsx";
 
 export default function App() {
   const { t } = useTranslation();
@@ -94,6 +95,7 @@ export default function App() {
             <Route path={"groups/:groupId"} element={<GroupInfo />} />
             <Route path={"spaces"} element={<Spaces />} />
             <Route path={"sharing"} element={<Shares />} />
+            <Route path={"ai"} element={<AiSettings />} />
             <Route path={"oidc"} element={<OidcSettingsPage />} />
           </Route>
         </Route>
