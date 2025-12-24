@@ -30,7 +30,7 @@ import SpaceGraph from "./pages/space/space-graph";
 import OidcSettingsPage from "@/pages/settings/oidc.tsx";
 import SpaceTrash from "@/pages/space/space-trash.tsx";
 import SpacesPage from "@/pages/spaces/spaces.tsx";
-import AiSettings from "@/features/ai/pages/ai-settings.tsx";
+import AiSettings from "@/pages/settings/ai.tsx";
 
 export default function App() {
   const { t } = useTranslation();
