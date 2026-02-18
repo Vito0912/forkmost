@@ -9,6 +9,8 @@ import { searchSpotlightStore } from "../constants.ts";
 import { SearchSpotlightFilters } from "./search-spotlight-filters.tsx";
 import { useUnifiedSearch } from "../hooks/use-unified-search.ts";
 import { SearchResultItem } from "./search-result-item.tsx";
+import { useAiSearch } from "@/features/ai/hooks/use-ai-search.ts";
+import { AiSearchResult } from "@/features/ai/components/ai-search-result.tsx";
 
 interface SearchSpotlightProps {
   spaceId?: string;
@@ -24,6 +26,7 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
     contentType: "page",
   });
   const [isAiMode, setIsAiMode] = useState(false);
+  const [submittedQuery, setSubmittedQuery] = useState("");
 
   // Build unified search params
   const searchParams = useMemo(() => {
@@ -45,6 +48,19 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
     !isAiMode, // Disable regular search when in AI mode
   );
 
+  const {
+    data: aiSearchResult,
+    mutate: performAiSearch,
+    isPending: isAiLoading,
+    error: aiSearchError,
+    streamingAnswer,
+    streamingSources,
+    streamingMeta,
+    latestSources,
+    latestMeta,
+    clearStreaming,
+  } = useAiSearch();
+
   // Determine result type for rendering
   const isAttachmentSearch = filters.contentType === "attachment";
 
@@ -62,8 +78,22 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
   };
 
   const handleAskClick = () => {
-    setIsAiMode(!isAiMode);
+    const nextIsAiMode = !isAiMode;
+    setIsAiMode(nextIsAiMode);
+    if (nextIsAiMode) {
+      clearStreaming();
+      const trimmed = query.trim();
+      if (trimmed && trimmed !== submittedQuery) {
+        setSubmittedQuery(trimmed);
+      }
+    }
   };
+
+  useEffect(() => {
+    if (isAiMode && submittedQuery.length > 0) {
+      performAiSearch({ ...searchParams, query: submittedQuery });
+    }
+  }, [isAiMode, submittedQuery, searchParams.spaceId]);
 
   return (
     <>
@@ -82,6 +112,18 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
           <Spotlight.Search
             placeholder={t("Search...")}
             leftSection={<IconSearch size={20} stroke={1.5} />}
+            onKeyDown={(event) => {
+              if (!isAiMode) {
+                return;
+              }
+              if (event.key === "Enter") {
+                const trimmed = query.trim();
+                if (!trimmed || trimmed === submittedQuery) {
+                  return;
+                }
+                setSubmittedQuery(trimmed);
+              }
+            }}
           />
           {isAiMode && <div></div>}
         </Group>
@@ -103,9 +145,23 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
           {isAiMode ? (
             <>
               {query.length === 0 && (
-                <Spotlight.Empty>{t("Ask a question...")}</Spotlight.Empty>
+                <Spotlight.Empty>
+                  {t("Ask a question... Press Enter to run.")}
+                </Spotlight.Empty>
               )}
-              {/* Removed due to EE. Thank docmost maintainer for closing source the project for most parts now */}
+              {query.length > 0 && (
+                <AiSearchResult
+                  result={aiSearchResult}
+                  isLoading={isAiLoading}
+                  streamingAnswer={streamingAnswer}
+                  streamingSources={streamingSources}
+                  latestSources={latestSources}
+                  streamingMeta={latestMeta || streamingMeta}
+                />
+              )}
+              {query.length > 0 && !isAiLoading && !aiSearchResult && (
+                <Spotlight.Empty>{t("No AI results yet...")}</Spotlight.Empty>
+              )}
             </>
           ) : (
             <>

@@ -74,6 +74,12 @@ const groupedData: DataGroup[] = [
       { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
       { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
       {
+        label: "AI",
+        icon: IconSparkles,
+        path: "/settings/ai",
+        isAdmin: true,
+      },
+      {
         label: "OIDC/SSO",
         icon: IconShield,
         path: "/settings/oidc",
