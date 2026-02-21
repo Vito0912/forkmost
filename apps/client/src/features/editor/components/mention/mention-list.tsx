@@ -10,6 +10,7 @@ import React, {
 import { useSearchSuggestionsQuery } from "@/features/search/queries/search-query.ts";
 import {
   ActionIcon,
+  Divider,
   Group,
   Paper,
   ScrollArea,
@@ -54,6 +55,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
   const tree = useMemo(() => new SimpleTree<SpaceTreeNode>(data), [data]);
   const createPageMutation = useCreatePageMutation();
   const emit = useQueryEmit();
+  const isInCommentContext = props.isInCommentContext ?? false;
 
   const { data: suggestion, isLoading } = useSearchSuggestionsQuery({
     query: props.query,
@@ -61,6 +63,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     includePages: true,
     spaceId: space.id,
     limit: 10,
+    preload: true,
   });
 
   const createPageItem = (label: string) : MentionSuggestionItem => {
@@ -114,9 +117,13 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
           })),
         );
       }
-      items.push(createPageItem(props.query));
+      if (!isInCommentContext && props.query) {
+        items.push(createPageItem(props.query));
+      }
 
       setRenderItems(items);
+      // update editor storage
+      //@ts-ignore
       props.editor.storage.mentionItems = items;
     }
   }, [suggestion, isLoading]);
@@ -194,7 +201,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
 
   const enterHandler = () => {
     if (!renderItems.length) return;
-    if (renderItems[selectedIndex].entityType !== "header") {
+    if (renderItems[selectedIndex]?.entityType !== "header") {
       selectItem(selectedIndex);
     }
   };
@@ -274,35 +281,51 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     }
   }
 
-  // if no results and enter what to do?
-
   useEffect(() => {
     viewportRef.current
       ?.querySelector(`[data-item-index="${selectedIndex}"]`)
       ?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex]);
 
+  const popupWidth = isInCommentContext ? 280 : 320;
+
   if (renderItems.length === 0) {
     return (
-      <Paper shadow="md" p="xs" withBorder>
-        { t("No results") }
+      <Paper id="mention" shadow="md" py="xs" withBorder radius="md">
+        <Text c="dimmed" size="sm" px="sm">
+          { t("No results") }
+        </Text>
       </Paper>
     );
   }
 
+  const hasUsers = renderItems.some((item) => item.entityType === "user");
+  const hasPages = renderItems.some((item) => item.entityType === "page" && item.id !== null);
+  const createPageItemData = renderItems.find((item) => item.entityType === "page" && item.id === null);
+
   return (
-    <Paper id="mention" shadow="md" p="xs" withBorder className={classes.mentionPanel}>
+    <Paper id="mention" shadow="md" radius="md" py={6} withBorder className={classes.mentionPanel}>
       <ScrollArea.Autosize
         viewportRef={viewportRef}
         mah={350}
-        w={320}
-        scrollbarSize={8}
+        w={popupWidth}
+        scrollbarSize={6}
       >
         {renderItems?.map((item, index) => {
           if (item.entityType === "header") {
+            const isFirst = index === 0;
             return (
               <div key={`${item.label}-${index}`}>
-                <Text c="dimmed" mb={4} tt="uppercase">
+                {!isFirst && <Divider my={6} />}
+                <Text
+                  c="dimmed"
+                  size="xs"
+                  fw={500}
+                  px="sm"
+                  pt={isFirst ? 2 : 4}
+                  pb={4}
+                  tt="uppercase"
+                >
                   {item.label}
                 </Text>
               </div>
@@ -316,8 +339,9 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                 className={clsx(classes.menuBtn, {
                   [classes.selectedItem]: index === selectedIndex,
                 })}
+                px="sm"
               >
-                <Group>
+                <Group gap="sm">
                   <CustomAvatar
                     size={"sm"}
                     avatarUrl={item.avatarUrl}
@@ -335,7 +359,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                 </Group>
               </UnstyledButton>
             );
-          } else if (item.entityType === "page") {
+          } else if (item.entityType === "page" && item.id !== null) {
             return (
               <UnstyledButton
                 data-item-index={index}
@@ -344,12 +368,15 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                 className={clsx(classes.menuBtn, {
                   [classes.selectedItem]: index === selectedIndex,
                 })}
+                px="sm"
               >
-                <Group wrap="nowrap">
+                <Group gap="sm" wrap="nowrap">
                   <ActionIcon
-                    variant="default"
+                    variant="subtle"
                     component="div"
                     aria-label={item.label}
+                    color="gray"
+                    size="sm"
                   >
                     {item.icon || (
                       <ActionIcon
@@ -359,7 +386,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                         size={18}
                       >
                         {item.id ? (
-                          <IconFileDescription size={18} />
+                          <IconFileDescription size={18} stroke={1.5} />
                         ) : (
                           <IconPlus size={18} />
                         )}
@@ -403,6 +430,37 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             return null;
           }
         })}
+
+        {createPageItemData && !isInCommentContext && (
+          <>
+            {(hasUsers || hasPages) && <Divider my={6} />}
+            <UnstyledButton
+              data-item-index={renderItems.indexOf(createPageItemData)}
+              onClick={() => selectItem(renderItems.indexOf(createPageItemData))}
+              className={clsx(classes.menuBtn, {
+                [classes.selectedItem]: renderItems.indexOf(createPageItemData) === selectedIndex,
+              })}
+              px="sm"
+            >
+              <Group gap="sm" wrap="nowrap">
+                <ActionIcon
+                  variant="subtle"
+                  component="div"
+                  color="gray"
+                  size="sm"
+                >
+                  <IconPlus size={16} stroke={1.5} />
+                </ActionIcon>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Text size="sm" fw={500} truncate>
+                    {t("Create page")}: {createPageItemData.label}
+                  </Text>
+                </div>
+              </Group>
+            </UnstyledButton>
+          </>
+        )}
       </ScrollArea.Autosize>
     </Paper>
   );

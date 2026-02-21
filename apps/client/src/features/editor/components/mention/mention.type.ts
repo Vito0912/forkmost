@@ -8,6 +8,7 @@ export interface MentionListProps {
   range: Range;
   text: string;
   editor: Editor;
+  isInCommentContext?: boolean;
 }
 
 export type MentionSuggestionItem =

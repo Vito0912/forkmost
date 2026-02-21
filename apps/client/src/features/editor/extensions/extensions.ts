@@ -13,7 +13,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import SlashCommand from "@/features/editor/extensions/slash-command";
 import { Collaboration, isChangeOrigin } from "@tiptap/extension-collaboration";
-import { CollaborationCursor } from "@tiptap/extension-collaboration-cursor";
+import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import {
   Comment,
@@ -190,6 +190,9 @@ export const mainExtensions = [
     },
   }).extend({
     addNodeView() {
+      // Force the react node view to render immediately using flush sync (https://github.com/ueberdosis/tiptap/blob/b4db352f839e1d82f9add6ee7fb45561336286d8/packages/react/src/ReactRenderer.tsx#L183-L191)
+      this.editor.isInitialized = true;
+
       return ReactNodeViewRenderer(MentionView);
     },
   }),
@@ -240,6 +243,7 @@ export const mainExtensions = [
   }),
   CustomCodeBlock.configure({
     view: CodeBlockView,
+    //@ts-ignore
     lowlight,
     HTMLAttributes: {
       spellcheck: false,
@@ -297,7 +301,7 @@ export const mainExtensions = [
         Escape: () => {
           const event = new CustomEvent("closeFindDialogFromEditor", {});
           document.dispatchEvent(event);
-          return true;
+          return false;
         },
       };
     },
@@ -309,8 +313,9 @@ type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];
 export const collabExtensions: CollabExtensions = (provider, user) => [
   Collaboration.configure({
     document: provider.document,
+    provider,
   }),
-  CollaborationCursor.configure({
+  CollaborationCaret.configure({
     provider,
     user: {
       name: user.name,

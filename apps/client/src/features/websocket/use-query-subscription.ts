@@ -9,7 +9,7 @@ import {
   invalidateGraph,
   invalidateOnCreatePage,
   invalidateOnDeletePage,
-  invalidateOnMovePage,
+  updateCacheOnMovePage,
   invalidateOnUpdatePage,
 } from "../page/queries/page-query";
 import { RQ_KEY } from "../comment/queries/comment-query";
@@ -43,7 +43,13 @@ export const useQuerySubscription = () => {
           invalidateGraph();
           break;
         case "moveTreeNode":
-          invalidateOnMovePage();
+          updateCacheOnMovePage(
+            data.spaceId,
+            data.payload.id,
+            data.payload.oldParentId,
+            data.payload.parentId,
+            data.payload.pageData,
+          );
           invalidateGraph();
           break;
         case "deleteTreeNode":

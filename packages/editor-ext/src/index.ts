@@ -26,3 +26,6 @@ export * from "./lib/extra-ligatures";
 export * from "./lib/audio";
 export * from "./lib/typst";
 export * from "./lib/heading/heading";
+export * from "./lib/unique-id";
+export * from "./lib/shared-storage";
+export * from "./lib/recreate-transform";

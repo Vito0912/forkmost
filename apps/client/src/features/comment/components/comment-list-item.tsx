@@ -1,5 +1,5 @@
 import { Group, Text, Box, Badge } from "@mantine/core";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from "./comment.module.css";
 import { useAtom, useAtomValue } from "jotai";
 import { timeAgo } from "@/lib/time";
@@ -38,6 +38,7 @@ function CommentListItem({
   const [isLoading, setIsLoading] = useState(false);
   const editor = useAtomValue(pageEditorAtom);
   const [content, setContent] = useState<string>(comment.content);
+  const editContentRef = useRef<any>(null);
   const updateCommentMutation = useUpdateCommentMutation();
   const deleteCommentMutation = useDeleteCommentMutation(comment.pageId);
 //  const resolveCommentMutation = useResolveCommentMutation();
@@ -54,9 +55,13 @@ function CommentListItem({
       setIsLoading(true);
       const commentToUpdate = {
         commentId: comment.id,
-        content: JSON.stringify(content),
+        content: JSON.stringify(editContentRef.current ?? content),
       };
       await updateCommentMutation.mutateAsync(commentToUpdate);
+      if (editContentRef.current) {
+        setContent(editContentRef.current);
+        editContentRef.current = null;
+      }
       setIsEditing(false);
 
       emit({
@@ -126,6 +131,7 @@ function CommentListItem({
     setIsEditing(true);
   }
   function cancelEdit() {
+    editContentRef.current = null;
     setIsEditing(false);
   }
 
@@ -193,7 +199,7 @@ function CommentListItem({
             <CommentEditor
               defaultContent={content}
               editable={true}
-              onUpdate={(newContent: any) => setContent(newContent)}
+              onUpdate={(newContent: any) => { editContentRef.current = newContent; }}
               onSave={handleUpdateComment}
               autofocus={true}
             />

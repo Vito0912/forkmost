@@ -52,17 +52,17 @@ export default function CodeBlockView(props: NodeViewProps) {
       const selection = editor.state.selection;
       const nodePos = getPos();
       const nodeEnd = nodePos + node.nodeSize;
-      
+
       if (selection.from >= nodePos && selection.to <= nodeEnd) {
         event.preventDefault();
         event.stopPropagation();
-        
+
         const text = event.clipboardData?.getData("text/plain");
         if (text) {
           const { state, view } = editor;
           const { tr } = state;
           const { from, to } = state.selection;
-          
+
           tr.replaceWith(from, to, state.schema.text(text));
           view.dispatch(tr);
         }
@@ -70,7 +70,7 @@ export default function CodeBlockView(props: NodeViewProps) {
     };
 
     document.addEventListener("paste", handlePaste, true);
-    
+
     return () => {
       document.removeEventListener("paste", handlePaste, true);
     };
@@ -105,7 +105,7 @@ export default function CodeBlockView(props: NodeViewProps) {
   function downloadCode() {
     const content = node?.textContent || "";
     let filename = titleValue || "code";
-    
+
     const hasExtension = filename.includes('.') && filename.lastIndexOf('.') > filename.lastIndexOf('/');
     if (!hasExtension && languageValue) {
       filename += `.${languageValue}`;
@@ -113,7 +113,7 @@ export default function CodeBlockView(props: NodeViewProps) {
     if (!hasExtension && !languageValue) {
       filename += '.txt';
     }
-    
+
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -152,7 +152,7 @@ export default function CodeBlockView(props: NodeViewProps) {
               )
             )}
           </div>
-          
+
           <Group gap="xs" className={classes.actionsGroup}>
             <Tooltip label={hideHeader ? t("Show header") : t("Hide header")} withArrow position="top">
               <ActionIcon
@@ -246,6 +246,7 @@ export default function CodeBlockView(props: NodeViewProps) {
             </Tooltip>
           </div>
         )}
+        {/* @ts-ignore */}
         <NodeViewContent as="code" className={`language-${language}`} ref={codeRef} />
       </pre>
 

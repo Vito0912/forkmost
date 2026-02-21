@@ -30,11 +30,11 @@ export class SearchService {
       userId?: string;
       workspaceId: string;
     },
-  ): Promise<SearchResponseDto[]> {
+  ): Promise<{ items: SearchResponseDto[] }> {
     const { query } = searchParams;
 
     if (query.length < 1) {
-      return;
+      return { items: [] };
     }
     const searchQuery = tsquery(query.trim() + '*');
 
@@ -66,7 +66,7 @@ export class SearchService {
       )
       .where('deletedAt', 'is', null)
       .orderBy('rank', 'desc')
-      .limit(searchParams.limit | 25)
+      .limit(searchParams.limit || 25)
       .offset(searchParams.offset || 0);
 
     if (!searchParams.shareId) {
@@ -78,22 +78,19 @@ export class SearchService {
       queryResults = queryResults.where('spaceId', '=', searchParams.spaceId);
     } else if (opts.userId && !searchParams.spaceId) {
       // only search spaces the user is a member of
-      const userSpaceIds = await this.spaceMemberRepo.getUserSpaceIds(
-        opts.userId,
-      );
-      if (userSpaceIds.length > 0) {
-        queryResults = queryResults
-          .where('spaceId', 'in', userSpaceIds)
-          .where('workspaceId', '=', opts.workspaceId);
-      } else {
-        return [];
-      }
+      queryResults = queryResults
+        .where(
+          'spaceId',
+          'in',
+          this.spaceMemberRepo.getUserSpaceIdsQuery(opts.userId),
+        )
+        .where('workspaceId', '=', opts.workspaceId);
     } else if (searchParams.shareId && !searchParams.spaceId && !opts.userId) {
       // search in shares
       const shareId = searchParams.shareId;
       const share = await this.shareRepo.findById(shareId);
       if (!share || share.workspaceId !== opts.workspaceId) {
-        return [];
+        return { items: [] };
       }
 
       const pageIdsToSearch = [];
@@ -115,10 +112,10 @@ export class SearchService {
           .where('id', 'in', pageIdsToSearch)
           .where('workspaceId', '=', opts.workspaceId);
       } else {
-        return [];
+        return { items: [] };
       }
     } else {
-      return [];
+      return { items: [] };
     }
 
     //@ts-ignore
@@ -134,7 +131,7 @@ export class SearchService {
       return result;
     });
 
-    return searchResults;
+    return { items: searchResults };
   }
 
   async searchSuggestions(

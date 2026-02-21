@@ -1,6 +1,7 @@
 import React, { Dispatch, FC, SetStateAction } from "react";
 import {
   IconBlockquote,
+  IconCaretRightFilled,
   IconCheck,
   IconCheckbox,
   IconChevronDown,
@@ -11,14 +12,16 @@ import {
   IconH4,
   IconH5,
   IconH6,
+  IconInfoCircle,
   IconList,
   IconListNumbers,
   IconTypography,
 } from "@tabler/icons-react";
-import { Popover, Button, ScrollArea } from "@mantine/core";
+import { Popover, Button, ScrollArea, Tooltip } from "@mantine/core";
 import type { Editor } from "@tiptap/react";
 import { useEditorState } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
+import classes from "./bubble-menu.module.css";
 
 interface NodeSelectorProps {
   editor: Editor | null;
@@ -57,6 +60,8 @@ export const NodeSelector: FC<NodeSelectorProps> = ({
         isTaskItem: ctx.editor.isActive("taskItem"),
         isBlockquote: ctx.editor.isActive("blockquote"),
         isCodeBlock: ctx.editor.isActive("codeBlock"),
+        isCallout: ctx.editor.isActive("callout"),
+        isDetails: ctx.editor.isActive("details"),
       };
     },
   });
@@ -144,6 +149,18 @@ export const NodeSelector: FC<NodeSelectorProps> = ({
       command: () => editor.chain().focus().toggleCodeBlock().run(),
       isActive: () => editorState?.isCodeBlock,
     },
+    {
+      name: "Callout",
+      icon: IconInfoCircle,
+      command: () => editor.chain().focus().toggleCallout().run(),
+      isActive: () => editorState?.isCallout,
+    },
+    {
+      name: "Toggle block",
+      icon: IconCaretRightFilled,
+      command: () => editor.chain().focus().setDetails().run(),
+      isActive: () => editorState?.isDetails,
+    },
   ];
 
   const activeItem = items.filter((item) => item.isActive()).pop() ?? {
@@ -153,15 +170,18 @@ export const NodeSelector: FC<NodeSelectorProps> = ({
   return (
     <Popover opened={isOpen} withArrow>
       <Popover.Target>
-        <Button
-          variant="default"
-          style={{ border: "none", height: "34px" }}
-          radius="0"
-          rightSection={<IconChevronDown size={16} />}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {t(activeItem?.name)}
-        </Button>
+        <Tooltip label={t("Turn into")} withArrow withinPortal={false} disabled={isOpen}>
+          <Button
+            className={classes.buttonRoot}
+            variant="default"
+            style={{ border: "none", height: "34px" }}
+            radius="0"
+            rightSection={<IconChevronDown size={16} />}
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {t(activeItem?.name)}
+          </Button>
+        </Tooltip>
       </Popover.Target>
 
       <Popover.Dropdown>

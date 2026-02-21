@@ -6,7 +6,7 @@ import { getWorkspaceMembers } from "@/features/workspace/services/workspace-ser
 import { getShares } from "@/features/share/services/share-service.ts";
 
 export const prefetchWorkspaceMembers = () => {
-  const params = { limit: 100, page: 1, query: "" } as QueryParams;
+  const params: QueryParams = { limit: 100, query: "" };
   queryClient.prefetchQuery({
     queryKey: ["workspaceMembers", params],
     queryFn: () => getWorkspaceMembers(params),
@@ -15,21 +15,21 @@ export const prefetchWorkspaceMembers = () => {
 
 export const prefetchSpaces = () => {
   queryClient.prefetchQuery({
-    queryKey: ["spaces", { page: 1 }],
-    queryFn: () => getSpaces({ page: 1 }),
+    queryKey: ["spaces", {}],
+    queryFn: () => getSpaces({}),
   });
 };
 
 export const prefetchGroups = () => {
   queryClient.prefetchQuery({
-    queryKey: ["groups", { page: 1 }],
-    queryFn: () => getGroups({ page: 1 }),
+    queryKey: ["groups", {}],
+    queryFn: () => getGroups({}),
   });
 };
 
 export const prefetchShares = () => {
   queryClient.prefetchQuery({
-    queryKey: ["share-list", { page: 1 }],
-    queryFn: () => getShares({ page: 1, limit: 100 }),
+    queryKey: ["share-list", {}],
+    queryFn: () => getShares({}),
   });
 };
