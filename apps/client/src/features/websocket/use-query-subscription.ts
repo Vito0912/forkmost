@@ -6,6 +6,7 @@ import { WebSocketEvent } from "@/features/websocket/types";
 import { IPage } from "../page/types/page.types";
 import { IPagination } from "@/lib/types";
 import {
+  invalidateGraph,
   invalidateOnCreatePage,
   invalidateOnDeletePage,
   updateCacheOnMovePage,
@@ -39,6 +40,7 @@ export const useQuerySubscription = () => {
           break;
         case "addTreeNode":
           invalidateOnCreatePage(data.payload.data);
+          invalidateGraph();
           break;
         case "moveTreeNode":
           updateCacheOnMovePage(
@@ -48,9 +50,13 @@ export const useQuerySubscription = () => {
             data.payload.parentId,
             data.payload.pageData,
           );
+          invalidateGraph();
           break;
         case "deleteTreeNode":
-          invalidateOnDeletePage(data.payload.node.id);
+          const pageId = data.payload.node.id;
+          invalidateOnDeletePage(pageId);
+          invalidateGraph();
+          invalidateOnDeletePage(pageId);
           break;
         case "updateOne":
           entity = data.entity[0];

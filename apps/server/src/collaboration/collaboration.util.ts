@@ -2,13 +2,14 @@ import { StarterKit } from '@tiptap/starter-kit';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Superscript } from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
+import { Underline } from '@tiptap/extension-underline';
+import { Highlight } from '@tiptap/extension-highlight';
 import { Typography } from '@tiptap/extension-typography';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Youtube } from '@tiptap/extension-youtube';
 import { TaskList, TaskItem } from '@tiptap/extension-list';
 import {
-  Heading,
   Callout,
   Comment,
   CustomCodeBlock,
@@ -24,6 +25,8 @@ import {
   CustomTable,
   TiptapImage,
   TiptapVideo,
+  TiptapPdf,
+  Audio,
   TrailingNode,
   Attachment,
   Drawio,
@@ -35,14 +38,18 @@ import {
   UniqueID,
   addUniqueIdsToDoc,
   htmlToMarkdown,
+  TypstBlock,
+  ColumnContainer,
+  Column,
 } from '@docmost/editor-ext';
 import { generateText, getSchema, JSONContent } from '@tiptap/core';
 import { generateHTML, generateJSON } from '../common/helpers/prosemirror/html';
 // @tiptap/html library works best for generating prosemirror json state but not HTML
 // see: https://github.com/ueberdosis/tiptap/issues/5352
 // see:https://github.com/ueberdosis/tiptap/issues/4089
-//import { generateJSON } from '@tiptap/html';
 import { Node, Schema } from '@tiptap/pm/model';
+import Heading, { Level } from '@tiptap/extension-heading';
+//import { generateJSON } from '@tiptap/html';
 import * as Y from 'yjs';
 import { Logger } from '@nestjs/common';
 
@@ -53,9 +60,15 @@ export const tiptapExtensions = [
     trailingNode: false,
     heading: false,
   }),
-  Heading,
-  UniqueID.configure({
-    types: ['heading', 'paragraph'],
+  Heading.extend({
+    addOptions() {
+      return {
+        ...this.parent?.(),
+        levels: [1, 2, 3, 4, 5, 6] as Level[],
+      };
+    },
+  }).configure({
+    levels: [1, 2, 3, 4, 5, 6],
   }),
   Comment,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -63,6 +76,7 @@ export const tiptapExtensions = [
   TaskItem.configure({
     nested: true,
   }),
+  Underline,
   LinkExtension,
   Superscript,
   SubScript,
@@ -83,6 +97,8 @@ export const tiptapExtensions = [
   Youtube,
   TiptapImage,
   TiptapVideo,
+  TiptapPdf,
+  Audio,
   Callout,
   Attachment,
   CustomCodeBlock,
@@ -90,23 +106,17 @@ export const tiptapExtensions = [
   Excalidraw,
   Embed,
   Mention,
+  ColumnContainer,
+  Column,
   Subpages,
+  TypstBlock,
 ] as any;
 
 export function jsonToHtml(tiptapJson: any) {
   return generateHTML(tiptapJson, tiptapExtensions);
 }
 
-export function htmlToJson(html: string) {
-  const pmJson = generateJSON(html, tiptapExtensions);
-
-  try {
-    return addUniqueIdsToDoc(pmJson, tiptapExtensions);
-  } catch (error) {
-    console.warn('failed to add unique ids to doc', error);
-    return pmJson;
-  }
-}
+export function htmlToJson(html: string) {}
 
 export function jsonToText(tiptapJson: JSONContent) {
   return generateText(tiptapJson, tiptapExtensions);

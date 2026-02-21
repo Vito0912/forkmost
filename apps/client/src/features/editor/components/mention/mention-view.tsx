@@ -10,9 +10,14 @@ import {
 import { extractPageSlugId } from "@/lib";
 import classes from "./mention.module.css";
 
+const truncateText = (text: string, maxLength: number = 30): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
 export default function MentionView(props: NodeViewProps) {
   const { node } = props;
-  const { label, entityType, entityId, slugId, anchorId } = node.attrs;
+  const { label, entityType, entityId, slugId, anchorSlug, anchorText, anchorId } = node.attrs;
   const { spaceSlug, pageSlug } = useParams();
   const { shareId } = useParams();
   const navigate = useNavigate();
@@ -25,26 +30,23 @@ export default function MentionView(props: NodeViewProps) {
   const location = useLocation();
   const isShareRoute = location.pathname.startsWith("/share");
 
-  const currentPageSlugId = extractPageSlugId(pageSlug);
-  const isSamePage = currentPageSlugId === slugId;
+    const currentPageSlugId = extractPageSlugId(pageSlug);
+    const isSamePage = currentPageSlugId === slugId;
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (isSamePage && anchorId) {
-      e.preventDefault();
-      const element = document.querySelector(`[id="${anchorId}"]`);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-        navigate(`#${anchorId}`, { replace: true });
-      }
-    }
-  };
+    const handleClick = (e: React.MouseEvent) => {
+        if (isSamePage && anchorId) {
+            e.preventDefault();
+            const element = document.querySelector(`[id="${anchorId}"]`);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+                navigate(`#${anchorId}`, { replace: true });
+            }
+        }
+    };
 
-  const shareSlugUrl = buildSharedPageUrl({
-    shareId,
-    pageSlugId: slugId,
-    pageTitle: label,
-    anchorId,
-  });
+  const shareSlugUrl = anchorSlug ? `${baseShareSlugUrl}#${anchorSlug}` : baseShareSlugUrl;
+  const pageUrl = buildPageUrl(spaceSlug, slugId, label);
+  const pageUrlWithAnchor = anchorSlug ? `${pageUrl}#${anchorSlug}` : pageUrl;
 
   return (
     <NodeViewWrapper style={{ display: "inline" }} data-drag-handle>
@@ -59,7 +61,7 @@ export default function MentionView(props: NodeViewProps) {
           component={Link}
           fw={500}
           to={
-            isShareRoute ? shareSlugUrl : buildPageUrl(spaceSlug, slugId, label, anchorId)
+            isShareRoute ? shareSlugUrl : pageUrlWithAnchor
           }
           onClick={handleClick}
           underline="never"
@@ -81,6 +83,11 @@ export default function MentionView(props: NodeViewProps) {
 
           <span className={classes.pageMentionText}>
             {page?.title || label}
+            {anchorText && (
+              <span className={classes.anchorText}>
+                {'#'}{truncateText(anchorText)}
+              </span>
+            )}
           </span>
         </Anchor>
       )}

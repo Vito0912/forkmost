@@ -12,6 +12,7 @@ import {
 import { PaginationOptions } from '../../pagination/pagination-options';
 import { executeWithCursorPagination } from '@docmost/db/pagination/cursor-pagination';
 import { ExpressionBuilder, sql } from 'kysely';
+import { MemberInfo } from '@docmost/db/repos/space/types';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
 @Injectable()
@@ -168,6 +169,75 @@ export class UserRepo {
       fields: [{ expression: 'id', direction: 'asc' }],
       parseCursor: (cursor) => ({ id: cursor.id }),
     });
+  }
+
+  async getUsersInSpacesOfUser(
+    workspaceId: string,
+    userId: string,
+    pagination: PaginationOptions
+  ) {
+    const accessibleSpaceIds = this.db
+      .selectFrom(() => {
+        const direct = this.db
+          .selectFrom('spaceMembers')
+          .select('spaceMembers.spaceId')
+          .where('spaceMembers.role', '!=', 'reader')
+          .where('spaceMembers.userId', '=', userId);
+
+        const viaGroup = this.db
+          .selectFrom('spaceMembers')
+          .innerJoin('groupUsers', 'groupUsers.groupId', 'spaceMembers.groupId')
+          .select('spaceMembers.spaceId')
+          .where('spaceMembers.role', '!=', 'reader')
+          .where('groupUsers.userId', '=', userId);
+
+        return direct.union(viaGroup).as('my_spaces');
+      })
+      .innerJoin('spaces', 'spaces.id', 'my_spaces.spaceId')
+      .select('my_spaces.spaceId')
+      .where('spaces.workspaceId', '=', workspaceId)
+
+    const directPairs = this.db
+      .selectFrom('spaceMembers')
+      .select(['spaceMembers.userId as user_id', 'spaceMembers.spaceId'])
+      .where('spaceMembers.userId', 'is not', null);
+
+    const groupPairs = this.db
+      .selectFrom('spaceMembers')
+      .innerJoin('groupUsers', 'groupUsers.groupId', 'spaceMembers.groupId')
+      .select(['groupUsers.userId as user_id', 'spaceMembers.spaceId'])
+      .where('spaceMembers.groupId', 'is not', null);
+
+    const memberIds = this.db
+      .selectFrom(() => directPairs.union(groupPairs).as('mp'))
+      .where('spaceId', 'in', accessibleSpaceIds)
+      .select('user_id')
+      .distinct()
+      .as('uids');
+
+    let query = this.db
+      .selectFrom(memberIds)
+      .innerJoin('users', 'users.id', 'uids.user_id')
+      .selectAll('users')
+      .orderBy('users.id', 'asc');
+
+    if (pagination.query) {
+      query = query.where((eb) =>
+        eb('users.name', 'ilike', `%${pagination.query}%`).or(
+          'users.email',
+          'ilike',
+          `%${pagination.query}%`
+        )
+      );
+    }
+
+  return executeWithCursorPagination(query, {
+      perPage: pagination.limit,
+      cursor: pagination.cursor,
+      beforeCursor: pagination.beforeCursor,
+      fields: [{ expression: 'id', direction: 'asc' }],
+      parseCursor: (cursor) => ({ id: cursor.id }),
+  });
   }
 
   async updatePreference(

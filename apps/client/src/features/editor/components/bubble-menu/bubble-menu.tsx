@@ -9,6 +9,8 @@ import {
   IconStrikethrough,
   IconUnderline,
   IconMessage,
+  IconSubscript,
+  IconSuperscript,
   IconSparkles,
 } from "@tabler/icons-react";
 import clsx from "clsx";
@@ -26,6 +28,7 @@ import { v7 as uuid7 } from "uuid";
 import { isCellSelection, isTextSelected } from "@docmost/editor-ext";
 import { LinkSelector } from "@/features/editor/components/bubble-menu/link-selector.tsx";
 import { useTranslation } from "react-i18next";
+import { HighlightColorSelector } from "./highlight-color-selector";
 import { showAiMenuAtom } from "@/features/editor/atoms/editor-atoms";
 import { workspaceAtom } from "@/features/user/atoms/current-user-atom";
 
@@ -70,6 +73,8 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
         isItalic: ctx.editor.isActive("italic"),
         isUnderline: ctx.editor.isActive("underline"),
         isStrike: ctx.editor.isActive("strike"),
+        isSubscript: ctx.editor.isActive("subscript"),
+        isSuperscript: ctx.editor.isActive("superscript"),
         isCode: ctx.editor.isActive("code"),
         isComment: ctx.editor.isActive("comment"),
       };
@@ -100,6 +105,18 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
       isActive: () => editorState?.isStrike,
       command: () => props.editor.chain().focus().toggleStrike().run(),
       icon: IconStrikethrough,
+    },
+    {
+      name: "Subscript",
+      isActive: () => editorState?.isSubscript,
+      command: () => props.editor.chain().focus().toggleSubscript().run(),
+      icon: IconSubscript,
+    },
+    {
+      name: "Superscript",
+      isActive: () => editorState?.isSuperscript,
+      command: () => props.editor.chain().focus().toggleSuperscript().run(),
+      icon: IconSuperscript,
     },
     {
       name: "Code",
@@ -146,6 +163,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
       offset: 8,
       onHide: () => {
         setIsNodeSelectorOpen(false);
+        setIsHighlightColorSelectorOpen(false);
         setIsTextAlignmentOpen(false);
         setIsLinkSelectorOpen(false);
         setIsColorSelectorOpen(false);
@@ -155,6 +173,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
 
   const [isNodeSelectorOpen, setIsNodeSelectorOpen] = useState(false);
   const [isTextAlignmentSelectorOpen, setIsTextAlignmentOpen] = useState(false);
+  const [isHighlightColorSelectorOpen, setIsHighlightColorSelectorOpen] = useState(false);
   const [isLinkSelectorOpen, setIsLinkSelectorOpen] = useState(false);
   const [isColorSelectorOpen, setIsColorSelectorOpen] = useState(false);
 
@@ -191,6 +210,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsTextAlignmentOpen(false);
             setIsLinkSelectorOpen(false);
             setIsColorSelectorOpen(false);
+            setIsHighlightColorSelectorOpen(false);
           }}
         />
 
@@ -202,6 +222,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsNodeSelectorOpen(false);
             setIsLinkSelectorOpen(false);
             setIsColorSelectorOpen(false);
+            setIsHighlightColorSelectorOpen(false);
           }}
         />
 
@@ -232,6 +253,19 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsNodeSelectorOpen(false);
             setIsTextAlignmentOpen(false);
             setIsColorSelectorOpen(false);
+            setIsHighlightColorSelectorOpen(false);
+          }}
+        />
+
+        <HighlightColorSelector
+          editor={props.editor}
+          isOpen={isHighlightColorSelectorOpen}
+          setIsOpen={() => {
+            setIsHighlightColorSelectorOpen(!isHighlightColorSelectorOpen);
+            setIsLinkSelectorOpen(false);
+            setIsNodeSelectorOpen(false);
+            setIsTextAlignmentOpen(false);
+            setIsColorSelectorOpen(false);
           }}
         />
 
@@ -243,6 +277,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsNodeSelectorOpen(false);
             setIsTextAlignmentOpen(false);
             setIsLinkSelectorOpen(false);
+            setIsHighlightColorSelectorOpen(false);
           }}
         />
 

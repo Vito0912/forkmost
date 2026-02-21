@@ -1,5 +1,5 @@
-import { Text, SimpleGrid, Card, rem, Group, Button } from "@mantine/core";
-import React from "react";
+import { Text, SimpleGrid, Card, rem, Button, Group } from "@mantine/core";
+import React, { useEffect, useState } from 'react';
 import {
   prefetchSpace,
   useGetSpacesQuery,
@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import classes from "./space-grid.module.css";
 import { formatMemberCount } from "@/lib";
 import { useTranslation } from "react-i18next";
+import Paginate from "@/components/common/paginate";
 import { IconArrowRight } from "@tabler/icons-react";
 import { CustomAvatar } from "@/components/ui/custom-avatar.tsx";
 import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
@@ -17,7 +18,7 @@ export default function SpaceGrid() {
   const { t } = useTranslation();
   const { data, isLoading } = useGetSpacesQuery({ limit: 10 });
 
-  const cards = data?.items.slice(0, 9).map((space, index) => (
+  const cards = data?.items.map((space, index) => (
     <Card
       key={space.id}
       p="xs"
@@ -49,29 +50,29 @@ export default function SpaceGrid() {
     </Card>
   ));
 
-  return (
-    <>
-      <Group justify="space-between" align="center" mb="md">
-        <Text fz="sm" fw={500}>
-          {t("Spaces you belong to")}
-        </Text>
-      </Group>
+    return (
+        <>
+            <Group justify="space-between" align="center" mb="md">
+                <Text fz="sm" fw={500}>
+                    {t("Spaces you belong to")}
+                </Text>
+            </Group>
 
-      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }}>{cards}</SimpleGrid>
+            <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }}>{cards}</SimpleGrid>
 
-      {data?.items && data.items.length > 9 && (
-        <Group justify="flex-end" mt="lg">
-          <Button
-            component={Link}
-            to="/spaces"
-            variant="subtle"
-            rightSection={<IconArrowRight size={16} />}
-            size="sm"
-          >
-            {t("View all spaces")}
-          </Button>
-        </Group>
-      )}
-    </>
-  );
+            {data?.items && data.items.length > 9 && (
+                <Group justify="flex-end" mt="lg">
+                    <Button
+                        component={Link}
+                        to="/spaces"
+                        variant="subtle"
+                        rightSection={<IconArrowRight size={16} />}
+                        size="sm"
+                    >
+                        {t("View all spaces")}
+                    </Button>
+                </Group>
+            )}
+        </>
+    );
 }

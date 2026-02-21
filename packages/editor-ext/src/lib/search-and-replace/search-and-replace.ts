@@ -18,6 +18,8 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
+
+ Custom mod from: https://github.com/sereneinserenade/tiptap-search-and-replace
  ***/
 
 import { Extension, Range, type Dispatch } from "@tiptap/core";
@@ -197,7 +199,9 @@ const replace = (
     });
 
     const marks = Array.from(marksSet);
-    
+
+    // Delete the old text and insert new text with preserved marks
+
     // Delete the old text
     tr.delete(from, to);
 
@@ -205,7 +209,7 @@ const replace = (
     if (replaceTerm) {
       tr.insert(from, state.schema.text(replaceTerm, marks));
     }
-    
+
     dispatch(tr);
   }
 };
