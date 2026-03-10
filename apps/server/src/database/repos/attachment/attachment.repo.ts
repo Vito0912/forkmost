@@ -118,4 +118,25 @@ export class AttachmentRepo {
       .where('filePath', '=', filePath)
       .executeTakeFirst();
   }
+
+  async searchByFileName(
+    query: string,
+    workspaceId: string,
+    spaceIds: string[],
+    limit: number = 25,
+  ): Promise<any[]> {
+    if (spaceIds.length === 0) return [];
+
+    return this.db
+      .selectFrom('attachments')
+      .selectAll()
+      .where('workspaceId', '=', workspaceId)
+      .where('type', '=', 'file')
+      .where('deletedAt', 'is', null)
+      .where('spaceId', 'in', spaceIds)
+      .where('fileName', 'ilike', `%${query}%`)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .execute();
+  }
 }

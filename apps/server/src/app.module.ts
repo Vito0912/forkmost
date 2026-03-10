@@ -26,6 +26,7 @@ import KeyvRedis from '@keyv/redis';
 import { LoggerModule } from './common/logger/logger.module';
 import { ClsModule } from 'nestjs-cls';
 import { NoopAuditModule } from './integrations/audit/audit.module';
+import { McpModule } from './integrations/mcp/mcp.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { NoopAuditModule } from './integrations/audit/audit.module';
     EventEmitterModule.forRoot(),
     SecurityModule,
     TelemetryModule,
+    McpModule,
   ],
   controllers: [AppController],
   providers: [
