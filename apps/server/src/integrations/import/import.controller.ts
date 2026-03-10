@@ -160,10 +160,10 @@ export class ImportController {
     const spaceId = file.fields?.spaceId?.value;
     const source = file.fields?.source?.value;
 
-    const validZipSources = ['generic', 'notion', 'confluence'];
+    const validZipSources = ['generic', 'notion'];
     if (!validZipSources.includes(source)) {
       throw new BadRequestException(
-        'Invalid import source. Import source must either be generic, notion or confluence.',
+        'Invalid import source. Import source must either be generic or notion.',
       );
     }
 
