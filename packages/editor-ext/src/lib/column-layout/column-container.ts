@@ -73,7 +73,7 @@ export const ColumnContainer = Node.create<ColummnContainerOptions>({
       clGetColumnAttr:
         () =>
         ({ editor, state, commands, dispatch }) => {
-          const parent = findParentNodeByType(editor, "column");
+          const parent = findParentNodeByType(editor, "columnLayoutColumn");
           if (!parent) return false;
 
           const node = parent.node;
@@ -83,7 +83,7 @@ export const ColumnContainer = Node.create<ColummnContainerOptions>({
       clSetColumnAttr:
         (xsAttr, mdAttr, lgAttr) =>
         ({ editor, state, commands, dispatch }) => {
-          const parent = findParentNodeByType(editor, "column");
+          const parent = findParentNodeByType(editor, "columnLayoutColumn");
           if (!parent) return false;
 
           const position = parent.pos;
@@ -100,7 +100,7 @@ export const ColumnContainer = Node.create<ColummnContainerOptions>({
       clAddColumnBefore:
         () =>
         ({ editor, commands }) => {
-          const parent = findParentNodeByType(editor, "column");
+          const parent = findParentNodeByType(editor, "columnLayoutColumn");
           if (!parent) return false;
 
           const position = parent.pos;
@@ -110,7 +110,7 @@ export const ColumnContainer = Node.create<ColummnContainerOptions>({
       clAddColumnAfter:
         () =>
         ({ editor, commands }) => {
-          const parent = findParentNodeByType(editor, "column");
+          const parent = findParentNodeByType(editor, "columnLayoutColumn");
           if (!parent) return false;
 
           const position = parent.pos + parent.node.nodeSize;
@@ -130,7 +130,7 @@ export const ColumnContainer = Node.create<ColummnContainerOptions>({
       clDeleteColumn:
         () =>
         ({ editor, state, dispatch }) => {
-          const parentColumn = findParentNodeByType(editor, "column");
+          const parentColumn = findParentNodeByType(editor, "columnLayoutColumn");
           if (!parentColumn) return false;
           const parentColumnContainer = findParentNodeByType(
             editor,
