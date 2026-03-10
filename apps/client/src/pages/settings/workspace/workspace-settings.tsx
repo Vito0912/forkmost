@@ -4,7 +4,6 @@ import WorkspaceIcon from "@/features/workspace/components/settings/components/w
 import { useTranslation } from "react-i18next";
 import { getAppName, isCloud } from "@/lib/config.ts";
 import { Helmet } from "react-helmet-async";
-import { Divider } from "@mantine/core";
 
 export default function WorkspaceSettings() {
   const { t } = useTranslation();
