@@ -142,14 +142,12 @@ export class PersistenceExtension implements Extension {
 
         if (isDeepStrictEqual(tiptapJson, page.content)) {
           if (forceHistorySave) {
-            this.eventEmitter.emit('collab.page.updated', {
-              page: {
-                ...page,
-                content: tiptapJson,
-                lastUpdatedById: context.user.id,
-              },
-              forceHistorySave: forceHistorySave,
-            });
+            const contributorIds = [
+              ...editingUserIds,
+              context?.user?.id,
+            ].filter((id): id is string => Boolean(id));
+            await this.collabHistory.addContributors(pageId, contributorIds);
+            await this.enqueuePageHistory(page);
           }
           page = null;
           return;

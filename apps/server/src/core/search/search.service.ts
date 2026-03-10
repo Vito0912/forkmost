@@ -166,7 +166,6 @@ export class SearchService {
         await this.userRepo.getUsersInSpacesOfUser(workspaceId, userId, {
           query: query,
           limit: limit,
-          page: 1,
           adminView: false,
         })
       ).items;

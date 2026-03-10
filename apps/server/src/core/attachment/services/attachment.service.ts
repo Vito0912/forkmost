@@ -174,7 +174,7 @@ export class AttachmentService {
         const currentFile = await this.storageService.read(currentFilePath);
         const currentBuffer = Buffer.isBuffer(currentFile) ? currentFile : Buffer.from(currentFile);
 
-        const newHash = createHash('sha256').update(processedBuffer).digest('hex').substring(0, 16);
+        const newHash = createHash('sha256').update(preparedFile.buffer).digest('hex').substring(0, 16);
         const currentHash = createHash('sha256').update(currentBuffer).digest('hex').substring(0, 16);
 
         if (newHash === currentHash) {

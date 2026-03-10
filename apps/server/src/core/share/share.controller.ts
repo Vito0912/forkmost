@@ -41,6 +41,11 @@ import {
   AUDIT_SERVICE,
   IAuditService,
 } from '../../integrations/audit/audit.service';
+import SpaceAbilityFactory from '../casl/abilities/space-ability.factory';
+import {
+  SpaceCaslAction,
+  SpaceCaslSubject,
+} from '../casl/interfaces/space-ability.type';
 
 @UseGuards(JwtAuthGuard)
 @Controller('shares')
@@ -53,6 +58,7 @@ export class ShareController {
     private readonly pageAccessService: PageAccessService,
     private readonly environmentService: EnvironmentService,
     private readonly spaceMemberRepo: SpaceMemberRepo,
+    private readonly spaceAbility: SpaceAbilityFactory,
     @Inject(AUDIT_SERVICE) private readonly auditService: IAuditService,
   ) {}
 

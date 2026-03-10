@@ -10,7 +10,10 @@ import {
   User,
 } from '@docmost/db/types/entity.types';
 import { PaginationOptions } from '../../pagination/pagination-options';
-import { executeWithCursorPagination } from '@docmost/db/pagination/cursor-pagination';
+import {
+  CursorPaginationResult,
+  executeWithCursorPagination,
+} from '@docmost/db/pagination/cursor-pagination';
 import { ExpressionBuilder, sql } from 'kysely';
 import { MemberInfo } from '@docmost/db/repos/space/types';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
@@ -177,8 +180,8 @@ export class UserRepo {
   async getUsersInSpacesOfUser(
     workspaceId: string,
     userId: string,
-    pagination: PaginationOptions
-  ) {
+    pagination: PaginationOptions,
+  ): Promise<CursorPaginationResult<User>> {
     const accessibleSpaceIds = this.db
       .selectFrom(() => {
         const direct = this.db
@@ -215,13 +218,13 @@ export class UserRepo {
       .selectFrom(() => directPairs.union(groupPairs).as('mp'))
       .where('spaceId', 'in', accessibleSpaceIds)
       .select('user_id')
-      .distinct()
-      .as('uids');
+      .distinct();
 
     let query = this.db
-      .selectFrom(memberIds)
-      .innerJoin('users', 'users.id', 'uids.user_id')
-      .select(this.baseFields.map((f) => `users.${f}` as any))
+      .selectFrom('users')
+      .select(this.baseFields)
+      .where('users.id', 'in', memberIds.select('user_id'))
+      .where('users.workspaceId', '=', workspaceId)
       .where('users.deletedAt', 'is', null);
 
     if (pagination.query) {
@@ -242,7 +245,7 @@ export class UserRepo {
       perPage: pagination.limit,
       cursor: pagination.cursor,
       beforeCursor: pagination.beforeCursor,
-      fields: [{ expression: 'id', direction: 'asc' }],
+      fields: [{ expression: 'users.id', direction: 'asc', key: 'id' }],
       parseCursor: (cursor) => ({ id: cursor.id }),
     });
   }
