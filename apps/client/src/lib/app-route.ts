@@ -18,6 +18,7 @@ const APP_ROUTE = {
     ACCOUNT: {
       PROFILE: "/settings/account/profile",
       PREFERENCES: "/settings/account/preferences",
+      API_KEYS: "/settings/account/api-keys",
     },
     WORKSPACE: {
       GENERAL: "/settings/workspace",
