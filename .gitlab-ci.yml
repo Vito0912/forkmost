@@ -1,7 +1,5 @@
 stages:
   - build
-  - package
-  - deploy
 
 .build_arch:
   stage: build
@@ -45,7 +43,7 @@ build:arm64:
     - arm64
 
 build:manifest:
-  stage: package
+  stage: build
   image: docker:29.1.3-cli
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
