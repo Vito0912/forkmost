@@ -7,10 +7,10 @@ import CommentEditor from "@/features/comment/components/comment-editor";
 import { pageEditorAtom } from "@/features/editor/atoms/editor-atoms";
 import CommentActions from "@/features/comment/components/comment-actions";
 import CommentMenu from "@/features/comment/components/comment-menu";
-import { useIsCloudEE } from "@/hooks/use-is-cloud-ee";
 import { useHover } from "@mantine/hooks";
 import {
   useDeleteCommentMutation,
+  useResolveCommentMutation,
   useUpdateCommentMutation,
 } from "@/features/comment/queries/comment-query";
 import { IComment } from "@/features/comment/types/comment.types";
@@ -40,9 +40,8 @@ function CommentListItem({
   const editContentRef = useRef<any>(null);
   const updateCommentMutation = useUpdateCommentMutation();
   const deleteCommentMutation = useDeleteCommentMutation(comment.pageId);
-//  const resolveCommentMutation = useResolveCommentMutation();
+  const resolveCommentMutation = useResolveCommentMutation();
   const [currentUser] = useAtom(currentUserAtom);
-  const isCloudEE = useIsCloudEE();
   const createdAtAgo = useTimeAgo(comment.createdAt);
 
   useEffect(() => {
@@ -79,16 +78,14 @@ function CommentListItem({
   }
 
   async function handleResolveComment() {
-    if (!isCloudEE) return;
-    
     try {
       const isResolved = comment.resolvedAt != null;
-      
-      /* await resolveCommentMutation.mutateAsync({
+
+      await resolveCommentMutation.mutateAsync({
         commentId: comment.id,
         pageId: comment.pageId,
         resolved: !isResolved,
-      }); */
+      });
 
       if (editor) {
         editor.commands.setCommentResolved(comment.id, !isResolved);
