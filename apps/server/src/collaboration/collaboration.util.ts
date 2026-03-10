@@ -108,7 +108,9 @@ export function jsonToHtml(tiptapJson: any) {
   return generateHTML(tiptapJson, tiptapExtensions);
 }
 
-export function htmlToJson(html: string) {}
+export function htmlToJson(html: string) {
+  return generateJSON(html, tiptapExtensions);
+}
 
 export function jsonToText(tiptapJson: JSONContent) {
   return generateText(tiptapJson, tiptapExtensions);
