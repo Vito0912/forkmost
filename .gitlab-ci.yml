@@ -1,0 +1,71 @@
+stages:
+  - build
+  - package
+  - deploy
+
+.build_arch:
+  stage: build
+  image: docker:29.1.3-cli
+  services:
+    - name: docker:29.1.3-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  rules:
+    - if: $CI_COMMIT_BRANCH == "personal"
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker buildx create --name builder --use
+    - docker buildx inspect --bootstrap
+  script:
+    - |
+      docker buildx build \
+        -t $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-${ARCH} \
+        --platform linux/${ARCH} \
+        --output type=registry,oci-mediatypes=false \
+        --progress plain --provenance=false \
+        --push \
+        -f Dockerfile \
+        .
+  after_script:
+    - docker logout $CI_REGISTRY
+
+build:amd64:
+  extends: .build_arch
+  variables:
+    ARCH: amd64
+  tags:
+    - amd64
+
+build:arm64:
+  extends: .build_arch
+  variables:
+    ARCH: arm64
+  tags:
+    - arm64
+
+build:manifest:
+  stage: package
+  image: docker:29.1.3-cli
+  rules:
+    - if: $CI_COMMIT_BRANCH == "personal"
+  needs:
+    - build:amd64
+    - build:arm64
+  tags:
+    - amd64
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - |
+      docker manifest create $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA \
+        $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-amd64 \
+        $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-arm64
+    - docker manifest push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - |
+      docker manifest create $CI_REGISTRY_IMAGE:latest \
+        $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-amd64 \
+        $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-arm64
+    - docker manifest push $CI_REGISTRY_IMAGE:latest
+  after_script:
+    - docker logout $CI_REGISTRY
