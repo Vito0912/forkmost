@@ -11,9 +11,9 @@ import {
   Alert,
   PasswordInput,
 } from "@mantine/core";
-import { useForm, zodResolver } from "@mantine/form";
+import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import * as z from "zod";
+import * as z from "zod/v4";
 import {
   useOidcProviderQuery,
   useCreateOidcProviderMutation,
@@ -51,6 +51,8 @@ const updateSchema = z.object({
   oidcAvatarAttribute: z.string().optional(),
 });
 
+type OidcFormValues = ICreateOidcProvider & Record<string, unknown>;
+
 export function OidcProviderForm() {
   const { t } = useTranslation();
   const { data: provider, isLoading } = useOidcProviderQuery();
@@ -59,8 +61,25 @@ export function OidcProviderForm() {
   const updateMutation = useUpdateOidcProviderMutation();
   const deleteMutation = useDeleteOidcProviderMutation();
 
-  const form = useForm<ICreateOidcProvider>({
-    validate: zodResolver(provider ? updateSchema : createSchema),
+  const validateOidcForm = (values: OidcFormValues) => {
+    const schema = provider ? updateSchema : createSchema;
+    const parsed = schema.safeParse(values);
+
+    if (parsed.success) {
+      return {};
+    }
+
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    return Object.fromEntries(
+      Object.entries(fieldErrors).map(([field, errors]) => [
+        field,
+        errors?.[0] ?? null,
+      ]),
+    );
+  };
+
+  const form = useForm<OidcFormValues>({
+    validate: validateOidcForm,
     initialValues: {
       name: "",
       oidcIssuer: "",
@@ -93,7 +112,7 @@ export function OidcProviderForm() {
     }
   }, [provider, workspaceData?.enforceSso]);
 
-  const handleSubmit = async (values: ICreateOidcProvider) => {
+  const handleSubmit = async (values: OidcFormValues) => {
     try {
       if (provider) {
         await updateMutation.mutateAsync({ id: provider.id, data: values });
