@@ -218,8 +218,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload image
@@ -251,8 +250,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload video
@@ -284,7 +282,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload audio
@@ -295,7 +293,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           if (input.files?.length) {
             const file = input.files[0];
             const pos = editor.view.state.selection.from;
-            uploadAudioAction(file, editor.view, pos, pageId);
+            uploadAudioAction(file, editor, pos, pageId);
           }
         };
         input.click();
@@ -309,7 +307,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload pdf
@@ -334,8 +332,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload file

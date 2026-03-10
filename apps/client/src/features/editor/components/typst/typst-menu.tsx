@@ -1,11 +1,9 @@
 import {
-  BubbleMenu as BaseBubbleMenu,
-  posToDOMRect,
   useEditorState,
 } from "@tiptap/react";
+import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
 import { findParentNode } from "@tiptap/core";  
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { sticky } from "tippy.js";
 import { Node as PMNode } from "prosemirror-model";
 import { NodeSelection } from "@tiptap/pm/state";
 import { ActionIcon, NumberInput, TextInput, Tooltip } from "@mantine/core";
@@ -131,33 +129,6 @@ export function TypstMenu({ editor }: EditorMenuProps) {
 
   const isMenuActive = Boolean(editorState);
 
-  const getReferenceClientRect = useCallback(() => {
-    const { selection } = editor.state;
-
-    if (
-      selection instanceof NodeSelection &&
-      selection.node.type.name === "typstBlock"
-    ) {
-      const dom = editor.view.nodeDOM(selection.from) as HTMLElement | null;
-
-      if (dom) {
-        return dom.getBoundingClientRect();
-      }
-    }
-
-    const predicate = (node: PMNode) => node.type.name === "typstBlock";
-    const parent = findParentNode(predicate)(selection);
-
-    if (parent) {
-      const dom = editor.view.nodeDOM(parent.pos) as HTMLElement | null;
-      if (dom) {
-        return dom.getBoundingClientRect();
-      }
-    }
-
-    return posToDOMRect(editor.view, selection.from, selection.to);
-  }, [editor]);
-
   const setDisplayMode = useCallback(() => {
     editor.commands.updateAttributes("typstBlock", { editMode: "display" });
     editor.commands.focus();
@@ -264,15 +235,9 @@ export function TypstMenu({ editor }: EditorMenuProps) {
       editor={editor}
       pluginKey="typst-menu"
       updateDelay={0}
-      tippyOptions={{
-        getReferenceClientRect,
-        offset: [0, 4],
-        zIndex: 99,
-        popperOptions: {
-          modifiers: [{ name: "flip", enabled: false }],
-        },
-        plugins: [sticky],
-        sticky: "popper",
+      options={{
+        placement: "top",
+        offset: 4,
       }}
       shouldShow={shouldShow}
     >

@@ -44,7 +44,7 @@ import {
   TableDndExtension,
   ExtraLigatures,
   ColumnContainer,
-  Column,
+  ColumnLayoutColumn,
   Subpages,
   Heading,
   Highlight,
@@ -73,9 +73,6 @@ import {
   createResizeHandle,
   buildResizeClasses,
 } from "@/features/editor/components/common/node-resize-handles.ts";
-import MathInlineView from "@/features/editor/components/math/math-inline.tsx";
-import MathBlockView from "@/features/editor/components/math/math-block.tsx";
-import ImageView from "@/features/editor/components/image/image-view.tsx";
 import CalloutView from "@/features/editor/components/callout/callout-view.tsx";
 import StatusView from "@/features/editor/components/status/status-view.tsx";
 import VideoView from "@/features/editor/components/video/video-view.tsx";
@@ -172,6 +169,7 @@ export const mainExtensions = [
         const parentName = $pos.parent.type.name;
         if (
           parentName === "column" ||
+          parentName === "columnLayoutColumn" ||
           parentName === "tableCell" ||
           parentName === "tableHeader" ||
           parentName === "callout" ||
@@ -352,7 +350,7 @@ export const mainExtensions = [
   ColumnContainer.configure({
     view: ColumnContainerView,
   }),
-  Column.configure({
+  ColumnLayoutColumn.configure({
     view: ColumnView,
   }),
   SearchAndReplace.extend({

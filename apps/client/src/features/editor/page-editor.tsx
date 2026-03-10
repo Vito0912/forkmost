@@ -71,7 +71,6 @@ import { jwtDecode } from "jwt-decode";
 import { searchSpotlight } from '@/features/search/constants.ts';
 import { useAnchorScroll } from "./components/heading/use-anchor-scroll";
 import { useEditorScroll } from "./hooks/use-editor-scroll";
-import { EditorAiMenu } from "@/ee/ai/components/editor/ai-menu/ai-menu";
 import ColumnsMenu from "@/features/editor/components/columns/columns-menu.tsx";
 
 interface PageEditorProps {
@@ -227,7 +226,7 @@ export default function PageEditor({
 
   const debouncedSendSaveCommand = useDebouncedCallback(() => {
     const payload = 'forceSave';
-    remoteProvider.sendStateless(payload);
+    providersRef.current?.remote.sendStateless(payload);
   }, 300);
 
   const editor = useEditor(
@@ -423,7 +422,6 @@ export default function PageEditor({
 
         {editor && editorIsEditable && (
           <div>
-            <EditorAiMenu editor={editor} />
             <EditorBubbleMenu editor={editor} />
             <EmbedMenu editor={editor} />
             <TableMenu editor={editor} />

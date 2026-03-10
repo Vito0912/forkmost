@@ -111,21 +111,20 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
              entityId: page.id,
              slugId: page.slugId,
              icon: page.icon,
-             headings: (page.headings || []).map(heading => ({
-               ...heading,
-               slug: heading.slug || generateSlug(heading.text)
-             })),
-             spaceName: page.space?.name,
-             spaceSlug: page.space?.slug,
-           })),
-         );
-       }
+              headings: (page.headings || []).map(heading => ({
+                ...heading,
+                slug: heading.slug || generateSlug(heading.text)
+              })),
+            })),
+          );
+        }
       if (!isInCommentContext && props.query) {
         items.push(createPageItem(props.query));
       }
 
       setRenderItems(items);
-      props.editor.storage.mentionItems = items;
+      const storage = props.editor.storage as { mentionItems?: MentionSuggestionItem[] };
+      storage.mentionItems = items;
     }
   }, [suggestion, isLoading]);
 
@@ -360,15 +359,14 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                     name={item.label}
                   />
 
-<<<<<<< HEAD
-                   <Stack gap="0">
-                     <Text size="sm" fw={500}>
-                       {item.label}
-                     </Text>
-                     <Text size="xs" c="dimmed">
-                       {item.email}
-                     </Text>
-                   </Stack>
+                  <Stack gap="0">
+                    <Text size="sm" fw={500}>
+                      {item.label}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {item.email}
+                    </Text>
+                  </Stack>
                 </Group>
               </UnstyledButton>
             );
@@ -407,41 +405,40 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                     )}
                   </ActionIcon>
 
-<<<<<<< HEAD
-                   <Stack gap="0" style={{ flex: 1, minWidth: 0 }}>
-                     <Text size="sm" fw={500} truncate>
-                       {item.id
-                         ? item.label
-                         : t("Create page") + ": " + item.label}
-                     </Text>
-                     {item.breadcrumbs !== "" && (
-                       <Text size="xs" c="dimmed" lineClamp={1}>
-                         {item.breadcrumbs}
-                       </Text>
-                     )}
-                     {item.spaceName && (
-                       <Text size="xs" c="dimmed" truncate>
-                         {item.spaceName}
-                       </Text>
-                     )}
-                   </Stack>
+                  <Stack gap="0" style={{ flex: 1, minWidth: 0 }}>
+                    <Text size="sm" fw={500} truncate>
+                      {item.id
+                        ? item.label
+                        : t("Create page") + ": " + item.label}
+                    </Text>
+                    {item.breadcrumbs !== "" && (
+                      <Text size="xs" c="dimmed" lineClamp={1}>
+                        {item.breadcrumbs}
+                      </Text>
+                    )}
+                    {item.spaceName && (
+                      <Text size="xs" c="dimmed" truncate>
+                        {item.spaceName}
+                      </Text>
+                    )}
+                  </Stack>
 
-                   {item.id &&
-                     item.entityId &&
-                     item.entityType === "page" &&
-                     item.headings && (
-                       <div
-                         onClick={(e) => e.stopPropagation()}
-                         className={classes.anchorSelector}
-                       >
-                         <AnchorSelector
-                           headings={item.headings}
-                           onSelectAnchor={(anchorSlug, headingText) => {
-                             selectPageWithAnchor(item, anchorSlug, headingText);
-                           }}
-                         />
-                       </div>
-                     )}
+                  {item.id &&
+                    item.entityId &&
+                    item.entityType === "page" &&
+                    item.headings && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={classes.anchorSelector}
+                      >
+                        <AnchorSelector
+                          headings={item.headings}
+                          onSelectAnchor={(anchorSlug, headingText) => {
+                            selectPageWithAnchor(item, anchorSlug, headingText);
+                          }}
+                        />
+                      </div>
+                    )}
                 </Group>
               </UnstyledButton>
             );
