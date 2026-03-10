@@ -1,10 +1,9 @@
 import { Spotlight } from "@mantine/spotlight";
-import { IconSearch, IconSparkles } from "@tabler/icons-react";
-import { Group, Button } from "@mantine/core";
-import React, { useState, useMemo, useEffect } from "react";
+import { IconSearch } from "@tabler/icons-react";
+import { Group } from "@mantine/core";
+import React, { useState, useMemo } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
-import { notifications } from "@mantine/notifications";
 import { searchSpotlightStore } from "../constants.ts";
 import { SearchSpotlightFilters } from "./search-spotlight-filters.tsx";
 import { useUnifiedSearch } from "../hooks/use-unified-search.ts";
@@ -23,16 +22,13 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
   }>({
     contentType: "page",
   });
-  const [isAiMode, setIsAiMode] = useState(false);
-
   // Build unified search params
   const searchParams = useMemo(() => {
     const params: any = {
       query: debouncedSearchQuery,
-      contentType: filters.contentType || "page", // Only used for frontend routing
+      contentType: filters.contentType || "page",
     };
 
-    // Handle space filtering - only pass spaceId if a specific space is selected
     if (filters.spaceId) {
       params.spaceId = filters.spaceId;
     }
@@ -40,10 +36,7 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
     return params;
   }, [debouncedSearchQuery, filters]);
 
-  const { data: searchResults, isLoading } = useUnifiedSearch(
-    searchParams,
-    !isAiMode, // Disable regular search when in AI mode
-  );
+  const { data: searchResults, isLoading } = useUnifiedSearch(searchParams);
 
   // Determine result type for rendering
   const isAttachmentSearch = filters.contentType === "attachment";
@@ -59,10 +52,6 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
 
   const handleFiltersChange = (newFilters: any) => {
     setFilters(newFilters);
-  };
-
-  const handleAskClick = () => {
-    setIsAiMode(!isAiMode);
   };
 
   return (
@@ -83,7 +72,6 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
             placeholder={t("Search...")}
             leftSection={<IconSearch size={20} stroke={1.5} />}
           />
-          {isAiMode && <div></div>}
         </Group>
 
         <div
@@ -93,35 +81,22 @@ export function SearchSpotlight({ spaceId }: SearchSpotlightProps) {
         >
           <SearchSpotlightFilters
             onFiltersChange={handleFiltersChange}
-            onAskClick={handleAskClick}
             spaceId={spaceId}
-            isAiMode={isAiMode}
           />
         </div>
 
         <Spotlight.ActionsList>
-          {isAiMode ? (
-            <>
-              {query.length === 0 && (
-                <Spotlight.Empty>{t("Ask a question...")}</Spotlight.Empty>
-              )}
-              {/* Removed due to EE. Thank docmost maintainer for closing source the project for most parts now */}
-            </>
-          ) : (
-            <>
-              {query.length === 0 && resultItems.length === 0 && (
-                <Spotlight.Empty>
-                  {t("Start typing to search...")}
-                </Spotlight.Empty>
-              )}
-
-              {query.length > 0 && resultItems.length === 0 && (
-                <Spotlight.Empty>{t("No results found...")}</Spotlight.Empty>
-              )}
-
-              {resultItems.length > 0 && <>{resultItems}</>}
-            </>
+          {query.length === 0 && resultItems.length === 0 && (
+            <Spotlight.Empty>
+              {t("Start typing to search...")}
+            </Spotlight.Empty>
           )}
+
+          {query.length > 0 && resultItems.length === 0 && (
+            <Spotlight.Empty>{t("No results found...")}</Spotlight.Empty>
+          )}
+
+          {resultItems.length > 0 && <>{resultItems}</>}
         </Spotlight.ActionsList>
       </Spotlight.Root>
     </>
