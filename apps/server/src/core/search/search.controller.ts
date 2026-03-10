@@ -27,6 +27,8 @@ import { AuthUser } from '../../common/decorators/auth-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { ModuleRef } from '@nestjs/core';
+import { AttachmentRepo } from '@docmost/db/repos/attachment/attachment.repo';
+import { SpaceMemberService } from '../space/services/space-member.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('search')
@@ -38,6 +40,8 @@ export class SearchController {
     private readonly spaceAbility: SpaceAbilityFactory,
     private readonly environmentService: EnvironmentService,
     private moduleRef: ModuleRef,
+    private readonly attachmentRepo: AttachmentRepo,
+    private readonly spaceMemberService: SpaceMemberService,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -104,6 +108,45 @@ export class SearchController {
     return this.searchService.searchPage(searchDto, {
       workspaceId: workspace.id,
     });
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('attachments')
+  async searchAttachments(
+    @Body() searchDto: SearchDTO,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    if (searchDto.spaceId) {
+      const ability = await this.spaceAbility.createForUser(
+        user,
+        searchDto.spaceId,
+      );
+
+      if (ability.cannot(SpaceCaslAction.Read, SpaceCaslSubject.Page)) {
+        throw new ForbiddenException();
+      }
+    }
+
+    const spaces = await this.spaceMemberService.getUserSpaces(user.id, {
+      limit: 100,
+      query: undefined,
+      adminView: undefined,
+    });
+    let spaceIds = spaces.items.map((space) => space.id);
+
+    if (searchDto.spaceId) {
+      spaceIds = spaceIds.filter((id) => id === searchDto.spaceId);
+    }
+
+    const items = await this.attachmentRepo.searchByFileNameWithRelations(
+      searchDto.query,
+      workspace.id,
+      spaceIds,
+      searchDto.limit || 25,
+    );
+
+    return { items };
   }
 
   async searchTypesense(

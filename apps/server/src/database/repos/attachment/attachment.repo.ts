@@ -7,6 +7,7 @@ import {
   InsertableAttachment,
   UpdatableAttachment,
 } from '@docmost/db/types/entity.types';
+import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
 @Injectable()
 export class AttachmentRepo {
@@ -130,13 +131,71 @@ export class AttachmentRepo {
     return this.db
       .selectFrom('attachments')
       .selectAll()
-      .where('workspaceId', '=', workspaceId)
-      .where('type', '=', 'file')
-      .where('deletedAt', 'is', null)
-      .where('spaceId', 'in', spaceIds)
-      .where('fileName', 'ilike', `%${query}%`)
-      .orderBy('createdAt', 'desc')
+      .where('attachments.workspaceId', '=', workspaceId)
+      .where('attachments.type', '=', 'file')
+      .where('attachments.deletedAt', 'is', null)
+      .where('attachments.spaceId', 'in', spaceIds)
+      .where('attachments.fileName', 'ilike', `%${query}%`)
+      .orderBy('attachments.createdAt', 'desc')
       .limit(limit)
       .execute();
+  }
+
+  async searchByFileNameWithRelations(
+    query: string,
+    workspaceId: string,
+    spaceIds: string[],
+    limit: number = 25,
+  ): Promise<any[]> {
+    if (spaceIds.length === 0) return [];
+
+    const rows = await this.db
+      .selectFrom('attachments')
+      .select([
+        'attachments.id',
+        'attachments.fileName',
+        'attachments.pageId',
+        'attachments.creatorId',
+        'attachments.createdAt',
+        'attachments.updatedAt',
+      ])
+      .select((eb) => [
+        jsonObjectFrom(
+          eb
+            .selectFrom('spaces')
+            .select(['spaces.id', 'spaces.name', 'spaces.slug'])
+            .whereRef('spaces.id', '=', 'attachments.spaceId'),
+        ).as('space'),
+        jsonObjectFrom(
+          eb
+            .selectFrom('pages')
+            .select(['pages.id', 'pages.title', 'pages.slugId'])
+            .whereRef('pages.id', '=', 'attachments.pageId'),
+        ).as('page'),
+      ])
+      .where('attachments.workspaceId', '=', workspaceId)
+      .where('attachments.type', '=', 'file')
+      .where('attachments.deletedAt', 'is', null)
+      .where('attachments.spaceId', 'in', spaceIds)
+      .where('attachments.pageId', 'is not', null)
+      .where('attachments.fileName', 'ilike', `%${query}%`)
+      .orderBy('attachments.createdAt', 'desc')
+      .limit(limit)
+      .execute();
+
+    return rows.map((row: any) => ({
+      id: row.id,
+      fileName: row.fileName,
+      pageId: row.pageId,
+      creatorId: row.creatorId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      highlight: '',
+      rank: '',
+      space: row.space
+        ? { ...row.space, icon: null }
+        : { id: null, name: null, slug: null, icon: null },
+      page: row.page || { id: null, title: null, slugId: null },
+    }));
   }
 }

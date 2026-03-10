@@ -16,6 +16,8 @@ import {
 import { SearchController } from './search.controller';
 import { SearchDTO, SearchShareDTO, SearchSuggestionDTO } from './dto/search.dto';
 import { SearchService } from './search.service';
+import { AttachmentRepo } from '@docmost/db/repos/attachment/attachment.repo';
+import { SpaceMemberService } from '../space/services/space-member.service';
 
 jest.mock(
   'src/common/decorators/public.decorator',
@@ -41,6 +43,12 @@ describe('SearchController', () => {
   let moduleRef: {
     get: jest.Mock;
   };
+  let attachmentRepo: {
+    searchByFileNameWithRelations: jest.Mock;
+  };
+  let spaceMemberService: {
+    getUserSpaces: jest.Mock;
+  };
 
   const user = createMockUser({ id: 'user-search-1' });
   const workspace = createMockWorkspace({ id: 'workspace-search-1' });
@@ -63,6 +71,14 @@ describe('SearchController', () => {
       get: jest.fn(),
     };
 
+    attachmentRepo = {
+      searchByFileNameWithRelations: jest.fn().mockResolvedValue([]),
+    };
+
+    spaceMemberService = {
+      getUserSpaces: jest.fn().mockResolvedValue({ items: [{ id: 'space-1' }] }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SearchController],
       providers: [
@@ -70,6 +86,8 @@ describe('SearchController', () => {
         { provide: SpaceAbilityFactory, useValue: spaceAbilityFactory },
         { provide: EnvironmentService, useValue: environmentService },
         { provide: ModuleRef, useValue: moduleRef },
+        { provide: AttachmentRepo, useValue: attachmentRepo },
+        { provide: SpaceMemberService, useValue: spaceMemberService },
       ],
     }).compile();
 
@@ -408,6 +426,79 @@ describe('SearchController', () => {
       searchService.searchPage.mockResolvedValue({ items: [] });
 
       await controller.searchShare(dto, workspace);
+
+      expect(spaceAbilityFactory.createForUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /search/attachments (searchAttachments)', () => {
+    it('searches attachments scoped to user spaces', async () => {
+      const dto: SearchDTO = { query: 'report.pdf', spaceId: '' };
+      const items = [{ id: 'att-1', fileName: 'report.pdf' }];
+      attachmentRepo.searchByFileNameWithRelations.mockResolvedValue(items);
+
+      const result = await controller.searchAttachments(dto, user, workspace);
+
+      expect(result).toEqual({ items });
+      expect(spaceMemberService.getUserSpaces).toHaveBeenCalledWith(
+        user.id,
+        expect.anything(),
+      );
+      expect(attachmentRepo.searchByFileNameWithRelations).toHaveBeenCalledWith(
+        'report.pdf',
+        workspace.id,
+        ['space-1'],
+        25,
+      );
+    });
+
+    it('filters spaceIds when spaceId filter is provided', async () => {
+      spaceMemberService.getUserSpaces.mockResolvedValue({
+        items: [{ id: 'space-1' }, { id: 'space-2' }],
+      });
+      attachmentRepo.searchByFileNameWithRelations.mockResolvedValue([]);
+      const dto: SearchDTO = { query: 'doc', spaceId: 'space-2' };
+
+      await controller.searchAttachments(dto, user, workspace);
+
+      expect(attachmentRepo.searchByFileNameWithRelations).toHaveBeenCalledWith(
+        'doc',
+        workspace.id,
+        ['space-2'],
+        25,
+      );
+    });
+
+    it('checks space permission when spaceId is provided', async () => {
+      const ability = createMockAbility({ can: true });
+      spaceAbilityFactory.createForUser.mockResolvedValue(ability);
+      const dto: SearchDTO = { query: 'file', spaceId: 'space-restricted' };
+      attachmentRepo.searchByFileNameWithRelations.mockResolvedValue([]);
+
+      await controller.searchAttachments(dto, user, workspace);
+
+      expect(spaceAbilityFactory.createForUser).toHaveBeenCalledWith(
+        user,
+        'space-restricted',
+      );
+    });
+
+    it('throws ForbiddenException when space read is denied', async () => {
+      const deniedAbility = createMockAbility({ can: false });
+      spaceAbilityFactory.createForUser.mockResolvedValue(deniedAbility);
+      const dto: SearchDTO = { query: 'secret', spaceId: 'space-denied' };
+
+      await expect(
+        controller.searchAttachments(dto, user, workspace),
+      ).rejects.toThrow(ForbiddenException);
+      expect(attachmentRepo.searchByFileNameWithRelations).not.toHaveBeenCalled();
+    });
+
+    it('does not check space ability when spaceId is not provided', async () => {
+      const dto: SearchDTO = { query: 'global', spaceId: '' };
+      attachmentRepo.searchByFileNameWithRelations.mockResolvedValue([]);
+
+      await controller.searchAttachments(dto, user, workspace);
 
       expect(spaceAbilityFactory.createForUser).not.toHaveBeenCalled();
     });
