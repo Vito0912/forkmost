@@ -72,6 +72,7 @@ import { searchSpotlight } from '@/features/search/constants.ts';
 import { useAnchorScroll } from "./components/heading/use-anchor-scroll";
 import { useEditorScroll } from "./hooks/use-editor-scroll";
 import ColumnsMenu from "@/features/editor/components/columns/columns-menu.tsx";
+import DragContextMenu from "@/features/editor/components/drag-handle/drag-context-menu.tsx";
 
 interface PageEditorProps {
   pageId: string;
@@ -438,6 +439,7 @@ export default function PageEditor({
             <ColumnsMenu editor={editor} />
             <TypstMenu editor={editor} />
             <LinkMenu editor={editor} appendTo={menuContainerRef} />
+            <DragContextMenu editor={editor} />
           </div>
         )}
         {showCommentPopup && <CommentDialog editor={editor} pageId={pageId} />}
