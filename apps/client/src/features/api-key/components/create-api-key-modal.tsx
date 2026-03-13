@@ -14,7 +14,7 @@ import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { IconAlertTriangle, IconCheck, IconCopy } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCalendar, IconCheck, IconCopy } from "@tabler/icons-react";
 import { useCreateApiKeyMutation } from "@/features/api-key/queries/api-key-query";
 
 export default function CreateApiKeyModal() {
@@ -98,12 +98,14 @@ export default function CreateApiKeyModal() {
               <Select
                 label={t("Expiration")}
                 data={expirationOptions}
+                leftSection={<IconCalendar size={16} />}
                 {...form.getInputProps("expiration")}
               />
 
               {form.values.expiration === "custom" && (
                 <DateInput
                   label={t("Custom expiration date")}
+                  placeholder={t("Select expiration date")}
                   minDate={new Date()}
                   required
                   {...form.getInputProps("customDate")}

@@ -35,9 +35,9 @@ export default function AiMcpSettings() {
   return (
     <>
       <Helmet>
-        <title>{t("AI & MCP")} - {getAppName()}</title>
+        <title>{t("AI settings")} - {getAppName()}</title>
       </Helmet>
-      <SettingsTitle title={t("AI & MCP")} />
+      <SettingsTitle title={t("AI settings")} />
 
       <Text fw={500} mb={4}>
         {t("MCP Integration")}
