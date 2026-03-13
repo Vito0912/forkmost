@@ -6,6 +6,7 @@ import {
   Range,
   ResizableNodeView,
 } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import { normalizeFileUrl } from "../media-utils";
 import type { ResizableNodeViewDirection } from "@tiptap/core";
 
@@ -33,6 +34,8 @@ export interface ImageAttributes {
   src?: string;
   alt?: string;
   align?: string;
+  showCaption?: boolean;
+  caption?: string;
   attachmentId?: string;
   size?: number;
   width?: number | string;
@@ -54,6 +57,7 @@ declare module "@tiptap/core" {
       setImageAlign: (align: "left" | "center" | "right" | "floatLeft" | "floatRight") => ReturnType;
       setImageWidth: (width: number) => ReturnType;
       setImageSize: (width: number, height: number) => ReturnType;
+      toggleImageCaption: () => ReturnType;
     };
   }
 }
@@ -79,7 +83,7 @@ export const TiptapImage = Image.extend<ImageOptions>({
     return {
       src: {
         default: "",
-        parseHTML: (element) => element.getAttribute("src"),
+        parseHTML: (element) => getImageFromElement(element)?.getAttribute("src"),
         renderHTML: (attributes) => ({
           src: attributes.src,
         }),
@@ -87,7 +91,7 @@ export const TiptapImage = Image.extend<ImageOptions>({
       width: {
         default: null,
         parseHTML: (element) => {
-          const raw = element.getAttribute("width");
+          const raw = getImageFromElement(element)?.getAttribute("width");
           if (!raw) return null;
           if (raw.endsWith("%")) return raw;
           const num = parseFloat(raw);
@@ -100,7 +104,7 @@ export const TiptapImage = Image.extend<ImageOptions>({
       height: {
         default: null,
         parseHTML: (element) => {
-          const raw = element.getAttribute("height");
+          const raw = getImageFromElement(element)?.getAttribute("height");
           if (!raw) return null;
           const num = parseFloat(raw);
           return isNaN(num) ? null : num;
@@ -111,35 +115,62 @@ export const TiptapImage = Image.extend<ImageOptions>({
       },
       align: {
         default: "center",
-        parseHTML: (element) => element.getAttribute("data-align"),
+        parseHTML: (element) => {
+          if (element.tagName === "FIGURE") {
+            return element.getAttribute("data-align");
+          }
+          return getImageFromElement(element)?.getAttribute("data-align");
+        },
         renderHTML: (attributes: ImageAttributes) => ({
           "data-align": attributes.align,
         }),
       },
       alt: {
         default: undefined,
-        parseHTML: (element) => element.getAttribute("alt"),
+        parseHTML: (element) => getImageFromElement(element)?.getAttribute("alt"),
         renderHTML: (attributes: ImageAttributes) => ({
           alt: attributes.alt,
         }),
       },
+      showCaption: {
+        default: false,
+        parseHTML: (element) =>
+          element.tagName === "FIGURE" ||
+          element.getAttribute("data-show-caption") === "true",
+        renderHTML: (attributes: ImageAttributes) =>
+          attributes.showCaption ? { "data-show-caption": "true" } : {},
+      },
+      caption: {
+        default: "",
+        parseHTML: (element) => {
+          const fig = element.closest("figure");
+          const figcaption = fig?.querySelector("figcaption");
+          return figcaption?.textContent || "";
+        },
+        renderHTML: (attributes: ImageAttributes) => ({
+          "data-caption": attributes.caption || "",
+        }),
+      },
       attachmentId: {
         default: undefined,
-        parseHTML: (element) => element.getAttribute("data-attachment-id"),
+        parseHTML: (element) =>
+          getImageFromElement(element)?.getAttribute("data-attachment-id"),
         renderHTML: (attributes: ImageAttributes) => ({
           "data-attachment-id": attributes.attachmentId,
         }),
       },
       size: {
         default: null,
-        parseHTML: (element) => element.getAttribute("data-size"),
+        parseHTML: (element) =>
+          getImageFromElement(element)?.getAttribute("data-size"),
         renderHTML: (attributes: ImageAttributes) => ({
           "data-size": attributes.size,
         }),
       },
       aspectRatio: {
         default: null,
-        parseHTML: (element) => element.getAttribute("data-aspect-ratio"),
+        parseHTML: (element) =>
+          getImageFromElement(element)?.getAttribute("data-aspect-ratio"),
         renderHTML: (attributes: ImageAttributes) => ({
           "data-aspect-ratio": attributes.aspectRatio,
         }),
@@ -151,11 +182,73 @@ export const TiptapImage = Image.extend<ImageOptions>({
     };
   },
 
-  renderHTML({ HTMLAttributes }) {
+  parseHTML() {
     return [
-      "img",
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
+      {
+        tag: "figure",
+        getAttrs: (node) => {
+          if (!(node instanceof Element)) return false;
+
+          const img = node.querySelector("img");
+          if (!img) return false;
+
+          return {
+            src: img.getAttribute("src"),
+            alt: img.getAttribute("alt"),
+            width: img.getAttribute("width"),
+            height: img.getAttribute("height"),
+            align: node.getAttribute("data-align") || img.getAttribute("data-align"),
+            attachmentId: img.getAttribute("data-attachment-id"),
+            size: img.getAttribute("data-size"),
+            aspectRatio: img.getAttribute("data-aspect-ratio"),
+            showCaption: true,
+            caption: node.querySelector("figcaption")?.textContent || "",
+          };
+        },
+      },
+      {
+        tag: "img[src]",
+        getAttrs: (node) => {
+          if (!(node instanceof Element)) return false;
+          if (node.closest("figure")) return false;
+          return null;
+        },
+      },
     ];
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const mergedAttributes = mergeAttributes(
+      this.options.HTMLAttributes,
+      HTMLAttributes,
+    );
+
+    const showCaption = node.attrs.showCaption === true;
+    const caption = node.attrs.caption || "";
+    const align = node.attrs.align;
+
+    const imgAttrs = { ...mergedAttributes };
+    delete imgAttrs["data-show-caption"];
+    delete imgAttrs["data-caption"];
+    if (showCaption) {
+      delete imgAttrs["data-align"];
+    }
+
+    if (showCaption) {
+      const figureAttrs: Record<string, string> = { "data-show-caption": "true" };
+      if (align) {
+        figureAttrs["data-align"] = String(align);
+      }
+
+      return [
+        "figure",
+        figureAttrs,
+        ["img", imgAttrs],
+        ["figcaption", {}, caption],
+      ];
+    }
+
+    return ["img", imgAttrs];
   },
 
   addCommands() {
@@ -192,6 +285,23 @@ export const TiptapImage = Image.extend<ImageOptions>({
         (width, height) =>
         ({ commands }) =>
           commands.updateAttributes("image", { width, height }),
+
+      toggleImageCaption:
+        () =>
+        ({ state, commands }) => {
+          if (!(state.selection instanceof NodeSelection)) {
+            return false;
+          }
+
+          const { node } = state.selection;
+          if (node.type.name !== this.name) {
+            return false;
+          }
+
+          return commands.updateAttributes("image", {
+            showCaption: !node.attrs.showCaption,
+          });
+        },
     };
   },
 
@@ -215,6 +325,12 @@ export const TiptapImage = Image.extend<ImageOptions>({
 
     return (props) => {
       const { node, getPos, HTMLAttributes, editor } = props;
+
+      if (node.attrs.showCaption) {
+        editor.isInitialized = true;
+        const reactView = ReactNodeViewRenderer(this.options.view);
+        return reactView(props);
+      }
 
       // If no src yet (placeholder/uploading), use React view for loading UI
       if (!HTMLAttributes.src) {
@@ -291,6 +407,10 @@ export const TiptapImage = Image.extend<ImageOptions>({
         },
         onUpdate: (updatedNode, _decorations, _innerDecorations) => {
           if (updatedNode.type !== currentNode.type) {
+            return false;
+          }
+
+          if (updatedNode.attrs.showCaption !== currentNode.attrs.showCaption) {
             return false;
           }
 
@@ -383,4 +503,16 @@ function applyAlignment(container: HTMLElement, align: string) {
   } else {
     container.style.justifyContent = "center";
   }
+}
+
+function getImageFromElement(element: Element): Element | null {
+  if (element.tagName === "FIGURE") {
+    return element.querySelector("img");
+  }
+
+  if (element.tagName === "IMG") {
+    return element;
+  }
+
+  return element.querySelector("img");
 }

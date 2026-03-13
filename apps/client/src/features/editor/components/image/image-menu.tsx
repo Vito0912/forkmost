@@ -11,6 +11,7 @@ import clsx from "clsx";
 import {
   IconBoxAlignLeftFilled,
   IconBoxAlignRightFilled,
+  IconMessage2,
   IconLayoutAlignCenter,
   IconLayoutAlignLeft,
   IconLayoutAlignRight,
@@ -41,6 +42,7 @@ export function ImageMenu({ editor }: EditorMenuProps) {
         isAlignLeft: ctx.editor.isActive("image", { align: "left" }),
         isAlignCenter: ctx.editor.isActive("image", { align: "center" }),
         isAlignRight: ctx.editor.isActive("image", { align: "right" }),
+        showCaption: imageAttrs?.showCaption === true,
         src: imageAttrs?.src || null,
       };
     },
@@ -153,6 +155,14 @@ export function ImageMenu({ editor }: EditorMenuProps) {
     editor.commands.deleteSelection();
   }, [editor]);
 
+  const handleToggleCaption = useCallback(() => {
+    editor
+      .chain()
+      .focus(undefined, { scrollIntoView: false })
+      .toggleImageCaption()
+      .run();
+  }, [editor]);
+
   return (
     <BaseBubbleMenu
       editor={editor}
@@ -239,6 +249,18 @@ export function ImageMenu({ editor }: EditorMenuProps) {
             variant="subtle"
           >
             <IconDownload size={18} />
+          </ActionIcon>
+        </Tooltip>
+
+        <Tooltip position="top" label={t("Caption")} withinPortal={false}>
+          <ActionIcon
+            onClick={handleToggleCaption}
+            size="lg"
+            aria-label={t("Caption")}
+            variant="subtle"
+            className={clsx({ [classes.active]: editorState?.showCaption })}
+          >
+            <IconMessage2 size={18} />
           </ActionIcon>
         </Tooltip>
 

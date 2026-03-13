@@ -10,7 +10,7 @@ export default function ImageView(props: NodeViewProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const { editor, node, selected } = props;
-  const { src, width, align, title, aspectRatio, placeholder } = node.attrs;
+  const { src, width, align, title, aspectRatio, placeholder, showCaption, caption } = node.attrs;
 
   const alignClass = useMemo(() => {
     if (align === "left") return "alignLeft";
@@ -60,40 +60,55 @@ export default function ImageView(props: NodeViewProps) {
 
   return (
     <NodeViewWrapper data-drag-handle ref={ref}>
-      <div
-        className={clsx(
-          selected && "ProseMirror-selectednode",
-          classes.imageWrapper,
-          alignClass,
-        )}
-        style={{
-          aspectRatio: aspectRatio ? aspectRatio : src ? undefined : "16 / 9",
-          width: (align==="floatLeft" || align==="floatRight") ? "100%" : width,
-        }}
-      >
-        {src && (
-          <Image radius="md" fit="contain" src={getFileUrl(src)} alt={title} />
-        )}
-        {!src && previewSrc && (
-          <Group pos="relative" h="100%" w="100%">
-            <Image
-              radius="md"
-              fit="contain"
-              src={previewSrc}
-              alt={placeholder?.name}
+      <div className={classes.figureWrapper}>
+        <div
+          className={clsx(
+            selected && "ProseMirror-selectednode",
+            classes.imageWrapper,
+            alignClass,
+          )}
+          style={{
+            aspectRatio: aspectRatio ? aspectRatio : src ? undefined : "16 / 9",
+            width: (align==="floatLeft" || align==="floatRight") ? "100%" : width,
+          }}
+        >
+          {src && (
+            <Image radius="md" fit="contain" src={getFileUrl(src)} alt={title} />
+          )}
+          {!src && previewSrc && (
+            <Group pos="relative" h="100%" w="100%">
+              <Image
+                radius="md"
+                fit="contain"
+                src={previewSrc}
+                alt={placeholder?.name}
+              />
+              <Loader size={20} pos="absolute" bottom={6} right={6} />
+            </Group>
+          )}
+          {!src && !previewSrc && (
+            <Group justify="center" wrap="nowrap" gap="xs" maw="100%" px="md">
+              <Loader size={20} style={{ flexShrink: 0 }} />
+              <Text component="span" size="sm" truncate="end">
+                {placeholder?.name
+                  ? t("Uploading {{name}}", { name: placeholder.name })
+                  : t("Uploading file")}
+              </Text>
+            </Group>
+          )}
+        </div>
+        {showCaption && (
+          <div className={classes.captionContainer}>
+            <input
+              className={classes.captionInput}
+              type="text"
+              value={caption || ""}
+              placeholder="Add a caption..."
+              onChange={(event) => {
+                props.updateAttributes({ caption: event.currentTarget.value });
+              }}
             />
-            <Loader size={20} pos="absolute" bottom={6} right={6} />
-          </Group>
-        )}
-        {!src && !previewSrc && (
-          <Group justify="center" wrap="nowrap" gap="xs" maw="100%" px="md">
-            <Loader size={20} style={{ flexShrink: 0 }} />
-            <Text component="span" size="sm" truncate="end">
-              {placeholder?.name
-                ? t("Uploading {{name}}", { name: placeholder.name })
-                : t("Uploading file")}
-            </Text>
-          </Group>
+          </div>
         )}
       </div>
     </NodeViewWrapper>
