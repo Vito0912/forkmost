@@ -9,9 +9,9 @@ import {
   IconSpaces,
   IconBrush,
   IconWorld,
-  IconShield,
+  IconLock,
   IconKey,
-  IconRobot,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import classes from "./settings.module.css";
@@ -74,17 +74,23 @@ const groupedData: DataGroup[] = [
         icon: IconUsers,
         path: "/settings/members",
       },
-      { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
-      { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
-      { label: "AI & MCP", icon: IconRobot, path: "/settings/ai-mcp", isAdmin: true },
-      { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
       {
-        label: "OIDC/SSO",
-        icon: IconShield,
-        path: "/settings/oidc",
+        label: "Security & SSO",
+        icon: IconLock,
+        path: "/settings/security",
         isSelfhosted: true,
         isAdmin: true,
       },
+      { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
+      { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
+      { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
+      {
+        label: "API management",
+        icon: IconKey,
+        path: "/settings/api-keys",
+        isAdmin: true,
+      },
+      { label: "AI settings", icon: IconSparkles, path: "/settings/ai", isAdmin: true },
     ],
   },
 ];
