@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -70,15 +71,28 @@ export class ApiKeyService {
     return { ...apiKey, token };
   }
 
-  async getApiKeys(workspaceId: string, pagination: PaginationOptions) {
-    return this.apiKeyRepo.findByWorkspace(workspaceId, pagination);
+  async getApiKeys(
+    workspaceId: string,
+    pagination: PaginationOptions,
+    creatorId?: string,
+  ) {
+    return this.apiKeyRepo.findByWorkspace(workspaceId, pagination, creatorId);
   }
 
-  async updateApiKey(workspaceId: string, dto: UpdateApiKeyDto) {
+  async updateApiKey(
+    workspaceId: string,
+    userId: string,
+    canManageAll: boolean,
+    dto: UpdateApiKeyDto,
+  ) {
     const apiKey = await this.apiKeyRepo.findById(dto.apiKeyId);
 
     if (!apiKey || apiKey.workspaceId !== workspaceId) {
       throw new NotFoundException('API key not found');
+    }
+
+    if (!canManageAll && apiKey.creatorId !== userId) {
+      throw new ForbiddenException('Not allowed to manage this API key');
     }
 
     const updatedApiKey = await this.apiKeyRepo.update(
@@ -103,11 +117,20 @@ export class ApiKeyService {
     return updatedApiKey;
   }
 
-  async revokeApiKey(workspaceId: string, apiKeyId: string) {
+  async revokeApiKey(
+    workspaceId: string,
+    userId: string,
+    canManageAll: boolean,
+    apiKeyId: string,
+  ) {
     const apiKey = await this.apiKeyRepo.findById(apiKeyId);
 
     if (!apiKey || apiKey.workspaceId !== workspaceId) {
       throw new NotFoundException('API key not found');
+    }
+
+    if (!canManageAll && apiKey.creatorId !== userId) {
+      throw new ForbiddenException('Not allowed to manage this API key');
     }
 
     await this.apiKeyRepo.softDelete(apiKeyId);

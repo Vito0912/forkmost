@@ -336,8 +336,7 @@ export class WorkspaceService {
 
     if (
       typeof updateWorkspaceDto.disablePublicSharing !== 'undefined' ||
-      typeof updateWorkspaceDto.trashRetentionDays !== 'undefined' ||
-      typeof updateWorkspaceDto.restrictApiToAdmins !== 'undefined'
+      typeof updateWorkspaceDto.trashRetentionDays !== 'undefined'
     ) {
       const ws = await this.db
         .selectFrom('workspaces')

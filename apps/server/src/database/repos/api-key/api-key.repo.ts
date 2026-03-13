@@ -38,13 +38,21 @@ export class ApiKeyRepo {
       .executeTakeFirst();
   }
 
-  async findByWorkspace(workspaceId: string, pagination: PaginationOptions) {
-    const query = this.db
+  async findByWorkspace(
+    workspaceId: string,
+    pagination: PaginationOptions,
+    creatorId?: string,
+  ) {
+    let query = this.db
       .selectFrom('apiKeys')
       .select(this.baseFields)
       .select((eb) => this.withCreator(eb))
       .where('workspaceId', '=', workspaceId)
       .where('deletedAt', 'is', null);
+
+    if (creatorId) {
+      query = query.where('creatorId', '=', creatorId);
+    }
 
     return executeWithCursorPagination(query, {
       perPage: pagination.limit,

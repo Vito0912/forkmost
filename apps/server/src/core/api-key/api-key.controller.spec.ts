@@ -101,13 +101,17 @@ describe('ApiKeyController', () => {
       await expect(controller.getApiKeys(pagination, user, workspace)).resolves.toEqual(
         result,
       );
-      expect(apiKeyService.getApiKeys).toHaveBeenCalledWith(workspace.id, pagination);
+      expect(apiKeyService.getApiKeys).toHaveBeenCalledWith(
+        workspace.id,
+        pagination,
+        user.id,
+      );
     });
 
-    it('throws ForbiddenException when create permission is denied', () => {
+    it('throws ForbiddenException when admin listing permission is denied', () => {
       const user = createMockUser();
       const workspace = createMockWorkspace();
-      const pagination = { limit: 10, cursor: null, query: '', adminView: false };
+      const pagination = { limit: 10, cursor: null, query: '', adminView: true };
 
       workspaceAbilityFactory.createForUser.mockReturnValue(
         createMockAbility({ can: false }),
@@ -119,10 +123,10 @@ describe('ApiKeyController', () => {
       expect(apiKeyService.getApiKeys).not.toHaveBeenCalled();
     });
 
-    it('checks Create API permission with expected action and subject', async () => {
+    it('checks Manage API permission for admin listing', async () => {
       const user = createMockUser();
       const workspace = createMockWorkspace();
-      const pagination = { limit: 20, cursor: null, query: '', adminView: false };
+      const pagination = { limit: 20, cursor: null, query: '', adminView: true };
       const ability = createMockAbility();
 
       workspaceAbilityFactory.createForUser.mockReturnValue(ability);
@@ -131,7 +135,7 @@ describe('ApiKeyController', () => {
       await controller.getApiKeys(pagination, user, workspace);
 
       expect(ability.cannot).toHaveBeenCalledWith(
-        WorkspaceCaslAction.Create,
+        WorkspaceCaslAction.Manage,
         WorkspaceCaslSubject.API,
       );
     });
@@ -165,7 +169,11 @@ describe('ApiKeyController', () => {
       await expect(controller.getApiKeys(pagination, user, workspace)).resolves.toEqual(
         result,
       );
-      expect(apiKeyService.getApiKeys).toHaveBeenCalledWith(workspace.id, pagination);
+      expect(apiKeyService.getApiKeys).toHaveBeenCalledWith(
+        workspace.id,
+        pagination,
+        user.id,
+      );
     });
 
     it('creates ability using current user and workspace for listing', async () => {
@@ -178,6 +186,22 @@ describe('ApiKeyController', () => {
       await controller.getApiKeys(pagination, user, workspace);
 
       expect(workspaceAbilityFactory.createForUser).toHaveBeenCalledWith(user, workspace);
+    });
+
+    it('lists workspace keys without creator filter in admin view', async () => {
+      const user = createMockUser({ id: 'admin-user-id', role: 'admin' });
+      const workspace = createMockWorkspace();
+      const pagination = { limit: 10, cursor: null, query: '', adminView: true };
+
+      apiKeyService.getApiKeys.mockResolvedValue(createPaginationResult([]));
+
+      await controller.getApiKeys(pagination, user, workspace);
+
+      expect(apiKeyService.getApiKeys).toHaveBeenCalledWith(
+        workspace.id,
+        pagination,
+        undefined,
+      );
     });
   });
 
@@ -297,10 +321,15 @@ describe('ApiKeyController', () => {
       apiKeyService.updateApiKey.mockResolvedValue(result);
 
       await expect(controller.updateApiKey(dto, user, workspace)).resolves.toEqual(result);
-      expect(apiKeyService.updateApiKey).toHaveBeenCalledWith(workspace.id, dto);
+      expect(apiKeyService.updateApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        true,
+        dto,
+      );
     });
 
-    it('throws ForbiddenException when manage permission is denied', () => {
+    it('passes non-admin manage state through to the service', async () => {
       const user = createMockUser();
       const workspace = createMockWorkspace();
       const dto = {
@@ -311,14 +340,21 @@ describe('ApiKeyController', () => {
       workspaceAbilityFactory.createForUser.mockReturnValue(
         createMockAbility({ can: false }),
       );
-
-      expect(() => controller.updateApiKey(dto, user, workspace)).toThrow(
-        ForbiddenException,
+      apiKeyService.updateApiKey.mockResolvedValue(
+        createMockApiKey({ id: dto.apiKeyId, name: dto.name }),
       );
-      expect(apiKeyService.updateApiKey).not.toHaveBeenCalled();
+
+      await controller.updateApiKey(dto, user, workspace);
+
+      expect(apiKeyService.updateApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        false,
+        dto,
+      );
     });
 
-    it('checks Manage API permission before updating key', async () => {
+    it('checks Manage API ability via can() before updating key', async () => {
       const user = createMockUser();
       const workspace = createMockWorkspace();
       const dto = {
@@ -334,7 +370,7 @@ describe('ApiKeyController', () => {
 
       await controller.updateApiKey(dto, user, workspace);
 
-      expect(ability.cannot).toHaveBeenCalledWith(
+      expect(ability.can).toHaveBeenCalledWith(
         WorkspaceCaslAction.Manage,
         WorkspaceCaslSubject.API,
       );
@@ -353,7 +389,12 @@ describe('ApiKeyController', () => {
 
       await expect(controller.updateApiKey(dto, user, workspace)).resolves.toEqual(result);
       expect(apiKeyService.updateApiKey).toHaveBeenCalledTimes(1);
-      expect(apiKeyService.updateApiKey).toHaveBeenCalledWith(workspace.id, dto);
+      expect(apiKeyService.updateApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        true,
+        dto,
+      );
     });
 
     it('returns updated api key payload', async () => {
@@ -398,10 +439,15 @@ describe('ApiKeyController', () => {
       apiKeyService.revokeApiKey.mockResolvedValue(undefined);
 
       await expect(controller.revokeApiKey(dto, user, workspace)).resolves.toBeUndefined();
-      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(workspace.id, dto.apiKeyId);
+      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        true,
+        dto.apiKeyId,
+      );
     });
 
-    it('throws ForbiddenException when manage permission is denied', () => {
+    it('passes non-admin revoke state through to the service', async () => {
       const user = createMockUser();
       const workspace = createMockWorkspace();
       const dto = { apiKeyId: '89e07e04-225f-4f35-a90a-cef5d4ef11c7' };
@@ -409,14 +455,19 @@ describe('ApiKeyController', () => {
       workspaceAbilityFactory.createForUser.mockReturnValue(
         createMockAbility({ can: false }),
       );
+      apiKeyService.revokeApiKey.mockResolvedValue(undefined);
 
-      expect(() => controller.revokeApiKey(dto, user, workspace)).toThrow(
-        ForbiddenException,
+      await controller.revokeApiKey(dto, user, workspace);
+
+      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        false,
+        dto.apiKeyId,
       );
-      expect(apiKeyService.revokeApiKey).not.toHaveBeenCalled();
     });
 
-    it('checks Manage API permission before revoking key', async () => {
+    it('checks Manage API ability via can() before revoking key', async () => {
       const user = createMockUser();
       const workspace = createMockWorkspace();
       const dto = { apiKeyId: 'bce3bdf2-d35b-4bc0-9608-5297355f02c1' };
@@ -427,7 +478,7 @@ describe('ApiKeyController', () => {
 
       await controller.revokeApiKey(dto, user, workspace);
 
-      expect(ability.cannot).toHaveBeenCalledWith(
+      expect(ability.can).toHaveBeenCalledWith(
         WorkspaceCaslAction.Manage,
         WorkspaceCaslSubject.API,
       );
@@ -441,7 +492,12 @@ describe('ApiKeyController', () => {
       apiKeyService.revokeApiKey.mockResolvedValue(undefined);
 
       await expect(controller.revokeApiKey(dto, user, workspace)).resolves.toBeUndefined();
-      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(workspace.id, dto.apiKeyId);
+      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        true,
+        dto.apiKeyId,
+      );
     });
 
     it('revokeApiKey extracts apiKeyId from DTO', async () => {
@@ -455,7 +511,12 @@ describe('ApiKeyController', () => {
 
       await controller.revokeApiKey(dto, user, workspace);
 
-      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(workspace.id, dto.apiKeyId);
+      expect(apiKeyService.revokeApiKey).toHaveBeenCalledWith(
+        workspace.id,
+        user.id,
+        true,
+        dto.apiKeyId,
+      );
       expect(apiKeyService.revokeApiKey).not.toHaveBeenCalledWith(workspace.id, dto);
     });
 

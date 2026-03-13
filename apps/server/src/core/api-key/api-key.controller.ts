@@ -38,11 +38,17 @@ export class ApiKeyController {
     @AuthWorkspace() workspace: Workspace,
   ) {
     const ability = this.workspaceAbility.createForUser(user, workspace);
-    if (ability.cannot(WorkspaceCaslAction.Create, WorkspaceCaslSubject.API)) {
+    const isAdminView = pagination.adminView === true;
+
+    if (isAdminView && ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.API)) {
       throw new ForbiddenException();
     }
 
-    return this.apiKeyService.getApiKeys(workspace.id, pagination);
+    return this.apiKeyService.getApiKeys(
+      workspace.id,
+      pagination,
+      isAdminView ? undefined : user.id,
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -68,11 +74,12 @@ export class ApiKeyController {
     @AuthWorkspace() workspace: Workspace,
   ) {
     const ability = this.workspaceAbility.createForUser(user, workspace);
-    if (ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.API)) {
-      throw new ForbiddenException();
-    }
+    const canManageAll = ability.can(
+      WorkspaceCaslAction.Manage,
+      WorkspaceCaslSubject.API,
+    );
 
-    return this.apiKeyService.updateApiKey(workspace.id, dto);
+    return this.apiKeyService.updateApiKey(workspace.id, user.id, canManageAll, dto);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -83,10 +90,16 @@ export class ApiKeyController {
     @AuthWorkspace() workspace: Workspace,
   ) {
     const ability = this.workspaceAbility.createForUser(user, workspace);
-    if (ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.API)) {
-      throw new ForbiddenException();
-    }
+    const canManageAll = ability.can(
+      WorkspaceCaslAction.Manage,
+      WorkspaceCaslSubject.API,
+    );
 
-    return this.apiKeyService.revokeApiKey(workspace.id, dto.apiKeyId);
+    return this.apiKeyService.revokeApiKey(
+      workspace.id,
+      user.id,
+      canManageAll,
+      dto.apiKeyId,
+    );
   }
 }
