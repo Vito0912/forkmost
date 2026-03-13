@@ -79,9 +79,9 @@ export default function CreateApiKeyModal() {
 
   return (
     <>
-      <Button onClick={open}>{t("Create API key")}</Button>
+      <Button onClick={open}>{t("Create API Key")}</Button>
 
-      <Modal opened={opened} onClose={handleClose} title={t("Create API key")}>
+      <Modal opened={opened} onClose={handleClose} title={t("Create API Key")}>
         <Divider size="xs" mb="md" />
 
         {!createdToken ? (

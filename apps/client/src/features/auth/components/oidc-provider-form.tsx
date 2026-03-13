@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Stack,
   TextInput,
@@ -25,36 +25,42 @@ import { IconInfoCircle, IconTrash } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
 import { useWorkspacePublicDataQuery } from "@/features/workspace/queries/workspace-query";
 
-const createSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  oidcIssuer: z.string().url({ message: "Valid issuer URL is required" }),
-  oidcClientId: z.string().min(1, { message: "Client ID is required" }),
-  oidcClientSecret: z.string().min(1, { message: "Client secret is required" }),
-  scope: z.string().optional(),
-  allowSignup: z.boolean().optional(),
-  isEnabled: z.boolean().optional(),
-  enforceSso: z.boolean().optional(),
-  oidcAllowedGroups: z.string().optional(),
-  oidcAvatarAttribute: z.string().optional(),
-});
-
-const updateSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  oidcIssuer: z.string().url({ message: "Valid issuer URL is required" }),
-  oidcClientId: z.string().min(1, { message: "Client ID is required" }),
-  oidcClientSecret: z.string().optional(),
-  scope: z.string().optional().default("openid email profile"),
-  allowSignup: z.boolean().optional(),
-  isEnabled: z.boolean().optional(),
-  enforceSso: z.boolean().optional(),
-  oidcAllowedGroups: z.string().optional(),
-  oidcAvatarAttribute: z.string().optional(),
-});
-
 type OidcFormValues = ICreateOidcProvider & Record<string, unknown>;
 
 export function OidcProviderForm() {
   const { t } = useTranslation();
+  const createSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, { message: t("Name is required") }),
+        oidcIssuer: z.string().url({ message: t("Valid issuer URL is required") }),
+        oidcClientId: z.string().min(1, { message: t("Client ID is required") }),
+        oidcClientSecret: z.string().min(1, { message: t("Client secret is required") }),
+        scope: z.string().optional(),
+        allowSignup: z.boolean().optional(),
+        isEnabled: z.boolean().optional(),
+        enforceSso: z.boolean().optional(),
+        oidcAllowedGroups: z.string().optional(),
+        oidcAvatarAttribute: z.string().optional(),
+      }),
+    [t],
+  );
+  const updateSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, { message: t("Name is required") }),
+        oidcIssuer: z.string().url({ message: t("Valid issuer URL is required") }),
+        oidcClientId: z.string().min(1, { message: t("Client ID is required") }),
+        oidcClientSecret: z.string().optional(),
+        scope: z.string().optional().default("openid email profile"),
+        allowSignup: z.boolean().optional(),
+        isEnabled: z.boolean().optional(),
+        enforceSso: z.boolean().optional(),
+        oidcAllowedGroups: z.string().optional(),
+        oidcAvatarAttribute: z.string().optional(),
+      }),
+    [t],
+  );
   const { data: provider, isLoading } = useOidcProviderQuery();
   const { data: workspaceData } = useWorkspacePublicDataQuery();
   const createMutation = useCreateOidcProviderMutation();
