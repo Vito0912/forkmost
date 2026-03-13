@@ -30,6 +30,7 @@ import SpaceGraph from "./pages/space/space-graph";
 import OidcSettingsPage from "@/pages/settings/oidc.tsx";
 import SpaceTrash from "@/pages/space/space-trash.tsx";
 import SpacesPage from "@/pages/spaces/spaces.tsx";
+import ApiManagementSettings from "@/pages/settings/workspace/api-management.tsx";
 
 export default function App() {
   useTrackOrigin();
@@ -83,13 +84,14 @@ export default function App() {
             />
             <Route path={"account/api-keys"} element={<ApiKeys />} />
             <Route path={"workspace"} element={<WorkspaceSettings />} />
-            <Route path={"ai-mcp"} element={<AiMcpSettings />} />
+            <Route path={"api-keys"} element={<ApiManagementSettings />} />
+            <Route path={"ai"} element={<AiMcpSettings />} />
             <Route path={"members"} element={<WorkspaceMembers />} />
             <Route path={"groups"} element={<Groups />} />
             <Route path={"groups/:groupId"} element={<GroupInfo />} />
             <Route path={"spaces"} element={<Spaces />} />
             <Route path={"sharing"} element={<Shares />} />
-            <Route path={"oidc"} element={<OidcSettingsPage />} />
+            <Route path={"security"} element={<OidcSettingsPage />} />
           </Route>
         </Route>
 
