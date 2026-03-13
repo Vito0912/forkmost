@@ -52,7 +52,10 @@ import {
   SharedStorage,
   Columns,
   Column,
-  Status
+  Status,
+  ListNormalization,
+  NodeBackground,
+  TocNode,
 } from "@docmost/editor-ext";
 import {
   randomElement,
@@ -105,6 +108,7 @@ import EmojiCommand from "./emoji-command";
 import { countWords } from "alfaaz";
 import ColumnContainerView from "@/features/editor/components/column-layout/column-container-view";
 import ColumnView from "@/features/editor/components/column-layout/column-view";
+import TocNodeView from "@/features/editor/components/toc-node/toc-node-view";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
@@ -384,6 +388,11 @@ export const mainExtensions = [
   }).configure(),
   Columns,
   Column,
+  ListNormalization,
+  NodeBackground,
+  TocNode.configure({
+    view: TocNodeView,
+  }),
 ] as any;
 
 type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];

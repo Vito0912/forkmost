@@ -32,3 +32,6 @@ export * from "./lib/shared-storage";
 export * from "./lib/recreate-transform";
 export * from "./lib/columns";
 export * from "./lib/status";
+export * from "./lib/list-normalization";
+export * from "./lib/node-background";
+export * from "./lib/toc-node";

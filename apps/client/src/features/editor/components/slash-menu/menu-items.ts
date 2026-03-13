@@ -30,6 +30,7 @@ import {
   IconColumns3,
   IconColumns2,
   IconTag,
+  IconListTree,
 } from "@tabler/icons-react";
 
 import {
@@ -518,6 +519,15 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           .deleteRange(range)
           .setStatus({ text: "", color: "gray" })
           .run();
+      },
+    },
+    {
+      title: "Table of contents",
+      description: "Insert a table of contents block.",
+      searchTerms: ["toc", "table of contents", "outline", "headings", "navigation"],
+      icon: IconListTree,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertTocNode().run();
       },
     },
     {
