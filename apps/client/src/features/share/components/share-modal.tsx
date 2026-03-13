@@ -25,10 +25,14 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { extractPageSlugId, getPageIcon } from "@/lib";
 import { useTranslation } from "react-i18next";
+import { usePageQuery } from "@/features/page/queries/page-query.ts";
 import CopyTextButton from "@/components/common/copy.tsx";
 import { getAppUrl, isCloud } from "@/lib/config.ts";
 import { buildPageUrl } from "@/features/page/page.utils.ts";
 import classes from "@/features/share/components/share.module.css";
+import { useAtom } from "jotai";
+import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
+import { useSpaceQuery } from "@/features/space/queries/space-query.ts";
 
 interface ShareModalProps {
   readOnly: boolean;
@@ -37,9 +41,16 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { pageSlug } = useParams();
-  const pageId = extractPageSlugId(pageSlug);
+  const pageSlugId = extractPageSlugId(pageSlug);
+  const { data: page } = usePageQuery({ pageId: pageSlugId });
+  const pageId = page?.id;
   const { data: share } = useShareForPageQuery(pageId);
   const { spaceSlug } = useParams();
+  const [workspace] = useAtom(workspaceAtom);
+  const { data: space } = useSpaceQuery(spaceSlug);
+  const workspaceDisabled = workspace?.settings?.sharing?.disabled === true;
+  const spaceDisabled = space?.settings?.sharing?.disabled === true;
+  const sharingDisabled = workspaceDisabled || spaceDisabled;
   const createShareMutation = useCreateShareMutation();
   const updateShareMutation = useUpdateShareMutation();
   const deleteShareMutation = useDeleteShareMutation();
@@ -69,19 +80,20 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
 
   const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.currentTarget.checked;
+    setIsPagePublic(value);
 
-    if (value) {
-      createShareMutation.mutateAsync({
-        pageId: pageId,
-        includeSubPages: true,
-        searchIndexing: false,
-      });
-      setIsPagePublic(value);
-    } else {
-      if (share && share.id) {
-        deleteShareMutation.mutateAsync(share.id);
-        setIsPagePublic(value);
+    try {
+      if (value) {
+        await createShareMutation.mutateAsync({
+          pageId: pageId,
+          includeSubPages: true,
+          searchIndexing: false,
+        });
+      } else if (share && share.id) {
+        await deleteShareMutation.mutateAsync(share.id);
       }
+    } catch {
+      setIsPagePublic(!value);
     }
   };
 
@@ -89,20 +101,28 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = event.currentTarget.checked;
-    updateShareMutation.mutateAsync({
-      shareId: share.id,
-      includeSubPages: value,
-    });
+    try {
+      await updateShareMutation.mutateAsync({
+        shareId: share.id,
+        includeSubPages: value,
+      });
+    } catch {
+      // query invalidation will revert the UI
+    }
   };
 
   const handleIndexSearchChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = event.currentTarget.checked;
-    updateShareMutation.mutateAsync({
-      shareId: share.id,
-      searchIndexing: value,
-    });
+    try {
+      await updateShareMutation.mutateAsync({
+        shareId: share.id,
+        searchIndexing: value,
+      });
+    } catch {
+      // query invalidation will revert the UI
+    }
   };
 
   const handleSetPassword = async () => {
@@ -144,7 +164,6 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
     <Popover width={350} position="bottom" withArrow shadow="md">
       <Popover.Target>
         <Button
-          style={{ border: "none" }}
           size="compact-sm"
           leftSection={
             <Indicator
@@ -156,13 +175,28 @@ export default function ShareModal({ readOnly }: ShareModalProps) {
               <IconWorld size={20} stroke={1.5} />
             </Indicator>
           }
-          variant="default"
+          color="dark"
+          variant="subtle"
         >
           {t("Share")}
         </Button>
       </Popover.Target>
       <Popover.Dropdown style={{ userSelect: "none" }}>
-        {isDescendantShared ? (
+        {sharingDisabled ? (
+          <>
+            <Group justify="center" mb="sm">
+              <IconLock size={20} stroke={1.5} />
+            </Group>
+            <Text size="sm" ta="center" fw={500} mb="xs">
+              {t("Public sharing is disabled")}
+            </Text>
+            <Text size="sm" c="dimmed" ta="center">
+              {workspaceDisabled
+                ? t("Public sharing has been disabled at the workspace level.")
+                : t("Public sharing has been disabled for this space.")}
+            </Text>
+          </>
+        ) : isDescendantShared ? (
           <>
             <Text size="sm">{t("Inherits public sharing from")}</Text>
             <Anchor

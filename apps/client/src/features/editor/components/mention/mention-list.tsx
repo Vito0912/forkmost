@@ -10,6 +10,7 @@ import React, {
 import { useSearchSuggestionsQuery } from "@/features/search/queries/search-query.ts";
 import {
   ActionIcon,
+  Divider,
   Group,
   Paper,
   ScrollArea,
@@ -40,6 +41,7 @@ import { useQueryEmit } from "@/features/websocket/use-query-emit";
 import { extractPageSlugId } from "@/lib";
 import { AnchorSelector } from "./anchor-selector";
 import { generateSlug } from "../../utils/heading-extractor";
+import { AutoTooltipText } from "@/components/ui/auto-tooltip-text.tsx";
 
 const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(1);
@@ -54,16 +56,18 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
   const tree = useMemo(() => new SimpleTree<SpaceTreeNode>(data), [data]);
   const createPageMutation = useCreatePageMutation();
   const emit = useQueryEmit();
+  const isInCommentContext = props.isInCommentContext ?? false;
 
   const { data: suggestion, isLoading } = useSearchSuggestionsQuery({
     query: props.query,
     includeUsers: true,
     includePages: true,
     spaceId: space.id,
-    limit: 10,
+    limit: props.query ? 10 : 5,
+    preload: true,
   });
 
-  const createPageItem = (label: string) : MentionSuggestionItem => {
+  const createPageItem = (label: string): MentionSuggestionItem => {
     return {
       id: null,
       label: label,
@@ -72,15 +76,15 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       entityId: null,
       slugId: null,
       icon: null,
-    }
-  }
+    };
+  };
 
   useEffect(() => {
     if (suggestion && !isLoading) {
       let items: MentionSuggestionItem[] = [];
 
       if (suggestion?.users?.length > 0) {
-        items.push({ entityType: "header", label: t("Users") });
+        items.push({ entityType: "header", label: t("People") });
 
         items = items.concat(
           suggestion.users.map((user) => ({
@@ -94,27 +98,31 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
         );
       }
 
-      if (suggestion?.pages?.length > 0) {
-        items.push({ entityType: "header", label: t("Pages") });
-        items = items.concat(
-          suggestion.pages.map((page) => ({
-            id: uuid7(),
-            label: page.title || "Untitled",
-            breadcrumbs: page.breadcrumbs
-              .map(item => item ?? t("Untitled"))
-              .join(' / '),
-            entityType: "page",
-            entityId: page.id,
-            slugId: page.slugId,
-            icon: page.icon,
-            headings: (page.headings || []).map(heading => ({
-              ...heading,
-              slug: heading.slug || generateSlug(heading.text)
-            })),
-          })),
-        );
+       if (suggestion?.pages?.length > 0) {
+         items.push({ entityType: "header", label: t("Pages") });
+         items = items.concat(
+           suggestion.pages.map((page) => ({
+             id: uuid7(),
+             label: page.title || t("Untitled"),
+             breadcrumbs: page.breadcrumbs
+               .map(item => item ?? t("Untitled"))
+               .join(' / '),
+             entityType: "page",
+             entityId: page.id,
+             slugId: page.slugId,
+             icon: page.icon,
+             headings: (page.headings || []).map(heading => ({
+               ...heading,
+               slug: heading.slug || generateSlug(heading.text)
+             })),
+             spaceName: page.space?.name,
+             spaceSlug: page.space?.slug,
+           })),
+         );
+       }
+      if (!isInCommentContext && props.query) {
+        items.push(createPageItem(props.query));
       }
-      items.push(createPageItem(props.query));
 
       setRenderItems(items);
       props.editor.storage.mentionItems = items;
@@ -134,10 +142,10 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             creatorId: currentUser?.user.id,
           });
         }
-        if (item.entityType === "page" && item.id!==null) {
+        if (item.entityType === "page" && item.id !== null) {
           props.command({
             id: item.id,
-            label: item.label || "Untitled",
+            label: item.label || t("Untitled"),
             entityType: "page",
             entityId: item.entityId,
             slugId: item.slugId,
@@ -146,7 +154,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
           });
           invalidateGraph();
         }
-        if (item.entityType === "page" && item.id===null) {
+        if (item.entityType === "page" && item.id === null) {
           createPage(item.label);
         }
       }
@@ -194,7 +202,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
 
   const enterHandler = () => {
     if (!renderItems.length) return;
-    if (renderItems[selectedIndex].entityType !== "header") {
+    if (renderItems[selectedIndex]?.entityType !== "header") {
       selectItem(selectedIndex);
     }
   };
@@ -228,12 +236,12 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     },
   }));
 
-  const createPage = async (title: string) => {
-    const payload = {
-      spaceId: space.id,
-      parentPageId: page.id || null,
-      title
-    };
+   const createPage = async (title: string) => {
+     const payload = {
+       spaceId: space.id,
+       parentPageId: page.id || null,
+       title: title,
+     };
 
     try {
       const createdPage = await createPageMutation.mutateAsync(payload);
@@ -262,19 +270,21 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
         creatorId: currentUser?.user.id,
       });
 
-      setTimeout(() => {
-        emit({
-          operation: "addTreeNode",
-          spaceId: space.id,
-          payload: { parentId, index: lastIndex, data },
-        });
-      }, 50);
-    } catch {
-      throw new Error("Failed to create page");
-    }
-  }
-
-  // if no results and enter what to do?
+       setTimeout(() => {
+         emit({
+           operation: "addTreeNode",
+           spaceId: space.id,
+           payload: {
+             parentId,
+             index: lastIndex,
+             data,
+           },
+         });
+       }, 50);
+     } catch (err) {
+       throw new Error("Failed to create page");
+     }
+   };
 
   useEffect(() => {
     viewportRef.current
@@ -282,27 +292,52 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       ?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex]);
 
+  const popupWidth = isInCommentContext ? 280 : 320;
+
   if (renderItems.length === 0) {
     return (
-      <Paper shadow="md" p="xs" withBorder>
-        { t("No results") }
+      <Paper id="mention" shadow="md" py="xs" withBorder radius="md">
+        <Text c="dimmed" size="sm" px="sm">
+          {t("No results")}
+        </Text>
       </Paper>
     );
   }
 
-  return (
-    <Paper id="mention" shadow="md" p="xs" withBorder className={classes.mentionPanel}>
+  const hasUsers = renderItems.some((item) => item.entityType === "user");
+  const hasPages = renderItems.some(
+    (item) => item.entityType === "page" && item.id !== null,
+  );
+  const createPageItemData = renderItems.find(
+    (item) => item.entityType === "page" && item.id === null,
+  );
+
+   return (
+     <Paper id="mention" shadow="md" withBorder radius="md" py={6} className={classes.mentionPanel}>
       <ScrollArea.Autosize
         viewportRef={viewportRef}
         mah={350}
-        w={320}
-        scrollbarSize={8}
+        w={popupWidth}
+        scrollbars={"y"}
+        scrollbarSize={6}
+        styles={{ content: { minWidth: 0 } }}
       >
         {renderItems?.map((item, index) => {
           if (item.entityType === "header") {
+            const isFirst = index === 0;
             return (
               <div key={`${item.label}-${index}`}>
-                <Text c="dimmed" mb={4} tt="uppercase">
+                {!isFirst && <Divider my={6} />}
+                <Text
+                  c="dimmed"
+                  size="xs"
+                  fw={500}
+                  px="sm"
+                  pt={isFirst ? 2 : 4}
+                  pb={4}
+                  tt="uppercase"
+                  style={{ userSelect: "none" }}
+                >
                   {item.label}
                 </Text>
               </div>
@@ -316,26 +351,28 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                 className={clsx(classes.menuBtn, {
                   [classes.selectedItem]: index === selectedIndex,
                 })}
+                px="sm"
               >
-                <Group>
+                <Group gap="sm">
                   <CustomAvatar
                     size={"sm"}
                     avatarUrl={item.avatarUrl}
                     name={item.label}
                   />
 
-                  <Stack gap="0">
-                    <Text size="sm" fw={500}>
-                      {item.label}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      {item.email}
-                    </Text>
-                  </Stack>
+<<<<<<< HEAD
+                   <Stack gap="0">
+                     <Text size="sm" fw={500}>
+                       {item.label}
+                     </Text>
+                     <Text size="xs" c="dimmed">
+                       {item.email}
+                     </Text>
+                   </Stack>
                 </Group>
               </UnstyledButton>
             );
-          } else if (item.entityType === "page") {
+          } else if (item.entityType === "page" && item.id !== null) {
             return (
               <UnstyledButton
                 data-item-index={index}
@@ -344,12 +381,15 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                 className={clsx(classes.menuBtn, {
                   [classes.selectedItem]: index === selectedIndex,
                 })}
+                px="sm"
               >
-                <Group wrap="nowrap">
+                <Group gap="sm" wrap="nowrap">
                   <ActionIcon
-                    variant="default"
+                    variant="subtle"
                     component="div"
                     aria-label={item.label}
+                    color="gray"
+                    size="sm"
                   >
                     {item.icon || (
                       <ActionIcon
@@ -359,43 +399,49 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                         size={18}
                       >
                         {item.id ? (
-                          <IconFileDescription size={18} />
+                          <IconFileDescription size={18} stroke={1.5} />
                         ) : (
-                          <IconPlus size={18} />
+                          <IconPlus size={18} stroke={1.5} />
                         )}
                       </ActionIcon>
                     )}
                   </ActionIcon>
 
-                  <Stack gap="0" style={{ flex: 1 }}>
-                    <Text size="sm" fw={500}>
-                      {item.id
-                        ? item.label
-                        : t("Create page") + ": " + item.label}
-                    </Text>
-                    {item.breadcrumbs !== "" && (
-                      <Text size="xs" c="dimmed" lineClamp={1}>
-                        {item.breadcrumbs}
-                      </Text>
-                    )}
-                  </Stack>
+<<<<<<< HEAD
+                   <Stack gap="0" style={{ flex: 1, minWidth: 0 }}>
+                     <Text size="sm" fw={500} truncate>
+                       {item.id
+                         ? item.label
+                         : t("Create page") + ": " + item.label}
+                     </Text>
+                     {item.breadcrumbs !== "" && (
+                       <Text size="xs" c="dimmed" lineClamp={1}>
+                         {item.breadcrumbs}
+                       </Text>
+                     )}
+                     {item.spaceName && (
+                       <Text size="xs" c="dimmed" truncate>
+                         {item.spaceName}
+                       </Text>
+                     )}
+                   </Stack>
 
-                  {item.id &&
-                    item.entityId &&
-                    item.entityType === "page" &&
-                    item.headings && (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        className={classes.anchorSelector}
-                      >
-                        <AnchorSelector
-                          headings={item.headings}
-                          onSelectAnchor={(anchorSlug, headingText) => {
-                            selectPageWithAnchor(item, anchorSlug, headingText);
-                          }}
-                        />
-                      </div>
-                    )}
+                   {item.id &&
+                     item.entityId &&
+                     item.entityType === "page" &&
+                     item.headings && (
+                       <div
+                         onClick={(e) => e.stopPropagation()}
+                         className={classes.anchorSelector}
+                       >
+                         <AnchorSelector
+                           headings={item.headings}
+                           onSelectAnchor={(anchorSlug, headingText) => {
+                             selectPageWithAnchor(item, anchorSlug, headingText);
+                           }}
+                         />
+                       </div>
+                     )}
                 </Group>
               </UnstyledButton>
             );
@@ -403,6 +449,40 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             return null;
           }
         })}
+
+        {createPageItemData && !isInCommentContext && (
+          <>
+            {(hasUsers || hasPages) && <Divider my={6} />}
+            <UnstyledButton
+              data-item-index={renderItems.indexOf(createPageItemData)}
+              onClick={() =>
+                selectItem(renderItems.indexOf(createPageItemData))
+              }
+              className={clsx(classes.menuBtn, {
+                [classes.selectedItem]:
+                  renderItems.indexOf(createPageItemData) === selectedIndex,
+              })}
+              px="sm"
+            >
+              <Group gap="sm" wrap="nowrap">
+                <ActionIcon
+                  variant="subtle"
+                  component="div"
+                  color="gray"
+                  size="sm"
+                >
+                  <IconPlus size={16} stroke={1.5} />
+                </ActionIcon>
+
+                <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                  <Text size="sm" fw={500} truncate>
+                    {t("Create page")}: {createPageItemData.label}
+                  </Text>
+                </div>
+              </Group>
+            </UnstyledButton>
+          </>
+        )}
       </ScrollArea.Autosize>
     </Paper>
   );

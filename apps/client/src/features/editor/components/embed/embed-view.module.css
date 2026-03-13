@@ -1,22 +1,20 @@
+:global(.ProseMirror .node-embed.ProseMirror-selectednode) {
+  outline: none;
+}
+
 .embedContainer {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .embedWrapper {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
-}
+  @mixin light {
+    background-color: var(--mantine-color-gray-0);
+  }
 
-.nonResizable {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 100%;
+  @mixin dark {
+    background-color: var(--mantine-color-dark-7);
+  }
 }
 
 .embedIframe {

@@ -13,6 +13,14 @@ import { Notifications } from "@mantine/notifications";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import "./i18n";
+import { PostHogProvider } from "posthog-js/react";
+import {
+  getPostHogHost,
+  getPostHogKey,
+  isCloud,
+  isPostHogEnabled,
+} from "@/lib/config.ts";
+import posthog from "posthog-js";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,9 +33,17 @@ export const queryClient = new QueryClient({
   },
 });
 
-const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement,
-);
+if (isCloud() && isPostHogEnabled) {
+  posthog.init(getPostHogKey(), {
+    api_host: getPostHogHost(),
+    defaults: "2025-05-24",
+    disable_session_recording: true,
+    capture_pageleave: false,
+  });
+}
+
+const container = document.getElementById("root") as HTMLElement;
+const root = (container as any).__reactRoot ??= ReactDOM.createRoot(container);
 
 root.render(
   <BrowserRouter>
@@ -36,7 +52,9 @@ root.render(
         <QueryClientProvider client={queryClient}>
           <Notifications position="bottom-center" limit={3} zIndex={10000} />
           <HelmetProvider>
+            <PostHogProvider client={posthog}>
               <App />
+            </PostHogProvider>
           </HelmetProvider>
         </QueryClientProvider>
       </ModalsProvider>

@@ -6,13 +6,14 @@ import {
   Group,
   PasswordInput,
 } from "@mantine/core";
-import * as z from "zod";
+import { z } from "zod/v4";
 import { useState } from "react";
 import { useAtom } from "jotai";
 import { currentUserAtom } from "@/features/user/atoms/current-user-atom.ts";
 import { useDisclosure } from "@mantine/hooks";
 import * as React from "react";
-import { useForm, zodResolver } from "@mantine/form";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useTranslation } from "react-i18next";
 import { updateUser } from "../services/user-service";
 import { notifications } from "@mantine/notifications";
@@ -69,7 +70,7 @@ function ChangeEmailForm({ onClose }: { onClose: () => void }) {
   const [, setCurrentUser] = useAtom(currentUserAtom);
 
   const form = useForm<FormValues>({
-    validate: zodResolver(formSchema),
+    validate: zod4Resolver(formSchema),
     initialValues: {
       password: "",
       email: "",

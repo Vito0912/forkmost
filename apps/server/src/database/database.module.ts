@@ -1,14 +1,7 @@
-import {
-  Global,
-  Logger,
-  Module,
-  OnApplicationBootstrap,
-  BeforeApplicationShutdown,
-} from '@nestjs/common';
+import { Global, Logger, Module, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectKysely, KyselyModule } from 'nestjs-kysely';
 import { EnvironmentService } from '../integrations/environment/environment.service';
-import { CamelCasePlugin, LogEvent, PostgresDialect, sql } from 'kysely';
-import { Pool, types } from 'pg';
+import { CamelCasePlugin, LogEvent, sql } from 'kysely';
 import { GroupRepo } from '@docmost/db/repos/group/group.repo';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
@@ -16,6 +9,7 @@ import { GroupUserRepo } from '@docmost/db/repos/group/group-user.repo';
 import { SpaceRepo } from '@docmost/db/repos/space/space.repo';
 import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
 import { PageRepo } from './repos/page/page.repo';
+import { PagePermissionRepo } from './repos/page/page-permission.repo';
 import { CommentRepo } from './repos/comment/comment.repo';
 import { PageHistoryRepo } from './repos/page/page-history.repo';
 import { AttachmentRepo } from './repos/attachment/attachment.repo';
@@ -25,10 +19,12 @@ import { MigrationService } from '@docmost/db/services/migration.service';
 import { UserTokenRepo } from './repos/user-token/user-token.repo';
 import { BacklinkRepo } from '@docmost/db/repos/backlink/backlink.repo';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
+import { NotificationRepo } from '@docmost/db/repos/notification/notification.repo';
+import { WatcherRepo } from '@docmost/db/repos/watcher/watcher.repo';
 import { PageListener } from '@docmost/db/listeners/page.listener';
-
-// https://github.com/brianc/node-postgres/issues/811
-types.setTypeParser(types.builtins.INT8, (val) => Number(val));
+import { PostgresJSDialect } from 'kysely-postgres-js';
+import * as postgres from 'postgres';
+import { normalizePostgresUrl } from '../common/helpers';
 
 @Global()
 @Module({
@@ -37,26 +33,30 @@ types.setTypeParser(types.builtins.INT8, (val) => Number(val));
       imports: [],
       inject: [EnvironmentService],
       useFactory: (environmentService: EnvironmentService) => ({
-        dialect: new PostgresDialect({
-          pool: new Pool({
-            connectionString: environmentService.getDatabaseURL(),
-            max: environmentService.getDatabaseMaxPool(),
-          }).on('error', (err) => {
-            console.error('Database error:', err.message);
-          }),
+        dialect: new PostgresJSDialect({
+          postgres: postgres(
+            normalizePostgresUrl(environmentService.getDatabaseURL()),
+            {
+              max: environmentService.getDatabaseMaxPool(),
+              onnotice: () => {},
+              types: {
+                bigint: {
+                  to: 20,
+                  from: [20, 1700],
+                  serialize: (value: number) => value.toString(),
+                  parse: (value: string) => Number.parseInt(value),
+                },
+              },
+            },
+          ),
         }),
         plugins: [new CamelCasePlugin()],
         log: (event: LogEvent) => {
           if (environmentService.getNodeEnv() !== 'development') return;
           const logger = new Logger(DatabaseModule.name);
-          if (event.level) {
-            if (process.env.DEBUG_DB?.toLowerCase() === 'true') {
-              logger.debug(event.query.sql);
-              logger.debug('query time: ' + event.queryDurationMillis + ' ms');
-              //if (event.query.parameters.length > 0) {
-              // logger.debug('parameters: ' + event.query.parameters);
-              //}
-            }
+          if (process.env.DEBUG_DB?.toLowerCase() === 'true') {
+            logger.debug(event.query.sql);
+            logger.debug('query time: ' + event.queryDurationMillis + ' ms');
           }
         },
       }),
@@ -71,12 +71,15 @@ types.setTypeParser(types.builtins.INT8, (val) => Number(val));
     SpaceRepo,
     SpaceMemberRepo,
     PageRepo,
+    PagePermissionRepo,
     PageHistoryRepo,
     CommentRepo,
     AttachmentRepo,
     UserTokenRepo,
     BacklinkRepo,
     ShareRepo,
+    NotificationRepo,
+    WatcherRepo,
     PageListener,
   ],
   exports: [
@@ -87,17 +90,18 @@ types.setTypeParser(types.builtins.INT8, (val) => Number(val));
     SpaceRepo,
     SpaceMemberRepo,
     PageRepo,
+    PagePermissionRepo,
     PageHistoryRepo,
     CommentRepo,
     AttachmentRepo,
     UserTokenRepo,
     BacklinkRepo,
     ShareRepo,
+    NotificationRepo,
+    WatcherRepo,
   ],
 })
-export class DatabaseModule
-  implements OnApplicationBootstrap, BeforeApplicationShutdown
-{
+export class DatabaseModule implements OnApplicationBootstrap {
   private readonly logger = new Logger(DatabaseModule.name);
 
   constructor(
@@ -111,12 +115,6 @@ export class DatabaseModule
 
     if (this.environmentService.getNodeEnv() === 'production') {
       await this.migrationService.migrateToLatest();
-    }
-  }
-
-  async beforeApplicationShutdown(): Promise<void> {
-    if (this.db) {
-      await this.db.destroy();
     }
   }
 

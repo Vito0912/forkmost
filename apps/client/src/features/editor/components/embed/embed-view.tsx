@@ -13,10 +13,10 @@ import {
   Center,
   Stack,
 } from "@mantine/core";
-import { IconEdit, IconArrowsMove, IconArrowsMaximize, IconArrowsMinimize, IconPlayerPlay } from "@tabler/icons-react";
+import { IconEdit, IconPlayerPlay } from "@tabler/icons-react";
 import { z } from "zod";
 import { useForm } from "@mantine/form";
-import { zodResolver } from "mantine-form-zod-resolver";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
@@ -29,16 +29,13 @@ import { ResizableWrapper } from "../common/resizable-wrapper";
 import classes from "./embed-view.module.css";
 
 const schema = z.object({
-  url: z
-    .string()
-    .trim()
-    .url({ message: i18n.t("Please enter a valid url") }),
+  url: z.url({ message: i18n.t("Please enter a valid url") }).trim(),
 });
 
 export default function EmbedView(props: NodeViewProps) {
   const { t } = useTranslation();
   const { node, selected, updateAttributes, editor } = props;
-  const { src, provider, height: nodeHeight, width: nodeWidth, resizable = true, lazyLoad = false } = node.attrs;
+  const { src, provider, width: nodeWidth, height: nodeHeight, resizable = true, lazyLoad = false } = node.attrs;
 
   const [isResizable, setIsResizable] = useState<boolean>(resizable);
   const [shouldLoadIframe, setShouldLoadIframe] = useState<boolean>(!lazyLoad);
@@ -54,16 +51,12 @@ export default function EmbedView(props: NodeViewProps) {
     initialValues: {
       url: "",
     },
-    validate: zodResolver(schema),
+    validate: zod4Resolver(schema),
   });
 
   const handleResize = useCallback(
-    (newHeight: number, newWidth?: string) => {
-      const updates: any = { height: newHeight };
-      if (newWidth !== undefined) {
-        updates.width = newWidth;
-      }
-      updateAttributes(updates);
+    (newWidth: number, newHeight: number) => {
+      updateAttributes({ width: newWidth, height: newHeight });
     },
     [updateAttributes],
   );
@@ -106,7 +99,7 @@ export default function EmbedView(props: NodeViewProps) {
   }
 
   return (
-    <NodeViewWrapper data-drag-handle>
+    <NodeViewWrapper data-drag-handle className={classes.embedNodeView}>
       {embedUrl ? (
         <div className={classes.embedContainer}>
           {!shouldLoadIframe ? (
@@ -117,9 +110,9 @@ export default function EmbedView(props: NodeViewProps) {
               className={clsx(classes.embedPlaceholder, {
                 "ProseMirror-selectednode": selected,
               })}
-              style={{ 
+              style={{
                 height: nodeHeight || 480,
-                width: nodeWidth || "100%"
+                width: nodeWidth || 640,
               }}
             >
               <Center style={{ height: "100%" }}>
@@ -137,7 +130,7 @@ export default function EmbedView(props: NodeViewProps) {
                       provider: getEmbedProviderById(provider)?.name || provider,
                     })}
                   </Text>
-                  <Button 
+                  <Button
                     onClick={handleLoadIframe}
                     variant="filled"
                     leftSection={<IconPlayerPlay size={16} />}
@@ -149,15 +142,15 @@ export default function EmbedView(props: NodeViewProps) {
             </Card>
           ) : isResizable ? (
             <ResizableWrapper
+              initialWidth={nodeWidth || 640}
               initialHeight={nodeHeight || 480}
-              initialWidth={nodeWidth || "100%"}
+              minWidth={200}
+              maxWidth={1200}
               minHeight={200}
               maxHeight={1200}
-              minWidth="20%"
-              maxWidth="100%"
               onResize={handleResize}
               isEditable={editor.isEditable}
-              direction="both"
+              selected={selected}
               className={clsx(classes.embedWrapper, {
                 "ProseMirror-selectednode": selected,
               })}
@@ -173,12 +166,12 @@ export default function EmbedView(props: NodeViewProps) {
             </ResizableWrapper>
           ) : (
             <div
-              className={clsx(classes.embedWrapper, classes.nonResizable, {
+              className={clsx(classes.embedWrapper, {
                 "ProseMirror-selectednode": selected,
               })}
-              style={{ 
+              style={{
                 height: nodeHeight || 480,
-                width: nodeWidth || "100%"
+                width: nodeWidth || 640,
               }}
             >
               <iframe

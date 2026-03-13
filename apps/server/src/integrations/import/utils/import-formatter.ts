@@ -1,4 +1,5 @@
 import { getEmbedUrlAndProvider } from '@docmost/editor-ext';
+import { Logger } from '@nestjs/common';
 import * as path from 'path';
 import { v7 } from 'uuid';
 import { InsertableBacklink } from '@docmost/db/types/entity.types';
@@ -49,6 +50,7 @@ export async function formatImportHtml(opts: {
   }
 
   notionFormatter($, $root);
+  xwikiFormatter($, $root);
   defaultHtmlFormatter($, $root);
 
   const backlinks = await rewriteInternalLinksToMentionHtml(
@@ -66,6 +68,14 @@ export async function formatImportHtml(opts: {
     backlinks,
     pageIcon: pageIcon || undefined,
   };
+}
+
+export function xwikiFormatter($: CheerioAPI, $root: Cheerio<any>) {
+  const $content = $root.find('#xwikicontent');
+  if ($content.length) {
+    $root.children().remove();
+    $root.append($content.contents());
+  }
 }
 
 export function defaultHtmlFormatter($: CheerioAPI, $root: Cheerio<any>) {
@@ -89,6 +99,15 @@ export function defaultHtmlFormatter($: CheerioAPI, $root: Cheerio<any>) {
   });
 }
 
+const COLUMN_LAYOUTS = [
+  '',
+  '',
+  'two_equal',
+  'three_equal',
+  'four_equal',
+  'five_equal',
+] as const;
+
 export function notionFormatter($: CheerioAPI, $root: Cheerio<any>) {
   // remove page header icon and cover image
   $root.find('.page-header-icon').remove();
@@ -97,6 +116,31 @@ export function notionFormatter($: CheerioAPI, $root: Cheerio<any>) {
   // remove empty description paragraphs
   $root.find('p.page-description').each((_, el) => {
     if (!$(el).text().trim()) $(el).remove();
+  });
+
+  // columns
+  $root.find('div.column-list').each((_, el) => {
+    const $list = $(el);
+    const $cols = $list.find('div.column');
+
+    if ($cols.length <= 1) {
+      $list.replaceWith($cols.html() || '');
+      return;
+    }
+
+    const layout = COLUMN_LAYOUTS[$cols.length] ?? 'two_equal';
+    let cells = '';
+    $cols.each((_, col) => {
+      const $col = $(col);
+      $col.children('div[style*="display:contents"]').each((_, wrapper) => {
+        $(wrapper).replaceWith($(wrapper).html() || '');
+      });
+      cells += `<div data-type="column">${$col.html()}</div>`;
+    });
+
+    $list.replaceWith(
+      `<div data-type="columns" data-layout="${layout}">${cells}</div>`,
+    );
   });
 
   // block math → mathBlock
@@ -280,8 +324,18 @@ export async function rewriteInternalLinksToMentionHtml(
     const $a = $(el);
     const raw = $a.attr('href')!;
     if (raw.startsWith('http') || raw.startsWith('/api/')) return;
+    let decodedRaw = raw;
+    try {
+      decodedRaw = decodeURIComponent(raw);
+    } catch (err) {
+      Logger.warn(
+        `URI malformed in page ${currentFilePath}: ${raw}. Falling back to raw path.`,
+        'ImportFormatter',
+      );
+    }
+
     const resolved = normalize(
-      path.join(path.dirname(currentFilePath), decodeURIComponent(raw)),
+      path.join(path.dirname(currentFilePath), decodedRaw),
     );
     const meta = filePathToPageMetaMap.get(resolved);
     if (!meta) return;
