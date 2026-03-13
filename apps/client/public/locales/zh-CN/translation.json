@@ -765,5 +765,7 @@
   "Failed to delete OIDC provider": "删除 OIDC 提供方失败",
   "MCP Integration": "MCP 集成",
   "Allow AI assistants to interact with your workspace via the Model Context Protocol.": "允许 AI 助手通过模型上下文协议与你的工作区交互。",
-  "Enable MCP": "启用 MCP"
+  "Enable MCP": "启用 MCP",
+  "Manage API keys for all users in the workspace. View the API documentation for usage details.": "管理工作区中所有用户的 API 密钥。有关使用详情，请查看 API 文档。",
+  "Security & SSO": "安全与 SSO"
 }

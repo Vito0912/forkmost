@@ -765,5 +765,7 @@
   "Failed to delete OIDC provider": "Impossibile eliminare il provider OIDC",
   "MCP Integration": "Integrazione MCP",
   "Allow AI assistants to interact with your workspace via the Model Context Protocol.": "Consenti agli assistenti AI di interagire con il tuo workspace tramite il Model Context Protocol.",
-  "Enable MCP": "Abilita MCP"
+  "Enable MCP": "Abilita MCP",
+  "Manage API keys for all users in the workspace. View the API documentation for usage details.": "Gestisci le chiavi API di tutti gli utenti del workspace. Consulta la documentazione API per i dettagli di utilizzo.",
+  "Security & SSO": "Sicurezza e SSO"
 }

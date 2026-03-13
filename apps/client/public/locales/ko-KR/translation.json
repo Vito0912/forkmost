@@ -765,5 +765,7 @@
   "Failed to delete OIDC provider": "OIDC 공급자 삭제에 실패했습니다",
   "MCP Integration": "MCP 통합",
   "Allow AI assistants to interact with your workspace via the Model Context Protocol.": "모델 컨텍스트 프로토콜을 통해 AI 어시스턴트가 워크스페이스와 상호작용하도록 허용합니다.",
-  "Enable MCP": "MCP 활성화"
+  "Enable MCP": "MCP 활성화",
+  "Manage API keys for all users in the workspace. View the API documentation for usage details.": "워크스페이스의 모든 사용자를 위한 API 키를 관리합니다. 사용 방법은 API 문서를 참고하세요.",
+  "Security & SSO": "보안 및 SSO"
 }
