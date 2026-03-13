@@ -701,5 +701,18 @@
   "Failed to update trash retention": "Falha ao atualizar a retenção da lixeira",
   "Removed page restriction": "Restrição de página removida",
   "Added page permission": "Permissão de página adicionada",
-  "Removed page permission": "Permissão de página removida"
+  "Removed page permission": "Permissão de página removida",
+  "Add block below": "Adicionar bloco abaixo",
+  "Transform to": "Transformar em",
+  "Bullet list": "Lista com marcadores",
+  "Numbered list": "Lista numerada",
+  "To-do list": "Lista de tarefas",
+  "Code block": "Bloco de código",
+  "Caption": "Legenda",
+  "Replace image": "Substituir imagem",
+  "Add a caption...": "Adicionar uma legenda...",
+  "Float left": "Flutuar à esquerda",
+  "Float right": "Flutuar à direita",
+  "Insert a table of contents block.": "Inserir um bloco de sumário.",
+  "Copy to clipboard": "Copiar para a área de transferência"
 }

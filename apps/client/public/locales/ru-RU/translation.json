@@ -701,5 +701,18 @@
   "Failed to update trash retention": "Не удалось обновить срок хранения корзины",
   "Removed page restriction": "Ограничение доступа к странице удалено",
   "Added page permission": "Добавлено разрешение доступа к странице",
-  "Removed page permission": "Удалено разрешение доступа к странице"
+  "Removed page permission": "Удалено разрешение доступа к странице",
+  "Add block below": "Добавить блок ниже",
+  "Transform to": "Преобразовать в",
+  "Bullet list": "Маркированный список",
+  "Numbered list": "Нумерованный список",
+  "To-do list": "Список задач",
+  "Code block": "Блок кода",
+  "Caption": "Подпись",
+  "Replace image": "Заменить изображение",
+  "Add a caption...": "Добавить подпись...",
+  "Float left": "Обтекание слева",
+  "Float right": "Обтекание справа",
+  "Insert a table of contents block.": "Вставить блок содержания.",
+  "Copy to clipboard": "Копировать в буфер обмена"
 }

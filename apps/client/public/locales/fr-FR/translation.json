@@ -418,7 +418,7 @@
   "Move page": "Déplacer la page",
   "Move page to a different space.": "Déplacer la page vers un autre espace.",
   "Real-time editor connection lost. Retrying...": "Connexion avec l'éditeur en temps réel perdue. Nouvelle tentative...",
-  "Table of contents": "",
+  "Table of contents": "Table des matières",
   "Add headings (H1, H2, H3) to generate a table of contents.": "Ajoutez des titres (H1, H2, H3) pour générer une table des matières.",
   "Share": "Partager",
   "Public sharing": "Partage public",
@@ -701,5 +701,18 @@
   "Failed to update trash retention": "Échec de la mise à jour de la durée de conservation de la corbeille",
   "Removed page restriction": "Restriction de la page supprimée",
   "Added page permission": "Autorisation de la page ajoutée",
-  "Removed page permission": "Autorisation de la page supprimée"
+  "Removed page permission": "Autorisation de la page supprimée",
+  "Add block below": "Ajouter un bloc en dessous",
+  "Transform to": "Transformer en",
+  "Bullet list": "Liste à puces",
+  "Numbered list": "Liste numérotée",
+  "To-do list": "Liste de tâches",
+  "Code block": "Bloc de code",
+  "Caption": "Légende",
+  "Replace image": "Remplacer l'image",
+  "Add a caption...": "Ajouter une légende...",
+  "Float left": "Flottant à gauche",
+  "Float right": "Flottant à droite",
+  "Insert a table of contents block.": "Insérer un bloc de table des matières.",
+  "Copy to clipboard": "Copier dans le presse-papiers"
 }

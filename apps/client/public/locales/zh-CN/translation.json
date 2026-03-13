@@ -701,5 +701,18 @@
   "Failed to update trash retention": "更新垃圾箱保留期失败",
   "Removed page restriction": "已移除页面限制",
   "Added page permission": "已添加页面权限",
-  "Removed page permission": "已移除页面权限"
+  "Removed page permission": "已移除页面权限",
+  "Add block below": "在下方添加区块",
+  "Transform to": "转换为",
+  "Bullet list": "项目符号列表",
+  "Numbered list": "编号列表",
+  "To-do list": "待办列表",
+  "Code block": "代码块",
+  "Caption": "说明文字",
+  "Replace image": "替换图片",
+  "Add a caption...": "添加说明文字...",
+  "Float left": "左浮动",
+  "Float right": "右浮动",
+  "Insert a table of contents block.": "插入目录区块。",
+  "Copy to clipboard": "复制到剪贴板"
 }

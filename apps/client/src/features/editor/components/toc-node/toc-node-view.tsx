@@ -138,7 +138,7 @@ export default function TocNodeView(props: NodeViewProps) {
 
         {!visibleLinks.length ? (
           <Text size="sm" c="dimmed">
-            {t("Add headings to create a table of contents.")}
+            {t("Add headings (H1, H2, H3) to generate a table of contents.")}
           </Text>
         ) : (
           <Stack gap={2}>

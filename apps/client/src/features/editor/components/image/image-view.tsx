@@ -103,7 +103,7 @@ export default function ImageView(props: NodeViewProps) {
               className={classes.captionInput}
               type="text"
               value={caption || ""}
-              placeholder="Add a caption..."
+              placeholder={t("Add a caption...")}
               onChange={(event) => {
                 props.updateAttributes({ caption: event.currentTarget.value });
               }}

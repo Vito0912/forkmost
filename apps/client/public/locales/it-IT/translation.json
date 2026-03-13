@@ -701,5 +701,18 @@
   "Failed to update trash retention": "Impossibile aggiornare la conservazione del cestino",
   "Removed page restriction": "Restrizione della pagina rimossa",
   "Added page permission": "Permesso sulla pagina aggiunto",
-  "Removed page permission": "Permesso sulla pagina rimosso"
+  "Removed page permission": "Permesso sulla pagina rimosso",
+  "Add block below": "Aggiungi blocco sotto",
+  "Transform to": "Trasforma in",
+  "Bullet list": "Elenco puntato",
+  "Numbered list": "Elenco numerato",
+  "To-do list": "Elenco attività",
+  "Code block": "Blocco di codice",
+  "Caption": "Didascalia",
+  "Replace image": "Sostituisci immagine",
+  "Add a caption...": "Aggiungi una didascalia...",
+  "Float left": "Fluttua a sinistra",
+  "Float right": "Fluttua a destra",
+  "Insert a table of contents block.": "Inserisci un blocco indice.",
+  "Copy to clipboard": "Copia negli appunti"
 }

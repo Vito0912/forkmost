@@ -701,5 +701,18 @@
   "Failed to update trash retention": "Aktualisierung der Aufbewahrungsdauer des Papierkorbs fehlgeschlagen",
   "Removed page restriction": "Seitenbeschränkung entfernt",
   "Added page permission": "Seitenberechtigung hinzugefügt",
-  "Removed page permission": "Seitenberechtigung entfernt"
+  "Removed page permission": "Seitenberechtigung entfernt",
+  "Add block below": "Block darunter hinzufügen",
+  "Transform to": "Umwandeln in",
+  "Bullet list": "Aufzählungsliste",
+  "Numbered list": "Nummerierte Liste",
+  "To-do list": "Aufgabenliste",
+  "Code block": "Codeblock",
+  "Caption": "Bildunterschrift",
+  "Replace image": "Bild ersetzen",
+  "Add a caption...": "Bildunterschrift hinzufügen...",
+  "Float left": "Links umfließen",
+  "Float right": "Rechts umfließen",
+  "Insert a table of contents block.": "Inhaltsverzeichnisblock einfügen.",
+  "Copy to clipboard": "In Zwischenablage kopieren"
 }

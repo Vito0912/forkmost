@@ -695,5 +695,18 @@
   "Failed to update trash retention": "Не вдалося оновити термін зберігання у кошику",
   "Removed page restriction": "Обмеження сторінки видалено",
   "Added page permission": "Додано дозвіл на сторінку",
-  "Removed page permission": "Дозвіл на сторінку видалено"
+  "Removed page permission": "Дозвіл на сторінку видалено",
+  "Add block below": "Додати блок нижче",
+  "Transform to": "Перетворити на",
+  "Bullet list": "Маркований список",
+  "Numbered list": "Нумерований список",
+  "To-do list": "Список завдань",
+  "Code block": "Блок коду",
+  "Caption": "Підпис",
+  "Replace image": "Замінити зображення",
+  "Add a caption...": "Додати підпис...",
+  "Float left": "Обтікання ліворуч",
+  "Float right": "Обтікання праворуч",
+  "Insert a table of contents block.": "Вставити блок змісту.",
+  "Copy to clipboard": "Скопіювати в буфер обміну"
 }

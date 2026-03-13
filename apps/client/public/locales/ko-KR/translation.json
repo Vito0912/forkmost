@@ -701,5 +701,18 @@
   "Failed to update trash retention": "휴지통 보관 기간 업데이트에 실패했습니다.",
   "Removed page restriction": "페이지 제한이 제거됨",
   "Added page permission": "페이지 권한이 추가됨",
-  "Removed page permission": "페이지 권한이 제거됨"
+  "Removed page permission": "페이지 권한이 제거됨",
+  "Add block below": "아래에 블록 추가",
+  "Transform to": "변환",
+  "Bullet list": "글머리 기호 목록",
+  "Numbered list": "번호 매기기 목록",
+  "To-do list": "할 일 목록",
+  "Code block": "코드 블록",
+  "Caption": "캡션",
+  "Replace image": "이미지 교체",
+  "Add a caption...": "캡션 추가...",
+  "Float left": "왼쪽 띄우기",
+  "Float right": "오른쪽 띄우기",
+  "Insert a table of contents block.": "목차 블록 삽입",
+  "Copy to clipboard": "클립보드에 복사"
 }

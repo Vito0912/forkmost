@@ -701,5 +701,18 @@
   "Failed to update trash retention": "Bijwerken van de bewaartermijn voor de prullenbak is mislukt.",
   "Removed page restriction": "Pagina-restrictie verwijderd",
   "Added page permission": "Paginatoestemming toegevoegd",
-  "Removed page permission": "Paginatoestemming verwijderd"
+  "Removed page permission": "Paginatoestemming verwijderd",
+  "Add block below": "Blok eronder toevoegen",
+  "Transform to": "Omzetten naar",
+  "Bullet list": "Lijst met opsommingstekens",
+  "Numbered list": "Genummerde lijst",
+  "To-do list": "Takenlijst",
+  "Code block": "Codeblok",
+  "Caption": "Bijschrift",
+  "Replace image": "Afbeelding vervangen",
+  "Add a caption...": "Bijschrift toevoegen...",
+  "Float left": "Links laten zweven",
+  "Float right": "Rechts laten zweven",
+  "Insert a table of contents block.": "Inhoudsopgaveblok invoegen.",
+  "Copy to clipboard": "Kopiëren naar klembord"
 }

@@ -701,5 +701,18 @@
   "Failed to update trash retention": "No se pudo actualizar la retención de la papelera.",
   "Removed page restriction": "Restricción de página eliminada",
   "Added page permission": "Permiso de página añadido",
-  "Removed page permission": "Permiso de página eliminado"
+  "Removed page permission": "Permiso de página eliminado",
+  "Add block below": "Agregar bloque debajo",
+  "Transform to": "Transformar a",
+  "Bullet list": "Lista con viñetas",
+  "Numbered list": "Lista numerada",
+  "To-do list": "Lista de tareas",
+  "Code block": "Bloque de código",
+  "Caption": "Leyenda",
+  "Replace image": "Reemplazar imagen",
+  "Add a caption...": "Agregar una leyenda...",
+  "Float left": "Flotar a la izquierda",
+  "Float right": "Flotar a la derecha",
+  "Insert a table of contents block.": "Insertar un bloque de índice.",
+  "Copy to clipboard": "Copiar al portapapeles"
 }

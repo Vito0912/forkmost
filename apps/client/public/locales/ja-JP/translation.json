@@ -693,5 +693,18 @@
   "Failed to update trash retention": "ゴミ箱保持期間の更新に失敗しました",
   "Removed page restriction": "ページの制限を解除しました",
   "Added page permission": "ページの権限を追加しました",
-  "Removed page permission": "ページの権限を削除しました"
+  "Removed page permission": "ページの権限を削除しました",
+  "Add block below": "下にブロックを追加",
+  "Transform to": "変換",
+  "Bullet list": "箇条書きリスト",
+  "Numbered list": "番号付きリスト",
+  "To-do list": "To-doリスト",
+  "Code block": "コードブロック",
+  "Caption": "キャプション",
+  "Replace image": "画像を置き換える",
+  "Add a caption...": "キャプションを追加...",
+  "Float left": "左に回り込む",
+  "Float right": "右に回り込む",
+  "Insert a table of contents block.": "目次ブロックを挿入",
+  "Copy to clipboard": "クリップボードにコピー"
 }

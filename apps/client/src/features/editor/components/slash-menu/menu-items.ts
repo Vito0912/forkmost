@@ -59,6 +59,7 @@ import {
   YoutubeIcon,
 } from "@/components/icons";
 import { uploadAudioAction } from "@/features/editor/components/audio/upload-audio-action.ts";
+import i18n from "@/i18n.ts";
 
 const CommandGroups: SlashMenuGroupedItemsType = {
   basic: [
@@ -522,8 +523,8 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       },
     },
     {
-      title: "Table of contents",
-      description: "Insert a table of contents block.",
+      title: i18n.t("Table of contents"),
+      description: i18n.t("Insert a table of contents block."),
       searchTerms: ["toc", "table of contents", "outline", "headings", "navigation"],
       icon: IconListTree,
       command: ({ editor, range }: CommandProps) => {
