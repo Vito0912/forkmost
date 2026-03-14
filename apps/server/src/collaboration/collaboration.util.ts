@@ -33,7 +33,6 @@ import {
   Embed,
   Mention,
   Subpages,
-  TypstBlock,
   ColumnContainer,
   ColumnLayoutColumn,
   Columns,
@@ -105,7 +104,6 @@ export const tiptapExtensions = [
   Columns,
   Column,
   Subpages,
-  TypstBlock,
   Status,
 ] as any;
 

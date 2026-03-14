@@ -56,7 +56,6 @@ import {
 import LinkMenu from "@/features/editor/components/link/link-menu.tsx";
 import ExcalidrawMenu from "./components/excalidraw/excalidraw-menu";
 import DrawioMenu from "./components/drawio/drawio-menu";
-import TypstMenu from "./components/typst/typst-menu";
 import { useCollabToken } from "@/features/auth/queries/auth-query.tsx";
 import SearchAndReplaceDialog from "@/features/editor/components/search-and-replace/search-and-replace-dialog.tsx";
 import { useDebouncedCallback, useDocumentVisibility } from "@mantine/hooks";
@@ -435,9 +434,7 @@ export default function PageEditor({
             <SubpagesMenu editor={editor} />
             <ExcalidrawMenu editor={editor} />
             <DrawioMenu editor={editor} />
-            <TypstMenu editor={editor} />
             <ColumnsMenu editor={editor} />
-            <TypstMenu editor={editor} />
             <LinkMenu editor={editor} appendTo={menuContainerRef} />
             <DragContextMenu editor={editor} />
           </div>

@@ -278,15 +278,6 @@ importers:
       '@mantine/spotlight':
         specifier: ^8.3.14
         version: 8.3.14(@mantine/core@8.3.14(@mantine/hooks@8.3.14(react@18.3.1))(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@8.3.14(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@myriaddreamin/typst-ts-renderer':
-        specifier: ^0.6.0
-        version: 0.6.0
-      '@myriaddreamin/typst-ts-web-compiler':
-        specifier: ^0.6.0
-        version: 0.6.0
-      '@myriaddreamin/typst.ts':
-        specifier: ^0.6.0
-        version: 0.6.0(@myriaddreamin/typst-ts-renderer@0.6.0)(@myriaddreamin/typst-ts-web-compiler@0.6.0)
       '@tabler/icons-react':
         specifier: ^3.36.1
         version: 3.36.1(react@18.3.1)
@@ -2710,23 +2701,6 @@ packages:
     resolution: {integrity: sha512-O+6Gs8UeDbyFpbSh2CPEz/UOrrdWPTBYNblZK5CxxLisYt4kGX3Sc+czffFonyjiGSq3jWLwJS/CCJc7tBr4sQ==}
     cpu: [x64]
     os: [win32]
-
-  '@myriaddreamin/typst-ts-renderer@0.6.0':
-    resolution: {integrity: sha512-56Mids4E5Ob6LeEeXDedvmsVnEWnLmc1qeUOeUSruL/zI3S9QXleF/c3Os1FXwJmLuCFbWTEIq8Quh2cXlnxKw==}
-
-  '@myriaddreamin/typst-ts-web-compiler@0.6.0':
-    resolution: {integrity: sha512-P/eIJ5RnfElj0NYzn5PI296t/IwWtgqUyyTMi5Jm5X3V5kZfskkH+LI7mSQe8tEyxwgCvxbxvFe5adinA3K8Gg==}
-
-  '@myriaddreamin/typst.ts@0.6.0':
-    resolution: {integrity: sha512-IUpetG0NyF2H6eXRm4j+NsbanJHIvyrffHEijqYb6q128sLWQgT1FYJS+h7dtjXmrBEfnIl1mI80DyfDR6kB/w==}
-    peerDependencies:
-      '@myriaddreamin/typst-ts-renderer': ^0.6.0
-      '@myriaddreamin/typst-ts-web-compiler': ^0.6.0
-    peerDependenciesMeta:
-      '@myriaddreamin/typst-ts-renderer':
-        optional: true
-      '@myriaddreamin/typst-ts-web-compiler':
-        optional: true
 
   '@napi-rs/canvas-android-arm64@0.1.82':
     resolution: {integrity: sha512-bvZhN0iI54ouaQOrgJV96H2q7J3ZoufnHf4E1fUaERwW29Rz4rgicohnAg4venwBJZYjGl5Yl3CGmlAl1LZowQ==}
@@ -7349,9 +7323,6 @@ packages:
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
-
-  idb@7.1.1:
-    resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -13206,17 +13177,6 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.2':
     optional: true
 
-  '@myriaddreamin/typst-ts-renderer@0.6.0': {}
-
-  '@myriaddreamin/typst-ts-web-compiler@0.6.0': {}
-
-  '@myriaddreamin/typst.ts@0.6.0(@myriaddreamin/typst-ts-renderer@0.6.0)(@myriaddreamin/typst-ts-web-compiler@0.6.0)':
-    dependencies:
-      idb: 7.1.1
-    optionalDependencies:
-      '@myriaddreamin/typst-ts-renderer': 0.6.0
-      '@myriaddreamin/typst-ts-web-compiler': 0.6.0
-
   '@napi-rs/canvas-android-arm64@0.1.82':
     optional: true
 
@@ -18338,8 +18298,6 @@ snapshots:
   iconv-lite@0.7.2:
     dependencies:
       safer-buffer: 2.1.2
-
-  idb@7.1.1: {}
 
   ieee754@1.2.1: {}
 
