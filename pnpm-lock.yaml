@@ -76,6 +76,9 @@ importers:
       '@tiptap/extension-code-block':
         specifier: 3.17.1
         version: 3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)
+      '@tiptap/extension-code-block-lowlight':
+        specifier: ^3.20.1
+        version: 3.20.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/extension-code-block@3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)(highlight.js@11.11.1)(lowlight@3.3.0)
       '@tiptap/extension-collaboration':
         specifier: 3.17.1
         version: 3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)(@tiptap/y-tiptap@3.0.2(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.40.0)(y-protocols@1.0.6(yjs@13.6.29))(yjs@13.6.29))(yjs@13.6.29)
@@ -4581,6 +4584,15 @@ packages:
     resolution: {integrity: sha512-2zw17XHruOJQK7ntLVq0PmOLajFhvQ+U4/qTfJnV3VOsHkm+2GPAksFe7I7+X0XmSmDru0pcT339Yywx/6Aykw==}
     peerDependencies:
       '@tiptap/extension-list': 3.17.1
+
+  '@tiptap/extension-code-block-lowlight@3.20.1':
+    resolution: {integrity: sha512-QJXZGN43HArGNl5HeiPF1fXZZs6FWJwG3wTr9v+OwsM8EX3ixyblIoeY0/nmFBlQqci49ZA/KfCqVwfGNlRj5A==}
+    peerDependencies:
+      '@tiptap/core': 3.17.1
+      '@tiptap/extension-code-block': ^3.20.1
+      '@tiptap/pm': 3.17.1
+      highlight.js: ^11
+      lowlight: ^2 || ^3
 
   '@tiptap/extension-code-block@3.17.1':
     resolution: {integrity: sha512-h4i+Y/cN7nMi0Tmlp6V1w4dI7NTqrUFSr1W/vMqnq4vn+c6jvm35KubKU5ry/1qQp8KfndDA02BtVQiMx6DmpA==}
@@ -15153,6 +15165,14 @@ snapshots:
   '@tiptap/extension-bullet-list@3.17.1(@tiptap/extension-list@3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1))':
     dependencies:
       '@tiptap/extension-list': 3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)
+
+  '@tiptap/extension-code-block-lowlight@3.20.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/extension-code-block@3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)(highlight.js@11.11.1)(lowlight@3.3.0)':
+    dependencies:
+      '@tiptap/core': 3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1)
+      '@tiptap/extension-code-block': 3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)
+      '@tiptap/pm': 3.17.1
+      highlight.js: 11.11.1
+      lowlight: 3.3.0
 
   '@tiptap/extension-code-block@3.17.1(@tiptap/core@3.17.1(patch_hash=efe36d923d71b90e115d2d468ea1ddaf04a78c2e43c811a1a4b667989c39ea00)(@tiptap/pm@3.17.1))(@tiptap/pm@3.17.1)':
     dependencies:
