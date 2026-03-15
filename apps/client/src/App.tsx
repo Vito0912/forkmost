@@ -6,21 +6,21 @@ import Page from "@/pages/page/page";
 import AccountSettings from "@/pages/settings/account/account-settings";
 import WorkspaceMembers from "@/pages/settings/workspace/workspace-members";
 import WorkspaceSettings from "@/pages/settings/workspace/workspace-settings";
+import AiMcpSettings from "@/pages/settings/workspace/ai-mcp-settings";
 import Groups from "@/pages/settings/group/groups";
 import GroupInfo from "./pages/settings/group/group-info";
 import Spaces from "@/pages/settings/space/spaces.tsx";
 import { Error404 } from "@/components/ui/error-404.tsx";
 import AccountPreferences from "@/pages/settings/account/account-preferences.tsx";
+import ApiKeys from "@/pages/settings/account/api-keys";
 import SpaceHome from "@/pages/space/space-home.tsx";
 import PageRedirect from "@/pages/page/page-redirect.tsx";
 import Layout from "@/components/layouts/global/layout.tsx";
-import { ErrorBoundary } from "react-error-boundary";
 import InviteSignup from "@/pages/auth/invite-signup.tsx";
 import ForgotPassword from "@/pages/auth/forgot-password.tsx";
 import PasswordReset from "./pages/auth/password-reset";
 import OidcCallbackPage from "@/pages/auth/oidc-callback.tsx";
 import { isCloud } from "@/lib/config.ts";
-import { useTranslation } from "react-i18next";
 import SharedPage from "@/pages/share/shared-page.tsx";
 import Shares from "@/pages/settings/shares/shares.tsx";
 import ShareLayout from "@/features/share/components/share-layout.tsx";
@@ -30,9 +30,9 @@ import SpaceGraph from "./pages/space/space-graph";
 import OidcSettingsPage from "@/pages/settings/oidc.tsx";
 import SpaceTrash from "@/pages/space/space-trash.tsx";
 import SpacesPage from "@/pages/spaces/spaces.tsx";
+import ApiManagementSettings from "@/pages/settings/workspace/api-management.tsx";
 
 export default function App() {
-  const { t } = useTranslation();
   useTrackOrigin();
 
   return (
@@ -73,13 +73,7 @@ export default function App() {
           <Route path={"/s/:spaceSlug/trash"} element={<SpaceTrash />} />
           <Route
             path={"/s/:spaceSlug/p/:pageSlug"}
-            element={
-              <ErrorBoundary
-                fallback={<>{t("Failed to load page. An error occurred.")}</>}
-              >
-                <Page />
-              </ErrorBoundary>
-            }
+            element={<Page />}
           />
 
           <Route path={"/settings"}>
@@ -88,13 +82,16 @@ export default function App() {
               path={"account/preferences"}
               element={<AccountPreferences />}
             />
+            <Route path={"account/api-keys"} element={<ApiKeys />} />
             <Route path={"workspace"} element={<WorkspaceSettings />} />
+            <Route path={"api-keys"} element={<ApiManagementSettings />} />
+            <Route path={"ai"} element={<AiMcpSettings />} />
             <Route path={"members"} element={<WorkspaceMembers />} />
             <Route path={"groups"} element={<Groups />} />
             <Route path={"groups/:groupId"} element={<GroupInfo />} />
             <Route path={"spaces"} element={<Spaces />} />
             <Route path={"sharing"} element={<Shares />} />
-            <Route path={"oidc"} element={<OidcSettingsPage />} />
+            <Route path={"security"} element={<OidcSettingsPage />} />
           </Route>
         </Route>
 

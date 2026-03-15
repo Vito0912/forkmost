@@ -55,7 +55,7 @@ export default function WorkspaceIcon() {
         fallbackName={workspace?.name}
         type={AvatarIconType.WORKSPACE_ICON}
         size="60px"
-        radius="sm"
+        radius="xl"
         variant="filled"
         onUpload={handleIconUpload}
         onRemove={handleIconRemove}

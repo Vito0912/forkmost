@@ -77,7 +77,6 @@ export default function SpaceDetails({ spaceId, readOnly }: SpaceDetailsProps) {
               fallbackName={space.name}
               size={"60px"}
               variant="filled"
-
               type={AvatarIconType.SPACE_ICON}
               onUpload={handleIconUpload}
               onRemove={handleIconRemove}

@@ -6,7 +6,7 @@ export interface ColumnOptions {
 }
 
 export const Column = Node.create<ColumnOptions>({
-  name: "column",
+  name: "columnLayoutColumn",
   group: 'columnItem',
   content: "block+",
   draggable: true,
@@ -47,6 +47,11 @@ export const Column = Node.create<ColumnOptions>({
     return [
       {
         tag: `div[data-type="${this.name}"]`,
+      },
+      {
+        // Backwards compatibility: old documents used data-type="column" for column-layout columns.
+        // Distinguish from upstream's column by checking for the data-col-xs attribute.
+        tag: `div[data-type="column"][data-col-xs]`,
       },
     ];
   },

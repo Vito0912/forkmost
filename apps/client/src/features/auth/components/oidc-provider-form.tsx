@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Stack,
   TextInput,
@@ -11,9 +11,9 @@ import {
   Alert,
   PasswordInput,
 } from "@mantine/core";
-import { useForm, zodResolver } from "@mantine/form";
+import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import * as z from "zod";
+import * as z from "zod/v4";
 import {
   useOidcProviderQuery,
   useCreateOidcProviderMutation,
@@ -25,42 +25,67 @@ import { IconInfoCircle, IconTrash } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
 import { useWorkspacePublicDataQuery } from "@/features/workspace/queries/workspace-query";
 
-const createSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  oidcIssuer: z.string().url({ message: "Valid issuer URL is required" }),
-  oidcClientId: z.string().min(1, { message: "Client ID is required" }),
-  oidcClientSecret: z.string().min(1, { message: "Client secret is required" }),
-  scope: z.string().optional(),
-  allowSignup: z.boolean().optional(),
-  isEnabled: z.boolean().optional(),
-  enforceSso: z.boolean().optional(),
-  oidcAllowedGroups: z.string().optional(),
-  oidcAvatarAttribute: z.string().optional(),
-});
-
-const updateSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  oidcIssuer: z.string().url({ message: "Valid issuer URL is required" }),
-  oidcClientId: z.string().min(1, { message: "Client ID is required" }),
-  oidcClientSecret: z.string().optional(),
-  scope: z.string().optional().default("openid email profile"),
-  allowSignup: z.boolean().optional(),
-  isEnabled: z.boolean().optional(),
-  enforceSso: z.boolean().optional(),
-  oidcAllowedGroups: z.string().optional(),
-  oidcAvatarAttribute: z.string().optional(),
-});
+type OidcFormValues = ICreateOidcProvider & Record<string, unknown>;
 
 export function OidcProviderForm() {
   const { t } = useTranslation();
+  const createSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, { message: t("Name is required") }),
+        oidcIssuer: z.string().url({ message: t("Valid issuer URL is required") }),
+        oidcClientId: z.string().min(1, { message: t("Client ID is required") }),
+        oidcClientSecret: z.string().min(1, { message: t("Client secret is required") }),
+        scope: z.string().optional(),
+        allowSignup: z.boolean().optional(),
+        isEnabled: z.boolean().optional(),
+        enforceSso: z.boolean().optional(),
+        oidcAllowedGroups: z.string().optional(),
+        oidcAvatarAttribute: z.string().optional(),
+      }),
+    [t],
+  );
+  const updateSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, { message: t("Name is required") }),
+        oidcIssuer: z.string().url({ message: t("Valid issuer URL is required") }),
+        oidcClientId: z.string().min(1, { message: t("Client ID is required") }),
+        oidcClientSecret: z.string().optional(),
+        scope: z.string().optional().default("openid email profile"),
+        allowSignup: z.boolean().optional(),
+        isEnabled: z.boolean().optional(),
+        enforceSso: z.boolean().optional(),
+        oidcAllowedGroups: z.string().optional(),
+        oidcAvatarAttribute: z.string().optional(),
+      }),
+    [t],
+  );
   const { data: provider, isLoading } = useOidcProviderQuery();
   const { data: workspaceData } = useWorkspacePublicDataQuery();
   const createMutation = useCreateOidcProviderMutation();
   const updateMutation = useUpdateOidcProviderMutation();
   const deleteMutation = useDeleteOidcProviderMutation();
 
-  const form = useForm<ICreateOidcProvider>({
-    validate: zodResolver(provider ? updateSchema : createSchema),
+  const validateOidcForm = (values: OidcFormValues) => {
+    const schema = provider ? updateSchema : createSchema;
+    const parsed = schema.safeParse(values);
+
+    if (parsed.success) {
+      return {};
+    }
+
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    return Object.fromEntries(
+      Object.entries(fieldErrors).map(([field, errors]) => [
+        field,
+        errors?.[0] ?? null,
+      ]),
+    );
+  };
+
+  const form = useForm<OidcFormValues>({
+    validate: validateOidcForm,
     initialValues: {
       name: "",
       oidcIssuer: "",
@@ -93,7 +118,7 @@ export function OidcProviderForm() {
     }
   }, [provider, workspaceData?.enforceSso]);
 
-  const handleSubmit = async (values: ICreateOidcProvider) => {
+  const handleSubmit = async (values: OidcFormValues) => {
     try {
       if (provider) {
         await updateMutation.mutateAsync({ id: provider.id, data: values });

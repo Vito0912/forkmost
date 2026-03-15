@@ -14,7 +14,10 @@ import SharePasswordModal from "@/features/share/components/share-password-modal
 import { useQueryClient } from "@tanstack/react-query";
 import { useAnchorScroll } from "@/features/editor/components/heading/use-anchor-scroll";
 import { useAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { shareFullPageWidthAtom } from "@/features/share/atoms/sidebar-atom";
+import { sharedTreeDataAtom } from "@/features/share/atoms/shared-page-atom.ts";
+import { isPageInTree } from "@/features/share/utils.ts";
 
 export default function SharedPage() {
   const { t } = useTranslation();
@@ -34,13 +37,22 @@ export default function SharedPage() {
     password: sessionPassword || undefined,
   });
 
+  const sharedTreeData = useAtomValue(sharedTreeDataAtom);
+
   useEffect(() => {
     if (shareId && data) {
       if (data.share.key !== shareId) {
-        navigate(`/share/${data.share.key}/p/${pageSlug}`, { replace: true });
+
+        // Check if the current page is part of the active sharing tree (sidebar) - If we are part of it, we will not redirect, keeping the sidebar visible.
+        const isPartOfTree =
+          sharedTreeData && isPageInTree(sharedTreeData, data.page.slugId);
+
+        if (!isPartOfTree) {
+          navigate(`/share/${data.share.key}/p/${pageSlug}`, { replace: true });
+        }
       }
     }
-  }, [shareId, data]);
+  }, [shareId, data, sharedTreeData]);
 
   useEffect(() => {
     if (isError && error) {

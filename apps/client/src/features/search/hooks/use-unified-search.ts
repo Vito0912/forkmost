@@ -8,8 +8,6 @@ import {
   IPageSearch,
   IPageSearchParams,
 } from "@/features/search/types/search.types";
-import { isCloud } from "@/lib/config";
-
 export type UnifiedSearchResult = IPageSearch | IAttachmentSearch;
 
 export interface UseUnifiedSearchParams extends IPageSearchParams {
@@ -21,8 +19,7 @@ export function useUnifiedSearch(
   enabled: boolean = true,
 ): UseQueryResult<UnifiedSearchResult[], Error> {
 
-  const isAttachmentSearch =
-    params.contentType === "attachment" && (isCloud());
+  const isAttachmentSearch = params.contentType === "attachment";
   const searchType = isAttachmentSearch ? "attachment" : "page";
 
   return useQuery({

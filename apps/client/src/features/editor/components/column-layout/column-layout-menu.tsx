@@ -1,10 +1,5 @@
-import {
-  BubbleMenu as BaseBubbleMenu,
-  findParentNode,
-  posToDOMRect,
-} from "@tiptap/react";
+import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
 import React, { useCallback, useState } from "react";
-import { Node as PMNode } from "prosemirror-model";
 import {
   EditorMenuProps,
   ShouldShowProps,
@@ -37,7 +32,7 @@ export const ColumnLayoutMenu = React.memo(
           return false;
         }
 
-        return editor.isActive("column");
+        return editor.isActive("columnLayoutColumn");
       },
       [editor]
     );
@@ -79,31 +74,14 @@ export const ColumnLayoutMenu = React.memo(
       setPopoverOpened(true);
     };
 
-    const getReferenceClientRect = useCallback(() => {
-      const { selection } = editor.state;
-      const predicate = (node: PMNode) => node.type.name === "column";
-      const parent = findParentNode(predicate)(selection);
-
-      if (parent) {
-        const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement;
-        return dom.getBoundingClientRect();
-      }
-
-      return posToDOMRect(editor.view, selection.from, selection.to);
-    }, [editor]);
-
     return (
       <BaseBubbleMenu
         editor={editor}
         pluginKey="column-layout-menu"
         updateDelay={0}
-        tippyOptions={{
-          getReferenceClientRect,
+        options={{
           placement: "top",
-          zIndex: 99,
-          popperOptions: {
-            modifiers: [{ name: "flip", enabled: false }],
-          },
+          offset: 8,
         }}
         shouldShow={shouldShow}
       >

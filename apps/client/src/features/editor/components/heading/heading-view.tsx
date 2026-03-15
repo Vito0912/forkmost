@@ -40,7 +40,7 @@ export default function HeadingView({ node }: NodeViewProps) {
       onMouseLeave={() => setShowAnchorButton(false)}
       style={{ position: "relative" }}
     >
-      <NodeViewContent as="span" />
+      <NodeViewContent as="div" />
       {showAnchorButton && node.textContent && (
         <div className={classes.anchorIconContainer}>
           <CopyButton value={url} timeout={2000}>

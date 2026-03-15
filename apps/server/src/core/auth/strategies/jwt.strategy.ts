@@ -6,7 +6,7 @@ import { JwtApiKeyPayload, JwtPayload, JwtType } from '../dto/jwt-payload';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
 import { FastifyRequest } from 'fastify';
-import { extractBearerTokenFromHeader } from '../../../common/helpers';
+import { extractBearerTokenFromHeader, isUserDisabled } from '../../../common/helpers';
 import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
@@ -53,7 +53,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
     const user = await this.userRepo.findById(payload.sub, payload.workspaceId);
 
-    if (!user || user.deactivatedAt || user.deletedAt) {
+    if (!user || isUserDisabled(user)) {
       throw new UnauthorizedException();
     }
 
@@ -61,28 +61,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   private async validateApiKey(req: any, payload: JwtApiKeyPayload) {
-    let ApiKeyModule: any;
-    let isApiKeyModuleReady = false;
-
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      ApiKeyModule = require('./../../../ee/api-key/api-key.service');
-      isApiKeyModuleReady = true;
+      const { ApiKeyService } = require('./../../api-key/api-key.service');
+      const apiKeyService = this.moduleRef.get(ApiKeyService, { strict: false });
+      return apiKeyService.validateApiKey(payload);
     } catch (err) {
-      this.logger.debug(
-        'API Key module requested but enterprise module not bundled in this build',
-      );
-      isApiKeyModuleReady = false;
+      this.logger.debug('API Key validation failed', err);
+      throw new UnauthorizedException('API Key validation failed');
     }
-
-    if (isApiKeyModuleReady) {
-      const ApiKeyService = this.moduleRef.get(ApiKeyModule.ApiKeyService, {
-        strict: false,
-      });
-
-      return ApiKeyService.validateApiKey(payload);
-    }
-
-    throw new UnauthorizedException('Enterprise API Key module missing');
   }
 }

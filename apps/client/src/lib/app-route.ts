@@ -18,17 +18,34 @@ const APP_ROUTE = {
     ACCOUNT: {
       PROFILE: "/settings/account/profile",
       PREFERENCES: "/settings/account/preferences",
+      API_KEYS: "/settings/account/api-keys",
     },
     WORKSPACE: {
       GENERAL: "/settings/workspace",
       MEMBERS: "/settings/members",
       GROUPS: "/settings/groups",
       SPACES: "/settings/spaces",
+      AI: "/settings/ai",
       BILLING: "/settings/billing",
       SECURITY: "/settings/security",
-      OIDC: "/settings/oidc",
     },
   },
 };
+
+export function getPostLoginRedirect(): string {
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get("redirect");
+  if (redirect) {
+    try {
+      const resolved = new URL(redirect, window.location.origin);
+      if (resolved.origin === window.location.origin) {
+        return resolved.pathname + resolved.search + resolved.hash;
+      }
+    } catch {
+      // malformed URL, fall through to default
+    }
+  }
+  return APP_ROUTE.HOME;
+}
 
 export default APP_ROUTE;

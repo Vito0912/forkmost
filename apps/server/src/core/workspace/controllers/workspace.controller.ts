@@ -35,7 +35,7 @@ import { EnvironmentService } from '../../../integrations/environment/environmen
 import { CheckHostnameDto } from '../dto/check-hostname.dto';
 import { RemoveWorkspaceUserDto } from '../dto/remove-workspace-user.dto';
 import { ChangeWorkspaceMemberPasswordDto } from '../../auth/dto/change-password.dto';
-import { PaginationResult } from '@docmost/db/pagination/pagination';
+import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination';
 
 @UseGuards(JwtAuthGuard)
 @Controller('workspace')
@@ -105,22 +105,28 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    const users: PaginationResult<User> = await this.workspaceService.getWorkspaceUsers(user, workspace.id, pagination)
+    const users: CursorPaginationResult<User> =
+      await this.workspaceService.getWorkspaceUsers(user, workspace.id, pagination);
 
-    return users.meta.page == 1 && users.items.length === 0 ? {
-      items: [user],
-      meta: {
-        page: 1,
-        perPage: pagination.limit,
-        totalItems: 0,
-        totalPages: 0,
-      },
-    } : users;
+    const isFirstCursorPage = !pagination.cursor && !pagination.beforeCursor;
+    return isFirstCursorPage && users.items.length === 0
+      ? {
+          items: [user],
+          meta: {
+            limit: pagination.limit,
+            hasNextPage: false,
+            hasPrevPage: false,
+            nextCursor: null,
+            prevCursor: null,
+          },
+        }
+      : users;
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('members/deactivate')
   async deactivateWorkspaceMember(
+    @Body() dto: RemoveWorkspaceUserDto,
     @AuthUser() user: User,
     @AuthWorkspace() workspace: Workspace,
   ) {
@@ -130,6 +136,23 @@ export class WorkspaceController {
     ) {
       throw new ForbiddenException();
     }
+    await this.workspaceService.deactivateUser(user, dto.userId, workspace.id);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('members/activate')
+  async activateWorkspaceMember(
+    @Body() dto: RemoveWorkspaceUserDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const ability = this.workspaceAbility.createForUser(user, workspace);
+    if (
+      ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.Member)
+    ) {
+      throw new ForbiddenException();
+    }
+    await this.workspaceService.activateUser(user, dto.userId, workspace.id);
   }
 
   @HttpCode(HttpStatus.OK)

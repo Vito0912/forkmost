@@ -2,7 +2,7 @@ import { Editor, findParentNode } from "@tiptap/core";
 import { Node as PMNode } from "prosemirror-model";
 
 export const newColumnContent = {
-  type: "column",
+  type: "columnLayoutColumn",
   content: [
     {
       type: "paragraph",
@@ -20,7 +20,7 @@ export function newColumnLayoutContent(...texts: string[]) {
   return {
     type: "columnContainer",
     content: texts.map((text) => ({
-      type: "column",
+      type: "columnLayoutColumn",
       content: [
         {
           type: "paragraph",

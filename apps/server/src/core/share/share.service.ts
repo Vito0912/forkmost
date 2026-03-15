@@ -21,6 +21,7 @@ import {
 import { Node } from '@tiptap/pm/model';
 import { SharePasswordRequiredException } from './exceptions/share-password-required.exception';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 import { updateAttachmentAttr } from './share.util';
 import { Page } from '@docmost/db/types/entity.types';
 import { validate as isValidUUID } from 'uuid';
@@ -33,6 +34,7 @@ export class ShareService {
   constructor(
     private readonly shareRepo: ShareRepo,
     private readonly pageRepo: PageRepo,
+    private readonly pagePermissionRepo: PagePermissionRepo,
     @InjectKysely() private readonly db: KyselyDB,
     private readonly tokenService: TokenService,
   ) {}
@@ -43,12 +45,20 @@ export class ShareService {
       throw new NotFoundException('Share not found');
     }
 
-    if (share.includeSubPages) {
-      const pageList = await this.pageRepo.getPageAndDescendants(share.pageId, {
-        includeContent: false,
-      });
+    const isRestricted =
+      await this.pagePermissionRepo.hasRestrictedAncestor(share.pageId);
+    if (isRestricted) {
+      throw new NotFoundException('Share not found');
+    }
 
-      return { share, pageTree: pageList };
+    if (share.includeSubPages) {
+      const pageTree =
+        await this.pageRepo.getPageAndDescendantsExcludingRestricted(
+          share.pageId,
+          { includeContent: false },
+        );
+
+      return { share, pageTree };
     } else {
       return { share, pageTree: [] };
     }
@@ -160,6 +170,13 @@ export class ShareService {
       throw new NotFoundException('Shared page not found');
     }
 
+    // Block access to restricted pages
+    const isRestricted =
+      await this.pagePermissionRepo.hasRestrictedAncestor(page.id);
+    if (isRestricted) {
+      throw new NotFoundException('Shared page not found');
+    }
+
     page.content = await this.updatePublicAttachments(page);
 
     return { page, share };
@@ -171,82 +188,85 @@ export class ShareService {
       .withRecursive('page_hierarchy', (cte) =>
         cte
           .selectFrom('pages')
+          .leftJoin('shares', 'shares.pageId', 'pages.id')
           .select([
-            'id',
-            'slugId',
+            'pages.id',
+            'pages.slugId',
             'pages.title',
             'pages.icon',
-            'parentPageId',
+            'pages.parentPageId',
             sql`0`.as('level'),
+            'shares.id as shareId',
+            'shares.key as shareKey',
+            'shares.includeSubPages',
+            'shares.searchIndexing',
+            'shares.creatorId',
+            'shares.spaceId',
+            'shares.workspaceId',
+            'shares.createdAt',
+            'shares.passwordHash',
           ])
-          .where(isValidUUID(pageId) ? 'id' : 'slugId', '=', pageId)
-          .where('deletedAt', 'is', null)
-          .unionAll((union) =>
-            union
-              .selectFrom('pages as p')
-              .select([
-                'p.id',
-                'p.slugId',
-                'p.title',
-                'p.icon',
-                'p.parentPageId',
-                // Increase the level by 1 for each ancestor.
-                sql`ph.level + 1`.as('level'),
-              ])
-              .innerJoin('page_hierarchy as ph', 'ph.parentPageId', 'p.id')
-              .where('p.deletedAt', 'is', null),
+          .where(isValidUUID(pageId) ? 'pages.id' : 'pages.slugId', '=', pageId)
+          .where('pages.deletedAt', 'is', null)
+          .unionAll(
+            (union) =>
+              union
+                .selectFrom('pages as p')
+                .innerJoin('page_hierarchy as ph', 'ph.parentPageId', 'p.id')
+                .leftJoin('shares as s', 's.pageId', 'p.id')
+                .select([
+                  'p.id',
+                  'p.slugId',
+                  'p.title',
+                  'p.icon',
+                  'p.parentPageId',
+                  sql`ph.level + 1`.as('level'),
+                  's.id as shareId',
+                  's.key as shareKey',
+                  's.includeSubPages',
+                  's.searchIndexing',
+                  's.creatorId',
+                  's.spaceId',
+                  's.workspaceId',
+                  's.createdAt',
+                  's.passwordHash',
+                ])
+                .where('p.deletedAt', 'is', null)
+                .where(sql`ph.share_id`, 'is', null) // stop if share found
+                .where(sql`ph.level`, '<', sql`25`), // prevent loop
           ),
       )
       .selectFrom('page_hierarchy')
-      .leftJoin('shares', 'shares.pageId', 'page_hierarchy.id')
-      .select([
-        'page_hierarchy.id as sharedPageId',
-        'page_hierarchy.slugId as sharedPageSlugId',
-        'page_hierarchy.title as sharedPageTitle',
-        'page_hierarchy.icon as sharedPageIcon',
-        'page_hierarchy.level as level',
-        'shares.id',
-        'shares.key',
-        'shares.pageId',
-        'shares.includeSubPages',
-        'shares.searchIndexing',
-        'shares.passwordHash',
-        'shares.creatorId',
-        'shares.spaceId',
-        'shares.workspaceId',
-        'shares.createdAt',
-        'shares.updatedAt',
-      ])
-      .where('shares.id', 'is not', null)
-      .orderBy('page_hierarchy.level', 'asc')
+      .selectAll()
+      .where('shareId', 'is not', null)
+      .limit(1)
       .executeTakeFirst();
 
-    if (!share || share.workspaceId != workspaceId) {
+    if (!share || share.workspaceId !== workspaceId) {
       return undefined;
     }
 
-    if (share.level === 1 && !share.includeSubPages) {
-      // we can only show a page if its shared ancestor permits it
+    if ((share.level as number) > 0 && !share.includeSubPages) {
       return undefined;
     }
 
     return {
-      id: share.id,
-      key: share.key,
+      id: share.shareId,
+      key: share.shareKey,
       includeSubPages: share.includeSubPages,
       searchIndexing: share.searchIndexing,
       passwordHash: share.passwordHash,
-      pageId: share.pageId,
+      pageId: share.id,
       creatorId: share.creatorId,
       spaceId: share.spaceId,
       workspaceId: share.workspaceId,
       createdAt: share.createdAt,
       level: share.level,
       sharedPage: {
-        id: share.sharedPageId,
-        slugId: share.sharedPageSlugId,
-        title: share.sharedPageTitle,
-        icon: share.sharedPageIcon,
+        id: share.id,
+        slugId: share.slugId,
+        title: share.title,
+        icon: share.icon,
       },
     };
   }
@@ -310,6 +330,31 @@ export class ShareService {
     }
 
     return ancestor;
+  }
+
+  async isSharingAllowed(
+    workspaceId: string,
+    spaceId: string,
+  ): Promise<boolean> {
+    const result = await this.db
+      .selectFrom('workspaces')
+      .innerJoin('spaces', 'spaces.workspaceId', 'workspaces.id')
+      .select([
+        'workspaces.settings as workspaceSettings',
+        'spaces.settings as spaceSettings',
+      ])
+      .where('workspaces.id', '=', workspaceId)
+      .where('spaces.id', '=', spaceId)
+      .executeTakeFirst();
+
+    if (!result) return false;
+
+    const workspaceDisabled =
+      (result.workspaceSettings as any)?.sharing?.disabled === true;
+    const spaceDisabled =
+      (result.spaceSettings as any)?.sharing?.disabled === true;
+
+    return !workspaceDisabled && !spaceDisabled;
   }
 
   async updatePublicAttachments(page: Page): Promise<any> {

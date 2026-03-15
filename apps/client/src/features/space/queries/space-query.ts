@@ -1,5 +1,6 @@
 import {
   keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -11,7 +12,6 @@ import {
   IGraph,
   IRemoveSpaceMember,
   ISpace,
-  ISpaceMember,
 } from "@/features/space/types/space.types";
 import {
   addSpaceMember,
@@ -203,15 +203,19 @@ export function useDeleteSpaceMutation() {
   });
 }
 
-export function useSpaceMembersQuery(
+export function useSpaceMembersInfiniteQuery(
   spaceId: string,
-  params?: QueryParams,
-): UseQueryResult<IPagination<ISpaceMember>, Error> {
-  return useQuery({
-    queryKey: ["spaceMembers", spaceId, params],
-    queryFn: () => getSpaceMembers(spaceId, params),
+  query?: string,
+) {
+  return useInfiniteQuery({
+    queryKey: ["spaceMembers", spaceId, query],
+    queryFn: ({ pageParam }) =>
+      getSpaceMembers(spaceId, { cursor: pageParam, limit: 50, query }),
     enabled: !!spaceId,
     placeholderData: keepPreviousData,
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.nextCursor : undefined,
   });
 }
 

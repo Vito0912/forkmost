@@ -5,12 +5,12 @@ import {
   FileButton,
   Group,
   Text,
-  Tooltip,
 } from "@mantine/core";
 import {
   IconBrandNotion,
   IconCheck,
   IconFileCode,
+  IconFileTypeDocx,
   IconFileTypeZip,
   IconMarkdown,
   IconX,
@@ -26,13 +26,12 @@ import { buildTree } from "@/features/page/tree/utils";
 import { IPage } from "@/features/page/types/page.types.ts";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ConfluenceIcon } from "@/components/icons/confluence-icon.tsx";
-import { getFileImportSizeLimit, isCloud } from "@/lib/config.ts";
+import { getFileImportSizeLimit } from "@/lib/config.ts";
 import { formatBytes } from "@/lib";
-import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
 import { getFileTaskById } from "@/features/file-task/services/file-task-service.ts";
 import { queryClient } from "@/main.tsx";
 import { useQueryEmit } from "@/features/websocket/use-query-emit.ts";
+import bytes from "bytes";
 
 interface PageImportModalProps {
   spaceId: string;
@@ -80,20 +79,28 @@ interface ImportFormatSelection {
 function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
   const { t } = useTranslation();
   const [treeData, setTreeData] = useAtom(treeDataAtom);
-  const [workspace] = useAtom(workspaceAtom);
   const [fileTaskId, setFileTaskId] = useState<string | null>(null);
   const emit = useQueryEmit();
 
   const markdownFileRef = useRef<() => void>(null);
   const htmlFileRef = useRef<() => void>(null);
+  const docxFileRef = useRef<() => void>(null);
   const notionFileRef = useRef<() => void>(null);
-  const confluenceFileRef = useRef<() => void>(null);
   const zipFileRef = useRef<() => void>(null);
-
-  const canUseConfluence = isCloud() || workspace?.hasLicenseKey;
 
   const handleZipUpload = async (selectedFile: File, source: string) => {
     if (!selectedFile) {
+      return;
+    }
+
+    const maxSize = getFileImportSizeLimit();
+    if (selectedFile.size > maxSize) {
+      notifications.show({
+        color: "red",
+        message: t("File exceeds the {{limit}} import limit", {
+          limit: formatBytes(maxSize),
+        }),
+      });
       return;
     }
 
@@ -126,8 +133,6 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
       // Reset file input after successful upload
       if (source === "notion" && notionFileRef.current) {
         notionFileRef.current();
-      } else if (source === "confluence" && confluenceFileRef.current) {
-        confluenceFileRef.current();
       } else if (source === "generic" && zipFileRef.current) {
         zipFileRef.current();
       }
@@ -170,6 +175,10 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
 
           await queryClient.refetchQueries({
             queryKey: ["root-sidebar-pages", fileTask.spaceId],
+          });
+
+          await queryClient.invalidateQueries({
+            queryKey: ["recent-changes", fileTask.spaceId],
           });
 
           setTimeout(() => {
@@ -223,8 +232,23 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
     }, 3000);
   }, [fileTaskId]);
 
+  const maxSingleFileSize = bytes("20mb");
+
   const handleFileUpload = async (selectedFiles: File[]) => {
     if (!selectedFiles) {
+      return;
+    }
+
+    const oversizedFiles = selectedFiles.filter(
+      (f) => f.size > maxSingleFileSize,
+    );
+    if (oversizedFiles.length > 0) {
+      notifications.show({
+        color: "red",
+        message: t("File exceeds the {{limit}} import limit", {
+          limit: formatBytes(maxSingleFileSize),
+        }),
+      });
       return;
     }
 
@@ -261,6 +285,7 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
       // Reset file inputs after successful upload
       if (markdownFileRef.current) markdownFileRef.current();
       if (htmlFileRef.current) htmlFileRef.current();
+      if (docxFileRef.current) docxFileRef.current();
 
       const pageCountText =
         pageCount === 1 ? `1 ${t("page")}` : `${pageCount} ${t("pages")}`;
@@ -318,6 +343,24 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
         </FileButton>
 
         <FileButton
+          onChange={handleFileUpload}
+          accept=".docx"
+          multiple
+          resetRef={docxFileRef}
+        >
+          {(props) => (
+            <Button
+              justify="start"
+              variant="default"
+              leftSection={<IconFileTypeDocx size={18} />}
+              {...props}
+            >
+              Word (DOCX)
+            </Button>
+          )}
+        </FileButton>
+
+        <FileButton
           onChange={(file) => handleZipUpload(file, "notion")}
           accept="application/zip"
           resetRef={notionFileRef}
@@ -331,28 +374,6 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
             >
               Notion
             </Button>
-          )}
-        </FileButton>
-        <FileButton
-          onChange={(file) => handleZipUpload(file, "confluence")}
-          accept="application/zip"
-          resetRef={confluenceFileRef}
-        >
-          {(props) => (
-            <Tooltip
-              label={t("Available in enterprise edition")}
-              disabled={canUseConfluence}
-            >
-              <Button
-                disabled={!canUseConfluence}
-                justify="start"
-                variant="default"
-                leftSection={<ConfluenceIcon size={18} />}
-                {...props}
-              >
-                Confluence
-              </Button>
-            </Tooltip>
           )}
         </FileButton>
       </SimpleGrid>

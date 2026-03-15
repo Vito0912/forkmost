@@ -8,12 +8,10 @@ import {
   IconUsersGroup,
   IconSpaces,
   IconBrush,
-  IconCoin,
+  IconWorld,
   IconLock,
   IconKey,
-  IconWorld,
   IconSparkles,
-  IconShield,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import classes from "./settings.module.css";
@@ -40,6 +38,7 @@ interface DataItem {
   isCloud?: boolean;
   isEnterprise?: boolean;
   isAdmin?: boolean;
+  isOwner?: boolean;
   isSelfhosted?: boolean;
   showDisabledInNonEE?: boolean;
 }
@@ -59,6 +58,11 @@ const groupedData: DataGroup[] = [
         icon: IconBrush,
         path: "/settings/account/preferences",
       },
+      {
+        label: "API keys",
+        icon: IconKey,
+        path: "/settings/account/api-keys",
+      },
     ],
   },
   {
@@ -70,16 +74,23 @@ const groupedData: DataGroup[] = [
         icon: IconUsers,
         path: "/settings/members",
       },
+      {
+        label: "Security & SSO",
+        icon: IconLock,
+        path: "/settings/security",
+        isSelfhosted: true,
+        isAdmin: true,
+      },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
       { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
       { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
       {
-        label: "OIDC/SSO",
-        icon: IconShield,
-        path: "/settings/oidc",
-        isSelfhosted: true,
-        isAdmin: true
+        label: "API management",
+        icon: IconKey,
+        path: "/settings/api-keys",
+        isAdmin: true,
       },
+      { label: "AI settings", icon: IconSparkles, path: "/settings/ai", isAdmin: true },
     ],
   },
 ];
@@ -89,7 +100,7 @@ export default function SettingsSidebar() {
   const location = useLocation();
   const [active, setActive] = useState(location.pathname);
   const { goBack } = useSettingsNavigation();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isOwner } = useUserRole();
   const [workspace] = useAtom(workspaceAtom);
   const [mobileSidebarOpened] = useAtom(mobileSidebarAtom);
   const toggleMobileSidebar = useToggleSidebar(mobileSidebarAtom);
@@ -98,34 +109,36 @@ export default function SettingsSidebar() {
     setActive(location.pathname);
   }, [location.pathname]);
 
+  const hasRoleAccess = (item: DataItem) => {
+    if (item.isOwner) return isOwner;
+    if (item.isAdmin) return isAdmin;
+    return true;
+  };
+
   const canShowItem = (item: DataItem) => {
     if (item.showDisabledInNonEE && item.isEnterprise) {
-      // Check admin permission regardless of license
-      return item.isAdmin ? isAdmin : true;
+      if (item.isSelfhosted && isCloud()) return false;
+      return hasRoleAccess(item);
     }
 
     if (item.isCloud && item.isEnterprise) {
       if (!(isCloud() || workspace?.hasLicenseKey)) return false;
-      return item.isAdmin ? isAdmin : true;
+      return hasRoleAccess(item);
     }
 
     if (item.isCloud) {
-      return isCloud() ? (item.isAdmin ? isAdmin : true) : false;
+      return isCloud() ? hasRoleAccess(item) : false;
     }
 
     if (item.isSelfhosted) {
-      return !isCloud() ? (item.isAdmin ? isAdmin : true) : false;
+      return !isCloud() ? hasRoleAccess(item) : false;
     }
 
     if (item.isEnterprise) {
-      return workspace?.hasLicenseKey ? (item.isAdmin ? isAdmin : true) : false;
+      return workspace?.hasLicenseKey ? hasRoleAccess(item) : false;
     }
 
-    if (item.isAdmin) {
-      return isAdmin;
-    }
-
-    return true;
+    return hasRoleAccess(item);
   };
 
   const isItemDisabled = (item: DataItem) => {

@@ -182,8 +182,10 @@ export function TitleEditor({
 
   useEffect(() => {
     setTimeout(() => {
-      titleEditor?.commands.focus("end");
-    }, 500);
+      // guard against Cannot access view['hasFocus'] error
+      if (!titleEditor?.isInitialized) return;
+      titleEditor?.commands?.focus("end");
+    }, 300);
   }, [titleEditor]);
 
   useEffect(() => {
@@ -194,11 +196,14 @@ export function TitleEditor({
   }, [pageId]);
 
   useEffect(() => {
-    // honor user default page edit mode preference
-    if (userPageEditMode && titleEditor && editable) {
-      if (userPageEditMode === PageEditMode.Edit) {
-        titleEditor.setEditable(true);
-      } else if (userPageEditMode === PageEditMode.Read) {
+    if (titleEditor) {
+      if (userPageEditMode && editable) {
+        if (userPageEditMode === PageEditMode.Edit) {
+          titleEditor.setEditable(true);
+        } else if (userPageEditMode === PageEditMode.Read) {
+          titleEditor.setEditable(false);
+        }
+      } else {
         titleEditor.setEditable(false);
       }
     }
@@ -264,16 +269,18 @@ export function TitleEditor({
   }
 
   return (
-    <EditorContent
-      editor={titleEditor}
-      onKeyDown={(event) => {
-        // First handle the search hotkey
-        getHotkeyHandler([["mod+F", openSearchDialog]])(event);
+    <div className="page-title">
+      <EditorContent
+        editor={titleEditor}
+        onKeyDown={(event) => {
+          // First handle the search hotkey
+          getHotkeyHandler([["mod+F", openSearchDialog]])(event);
 
-        // Then handle other key events
-        handleTitleKeyDown(event);
-      }}
-      spellCheck={userSpellcheckPref}
-    />
+          // Then handle other key events
+          handleTitleKeyDown(event);
+        }}
+        spellCheck={userSpellcheckPref}
+      />
+    </div>
   );
 }

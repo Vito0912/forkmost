@@ -5,13 +5,13 @@ import {
   useUpdateGroupMutation,
 } from "@/features/group/queries/group-query.ts";
 import { useForm } from "@mantine/form";
-import * as z from "zod";
+import { z } from "zod/v4";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { zodResolver } from "mantine-form-zod-resolver";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 
 const formSchema = z.object({
-  name: z.string().min(2).max(50),
+  name: z.string().min(2).max(100),
   description: z.string().max(500),
 });
 
@@ -35,7 +35,7 @@ export function EditGroupForm({ onClose }: EditGroupFormProps) {
   }, [isSuccess]);
 
   const form = useForm<FormValues>({
-    validate: zodResolver(formSchema),
+    validate: zod4Resolver(formSchema),
     initialValues: {
       name: group?.name,
       description: group?.description,

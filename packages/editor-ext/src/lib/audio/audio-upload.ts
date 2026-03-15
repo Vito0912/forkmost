@@ -2,11 +2,11 @@
 import { type EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
-    insertTrailingNode,
     MediaUploadOptions,
     UploadFn,
 } from "../media-utils";
 import { IAttachment } from "../types";
+import { Command } from "@tiptap/core";
 
 const uploadKey = new PluginKey("audio-upload");
 
@@ -75,7 +75,7 @@ function findPlaceholder(state: EditorState, id: {}) {
 
 export const handleAudioUpload =
     ({ validateFn, onUpload }: MediaUploadOptions): UploadFn =>
-        async (file, view, pos, pageId) => {
+        async (file, editor, pos, pageId) => {
             const validated = validateFn?.(file);
             // @ts-ignore
             if (!validated) return;
@@ -85,57 +85,67 @@ export const handleAudioUpload =
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => {
-                const tr = view.state.tr;
-                if (!tr.selection.empty) tr.deleteSelection();
-
-                tr.setMeta(uploadKey, {
-                    add: {
-                        id,
-                        pos,
-                        src: reader.result,
-                    },
-                });
-
-                insertTrailingNode(tr, pos, view);
-                view.dispatch(tr);
+                const addPlaceholder = (): Command => {
+                    return ({ tr }) => {
+                        if (!tr.selection.empty) tr.deleteSelection();
+                        tr.setMeta(uploadKey, {
+                            add: {
+                                id,
+                                pos,
+                                src: reader.result,
+                            },
+                        });
+                        return true;
+                    };
+                };
+                editor.commands.command(addPlaceholder());
             };
             reader.onerror = (error) => {
                 console.error("Error reading audio file:", error);
-        
-                const transaction = view.state.tr
-                    .delete(pos, pos)
-                    .setMeta(uploadKey, { remove: { id } });
-                view.dispatch(transaction);
+
+                const removePlaceholder = (): Command => {
+                    return ({ tr }) => {
+                        tr.delete(pos, pos)
+                            .setMeta(uploadKey, { remove: { id } });
+                        return true;
+                    };
+                };
+                editor.commands.command(removePlaceholder());
             };
 
             await onUpload(file, pageId).then(
                 (attachment: IAttachment) => {
-                    const { schema } = view.state;
+                    const replaceWithAudio = (): Command => {
+                        return ({ tr, state }) => {
+                            const currentPos = findPlaceholder(state, id);
+                            if (currentPos == null) return false;
+                            if (!attachment) return false;
 
-                    const currentPos = findPlaceholder(view.state, id);
-                    if (currentPos == null) return;
+                            const node = state.schema.nodes.audio?.create({
+                                src: `/api/files/${attachment.id}/${attachment.fileName}`,
+                                attachmentId: attachment.id,
+                                title: attachment.fileName,
+                                size: attachment.fileSize,
+                            });
 
-                    if (!attachment) return;
+                            if (!node) return false;
 
-                    const node = schema.nodes.audio?.create({
-                        src: `/api/files/${attachment.id}/${attachment.fileName}`,
-                        attachmentId: attachment.id,
-                        title: attachment.fileName,
-                        size: attachment.fileSize,
-                    });
-
-                    if (!node) return;
-
-                    const transaction = view.state.tr
-                        .replaceWith(currentPos, currentPos, node)
-                        .setMeta(uploadKey, { remove: { id } });
-                    view.dispatch(transaction);
+                            tr.replaceWith(currentPos, currentPos, node)
+                                .setMeta(uploadKey, { remove: { id } });
+                            return true;
+                        };
+                    };
+                    editor.commands.command(replaceWithAudio());
                 },
                 () => {
-                    const transaction = view.state.tr
-                        .delete(pos, pos)
-                        .setMeta(uploadKey, { remove: { id } });
-                    view.dispatch(transaction);
+                    const removePlaceholder = (): Command => {
+                        return ({ tr }) => {
+                            tr.delete(pos, pos)
+                                .setMeta(uploadKey, { remove: { id } });
+                            return true;
+                        };
+                    };
+                    editor.commands.command(removePlaceholder());
                 },
             );
         };

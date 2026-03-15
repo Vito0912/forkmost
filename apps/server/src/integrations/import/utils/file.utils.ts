@@ -10,7 +10,6 @@ export enum FileTaskType {
 export enum FileImportSource {
   Generic = 'generic',
   Notion = 'notion',
-  Confluence = 'confluence',
 }
 
 export enum FileTaskStatus {
