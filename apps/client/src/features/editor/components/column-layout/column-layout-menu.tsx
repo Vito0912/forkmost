@@ -143,7 +143,7 @@ export const ColumnLayoutMenu = React.memo(
             withArrow
             shadow="md"
             opened={popoverOpened}
-            onDismiss={() => setPopoverOpened(false)}
+            onClose={() => setPopoverOpened(false)}
           >
             <Popover.Target>
               <Tooltip position="top" label={t("Settings")}>

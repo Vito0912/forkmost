@@ -3,6 +3,7 @@ import { getPageById } from "@/features/page/services/page-service.ts";
 import { IPage } from "@/features/page/types/page.types.ts";
 import { v7 } from "uuid";
 import { extractPageSlugId } from "@/lib";
+import i18n from "@/i18n.ts";
 
 export type LinkFn = (
   url: string,
@@ -31,7 +32,7 @@ export const handleInternalLink =
 
         const node = schema.nodes.mention.create({
           id: v7(),
-          label: page.title || "Untitled",
+            label: page.title || i18n.t("Untitled"),
           entityType: "page",
           entityId: page.id,
           slugId: page.slugId,

@@ -496,7 +496,20 @@ export const TiptapImage = Image.extend<ImageOptions>({
 });
 
 function applyAlignment(container: HTMLElement, align: string) {
-  if (align === "left") {
+  // Reset float-related styles
+  container.style.float = "";
+  container.style.width = "";
+  container.style.padding = "";
+
+  if (align === "floatLeft") {
+    container.style.float = "left";
+    container.style.padding = "0 10px 0 0";
+    container.style.justifyContent = "flex-start";
+  } else if (align === "floatRight") {
+    container.style.float = "right";
+    container.style.padding = "0 0 0 10px";
+    container.style.justifyContent = "flex-end";
+  } else if (align === "left") {
     container.style.justifyContent = "flex-start";
   } else if (align === "right") {
     container.style.justifyContent = "flex-end";

@@ -262,7 +262,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
 
       props.command({
         id: uuid7(),
-        label: createdPage.title || "Untitled",
+        label: createdPage.title || t("Untitled"),
         entityType: "page",
         entityId: createdPage.id,
         slugId: createdPage.slugId,

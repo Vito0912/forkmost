@@ -161,22 +161,8 @@ export function useResolveCommentMutation() {
 
   return useMutation<IComment, Error, IResolveComment>({
     mutationFn: (data) => resolveComment(data),
-    onSuccess: (updatedComment) => {
-      const cache = queryClient.getQueryData(
-        RQ_KEY(updatedComment.pageId),
-      ) as InfiniteData<IPagination<IComment>> | undefined;
-
-      if (cache) {
-        queryClient.setQueryData(RQ_KEY(updatedComment.pageId), {
-          ...cache,
-          pages: cache.pages.map((page) => ({
-            ...page,
-            items: page.items.map((comment) =>
-              comment.id === updatedComment.id ? updatedComment : comment,
-            ),
-          })),
-        });
-      }
+    onSuccess: (resolved) => {
+      queryClient.invalidateQueries({ queryKey: RQ_KEY(resolved.pageId) });
     },
     onError: () => {
       notifications.show({
@@ -186,3 +172,4 @@ export function useResolveCommentMutation() {
     },
   });
 }
+

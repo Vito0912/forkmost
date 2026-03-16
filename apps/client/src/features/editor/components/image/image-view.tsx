@@ -98,7 +98,17 @@ export default function ImageView(props: NodeViewProps) {
           )}
         </div>
         {showCaption && (
-          <div className={classes.captionContainer}>
+          <div
+            className={classes.captionContainer}
+            style={{
+              justifyContent:
+                align === "left" || align === "floatLeft"
+                  ? "flex-start"
+                  : align === "right" || align === "floatRight"
+                    ? "flex-end"
+                    : "center",
+            }}
+          >
             <input
               className={classes.captionInput}
               type="text"

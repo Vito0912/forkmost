@@ -10,7 +10,7 @@ stages:
   variables:
     DOCKER_TLS_CERTDIR: ""
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "personal"
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker buildx create --name builder --use
@@ -46,7 +46,7 @@ build:manifest:
   stage: build
   image: docker:29.1.3-cli
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "personal"
   needs:
     - build:amd64
     - build:arm64

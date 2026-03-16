@@ -143,9 +143,9 @@ export function ImageMenu({ editor }: EditorMenuProps) {
       const pageId = editor.storage?.pageId;
       if (pageId) {
         const pos = editor.state.selection.from;
+        editor.commands.deleteSelection();
         uploadImageAction(file, editor, pos, pageId);
       }
-      // Reset so the same file can be selected again
       e.target.value = "";
     },
     [editor],

@@ -7,6 +7,7 @@ import ForceGraph2D, {
   NodeObject,
 } from "react-force-graph-2d";
 import { useGetSpaceGraph } from "../queries/space-query";
+import i18n from "@/i18n.ts";
 import { IGraphDataLink, IGraphDataNode } from "../types/space.types";
 import { buildPageUrl } from "@/features/page/page.utils";
 import { useNavigate } from "react-router-dom";
@@ -483,7 +484,7 @@ export default function Graph({ space }) {
         nodeMap.set(page.id, {
           id: page.id,
           slugId: page.slugId,
-          title: page.title || "untitled",
+          title: page.title || i18n.t("untitled"),
           neighbors: new Set(),
           links: new Set(),
         })
