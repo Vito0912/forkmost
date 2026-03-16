@@ -1,19 +1,18 @@
+import { markInputRule } from "@tiptap/core";
 import { StarterKit } from "@tiptap/starter-kit";
-import { Placeholder } from "@tiptap/extension-placeholder";
+import { Code } from "@tiptap/extension-code";
 import { TextAlign } from "@tiptap/extension-text-align";
-import { TaskList } from "@tiptap/extension-task-list";
-import { ListKeymap } from "@tiptap/extension-list-keymap";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { Underline } from "@tiptap/extension-underline";
+import { TaskList, TaskItem } from "@tiptap/extension-list";
+import { Placeholder, CharacterCount } from "@tiptap/extensions";
 import { Superscript } from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
-import { Highlight } from "@tiptap/extension-highlight";
+
 import { Typography } from "@tiptap/extension-typography";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import SlashCommand from "@/features/editor/extensions/slash-command";
 import { Collaboration, isChangeOrigin } from "@tiptap/extension-collaboration";
-import { CollaborationCursor } from "@tiptap/extension-collaboration-cursor";
+import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import {
   Comment,
@@ -22,7 +21,6 @@ import {
   DetailsSummary,
   MathBlock,
   MathInline,
-  TypstBlock,
   TableCell,
   TableRow,
   TableHeader,
@@ -42,11 +40,21 @@ import {
   Embed,
   SearchAndReplace,
   Mention,
-  Subpages,
   TableDndExtension,
   ExtraLigatures,
   ColumnContainer,
+  ColumnLayoutColumn,
+  Subpages,
+  Heading,
+  Highlight,
+  UniqueID,
+  SharedStorage,
+  Columns,
   Column,
+  Status,
+  ListNormalization,
+  NodeBackground,
+  TocNode,
 } from "@docmost/editor-ext";
 import {
   randomElement,
@@ -55,11 +63,19 @@ import {
 import { IUser } from "@/features/user/types/user.types.ts";
 import MathInlineView from "@/features/editor/components/math/math-inline.tsx";
 import MathBlockView from "@/features/editor/components/math/math-block.tsx";
-import TypstBlockView from "@/features/editor/components/typst/typst-block.tsx";
 import GlobalDragHandle from "tiptap-extension-global-drag-handle";
 import { Youtube } from "@tiptap/extension-youtube";
 import ImageView from "@/features/editor/components/image/image-view.tsx";
+import {
+  createImageHandle,
+  imageResizeClasses,
+} from "@/features/editor/components/image/image-resize-handles.ts";
+import {
+  createResizeHandle,
+  buildResizeClasses,
+} from "@/features/editor/components/common/node-resize-handles.ts";
 import CalloutView from "@/features/editor/components/callout/callout-view.tsx";
+import StatusView from "@/features/editor/components/status/status-view.tsx";
 import VideoView from "@/features/editor/components/video/video-view.tsx";
 import PdfView from "@/features/editor/components/pdf/pdf-view.tsx";
 import AudioView from "@/features/editor/components/audio/audio-view.tsx";
@@ -81,17 +97,17 @@ import fortran from "highlight.js/lib/languages/fortran";
 import haskell from "highlight.js/lib/languages/haskell";
 import scala from "highlight.js/lib/languages/scala";
 import mentionRenderItems from "@/features/editor/components/mention/mention-suggestion.ts";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+import { ReactNodeViewRenderer, ReactMarkViewRenderer } from "@tiptap/react";
 import MentionView from "@/features/editor/components/mention/mention-view.tsx";
+import LinkView from "@/features/editor/components/link/link-view.tsx";
 import i18n from "@/i18n.ts";
 import { MarkdownClipboard } from "@/features/editor/extensions/markdown-clipboard.ts";
 import EmojiCommand from "./emoji-command";
-import { CharacterCount } from "@tiptap/extension-character-count";
-import Heading, { Level } from "@tiptap/extension-heading";
-import HeadingView from "../components/heading/heading-view";
+
 import { countWords } from "alfaaz";
 import ColumnContainerView from "@/features/editor/components/column-layout/column-container-view";
 import ColumnView from "@/features/editor/components/column-layout/column-view";
+import TocNodeView from "@/features/editor/components/toc-node/toc-node-view";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
@@ -105,36 +121,46 @@ lowlight.register("fortran", fortran);
 lowlight.register("haskell", haskell);
 lowlight.register("scala", scala);
 
+// @ts-ignore
 export const mainExtensions = [
   StarterKit.configure({
-    history: false,
+    heading: false,
+    undoRedo: false,
+    link: false,
+    trailingNode: false,
     dropcursor: {
       width: 3,
       color: "#70CFF8",
     },
     codeBlock: false,
-    code: {
-      HTMLAttributes: {
-        spellcheck: false,
-      },
-    },
-    heading: false,
+    code: false,
   }),
-  Heading.extend({
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        levels: [1, 2, 3, 4, 5, 6] as Level[],
-      };
+  // Override TipTap's Code extension to fix the inline code input rule.
+  // The upstream regex /(^|[^`])`([^`]+)`(?!`)$/ captures the character
+  // before the opening backtick as part of the match, causing markInputRule
+  // to delete it. Using a lookbehind avoids including it in the match.
+  Code.configure({
+    HTMLAttributes: {
+      spellcheck: false,
     },
-    addNodeView() {
-      return ReactNodeViewRenderer(HeadingView);
+  }).extend({
+    addInputRules() {
+      return [
+        markInputRule({
+          find: /(?:^|(?<=[^`]))`([^`]+)`(?!`)$/,
+          type: this.type,
+        }),
+      ];
     },
-  }).configure({
-    levels: [1, 2, 3, 4, 5, 6],
+  }),
+  SharedStorage,
+  Heading,
+  UniqueID.configure({
+    types: ["heading", "paragraph"],
+    filterTransaction: (transaction) => !isChangeOrigin(transaction),
   }),
   Placeholder.configure({
-    placeholder: ({ node }) => {
+    placeholder: ({ editor, node, pos }) => {
       if (node.type.name === "heading") {
         return i18n.t("Heading {{level}}", { level: node.attrs.level });
       }
@@ -142,6 +168,18 @@ export const mainExtensions = [
         return i18n.t("Toggle title");
       }
       if (node.type.name === "paragraph") {
+        const $pos = editor.state.doc.resolve(pos);
+        const parentName = $pos.parent.type.name;
+        if (
+          parentName === "column" ||
+          parentName === "columnLayoutColumn" ||
+          parentName === "tableCell" ||
+          parentName === "tableHeader" ||
+          parentName === "callout" ||
+          parentName === "blockquote"
+        ) {
+          return i18n.t("Write...");
+        }
         return i18n.t('Write anything. Enter "/" for commands');
       }
     },
@@ -153,10 +191,12 @@ export const mainExtensions = [
   TaskItem.configure({
     nested: true,
   }),
-  ListKeymap,
-  Underline,
   LinkExtension.configure({
     openOnClick: false,
+  }).extend({
+    addMarkView() {
+      return ReactMarkViewRenderer(LinkView);
+    },
   }),
   Superscript,
   SubScript,
@@ -190,6 +230,9 @@ export const mainExtensions = [
     },
   }).extend({
     addNodeView() {
+      // Force the react node view to render immediately using flush sync (https://github.com/ueberdosis/tiptap/blob/b4db352f839e1d82f9add6ee7fb45561336286d8/packages/react/src/ReactRenderer.tsx#L183-L191)
+      this.editor.isInitialized = true;
+
       return ReactNodeViewRenderer(MentionView);
     },
   }),
@@ -211,9 +254,6 @@ export const mainExtensions = [
   MathBlock.configure({
     view: MathBlockView,
   }),
-  TypstBlock.configure({
-    view: TypstBlockView,
-  }),
   Details,
   DetailsSummary,
   DetailsContent,
@@ -225,9 +265,29 @@ export const mainExtensions = [
   TiptapImage.configure({
     view: ImageView,
     allowBase64: false,
+    resize: {
+      enabled: true,
+      directions: ["left", "right"],
+      minWidth: 80,
+      minHeight: 40,
+      alwaysPreserveAspectRatio: true,
+      //@ts-ignore
+      createCustomHandle: createImageHandle,
+      className: imageResizeClasses,
+    },
   }),
   TiptapVideo.configure({
     view: VideoView,
+    resize: {
+      enabled: true,
+      directions: ["left", "right"],
+      minWidth: 80,
+      minHeight: 40,
+      alwaysPreserveAspectRatio: true,
+      //@ts-ignore
+      createCustomHandle: createResizeHandle,
+      className: buildResizeClasses("node-video"),
+    },
   }),
   TiptapPdf.configure({
     view: PdfView,
@@ -240,6 +300,7 @@ export const mainExtensions = [
   }),
   CustomCodeBlock.configure({
     view: CodeBlockView,
+    //@ts-ignore
     lowlight,
     HTMLAttributes: {
       spellcheck: false,
@@ -251,15 +312,38 @@ export const mainExtensions = [
   }),
   Drawio.configure({
     view: DrawioView,
+    resize: {
+      enabled: true,
+      directions: ["left", "right"],
+      minWidth: 80,
+      minHeight: 40,
+      alwaysPreserveAspectRatio: true,
+      //@ts-ignore
+      createCustomHandle: createResizeHandle,
+      className: buildResizeClasses("node-drawio"),
+    },
   }),
   Excalidraw.configure({
     view: ExcalidrawView,
+    resize: {
+      enabled: true,
+      directions: ["left", "right"],
+      minWidth: 80,
+      minHeight: 40,
+      alwaysPreserveAspectRatio: true,
+      //@ts-ignore
+      createCustomHandle: createResizeHandle,
+      className: buildResizeClasses("node-excalidraw"),
+    },
   }),
   Embed.configure({
     view: EmbedView,
   }),
   Subpages.configure({
     view: SubpagesView,
+  }),
+  Status.configure({
+    view: StatusView,
   }),
   MarkdownClipboard.configure({
     transformPastedText: true,
@@ -270,7 +354,7 @@ export const mainExtensions = [
   ColumnContainer.configure({
     view: ColumnContainerView,
   }),
-  Column.configure({
+  ColumnLayoutColumn.configure({
     view: ColumnView,
   }),
   SearchAndReplace.extend({
@@ -297,11 +381,18 @@ export const mainExtensions = [
         Escape: () => {
           const event = new CustomEvent("closeFindDialogFromEditor", {});
           document.dispatchEvent(event);
-          return true;
+          return false;
         },
       };
     },
   }).configure(),
+  Columns,
+  Column,
+  ListNormalization,
+  NodeBackground,
+  TocNode.configure({
+    view: TocNodeView,
+  }),
 ] as any;
 
 type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];
@@ -309,8 +400,9 @@ type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];
 export const collabExtensions: CollabExtensions = (provider, user) => [
   Collaboration.configure({
     document: provider.document,
+    provider,
   }),
-  CollaborationCursor.configure({
+  CollaborationCaret.configure({
     provider,
     user: {
       name: user.name,

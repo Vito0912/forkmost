@@ -8,6 +8,7 @@ export interface MentionListProps {
   range: Range;
   text: string;
   editor: Editor;
+  isInCommentContext?: boolean;
 }
 
 export type MentionSuggestionItem =
@@ -20,15 +21,17 @@ export type MentionSuggestionItem =
   entityId: string;
   avatarUrl: string;
 }
-  | {
-  id: string;
-  label: string;
-  breadcrumbs: string;
-  entityType: "page";
-  entityId: string;
-  slugId: string;
-  icon: string;
-  anchorSlug?: string;
-  anchorText?: string;
-  headings?: HeadingInfo[];
+   | {
+   id: string;
+   label: string;
+   breadcrumbs: string;
+   entityType: "page";
+   entityId: string;
+   slugId: string;
+   icon: string;
+   anchorSlug?: string;
+   anchorText?: string;
+   headings?: HeadingInfo[];
+   spaceName?: string;
+   spaceSlug?: string;
 };

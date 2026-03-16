@@ -5,11 +5,12 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { Logger, NotFoundException, ValidationPipe } from '@nestjs/common';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { TransformHttpResponseInterceptor } from './common/interceptors/http-response.interceptor';
 import { WsRedisIoAdapter } from './ws/adapter/ws-redis.adapter';
-import { InternalLogFilter } from './common/logger/internal-log-filter';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyCookie from '@fastify/cookie';
+import { InternalLogFilter } from './common/logger/internal-log-filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -24,12 +25,18 @@ async function bootstrap() {
     }),
     {
       rawBody: true,
+      // captures NestJS internal errors
       logger: new InternalLogFilter(),
+      // bufferLogs must be false else pino will fail
+      // to log OnApplicationBootstrap logs
+      bufferLogs: false,
     },
   );
 
+  app.useLogger(app.get(PinoLogger));
+
   app.setGlobalPrefix('api', {
-    exclude: ['robots.txt', 'share/:shareId/p/:pageSlug'],
+    exclude: ['robots.txt', 'share/:shareId/p/:pageSlug', 'mcp'],
   });
 
   const reflector = app.get(Reflector);
@@ -60,6 +67,7 @@ async function bootstrap() {
         '/api/sso/google',
         '/api/workspace/create',
         '/api/workspace/joined',
+        '/api/workspace/find-by-email',
       ];
 
       if (
@@ -98,7 +106,8 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0', () => {
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host, () => {
     logger.log(
       `Listening on http://127.0.0.1:${port} / ${process.env.APP_URL}`,
     );

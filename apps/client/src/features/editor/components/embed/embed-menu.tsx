@@ -1,10 +1,9 @@
-import { BubbleMenu as BaseBubbleMenu, posToDOMRect, findParentNode } from "@tiptap/react";
+import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
 import React, { useCallback, useState, useEffect } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 import { Editor } from "@tiptap/core";
 import { useTranslation } from "react-i18next";
-import { Node as PMNode } from "prosemirror-model";
 
 interface EmbedMenuProps {
   editor: Editor;
@@ -30,20 +29,6 @@ export const EmbedMenu = React.memo(({ editor }: EmbedMenuProps): JSX.Element =>
     return editor.isActive("embed");
   }, [editor]);
 
-  const getReferenceClientRect = useCallback(() => {
-    const { selection } = editor.state;
-    const predicate = (node: PMNode) => node.type.name === "embed";
-    const parent = findParentNode(predicate)(selection);
-
-    if (parent) {
-      const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement;
-      if (dom) {
-        return dom.getBoundingClientRect();
-      }
-    }
-    return posToDOMRect(editor.view, selection.from, selection.to);
-  }, [editor]);
-
   const toggleResizable = useCallback(() => {
     const attrs = (editor.getAttributes("embed") as any) || {};
     const isResizable = attrs?.resizable ?? true;
@@ -64,14 +49,9 @@ export const EmbedMenu = React.memo(({ editor }: EmbedMenuProps): JSX.Element =>
       editor={editor}
       pluginKey="embed-menu"
       updateDelay={0}
-      tippyOptions={{
-        getReferenceClientRect,
-        offset: [0, 10],
+      options={{
         placement: "top",
-        zIndex: 99,
-        popperOptions: {
-          modifiers: [{ name: "flip", enabled: false }],
-        },
+        offset: 10,
       }}
       shouldShow={shouldShow}
     >

@@ -1,6 +1,6 @@
 import { ActionIcon } from "@mantine/core";
 import { IconGripVertical } from "@tabler/icons-react";
-import { NodeViewProps, mergeAttributes } from "@tiptap/core";
+import { NodeViewProps } from "@tiptap/core";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 
@@ -11,9 +11,9 @@ export default function ColumnView(props: NodeViewProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const wrapperClass = (xs: number, md: number, lg: number) => {
-    const wrapper = ref.current?.closest(".react-renderer.node-column");
+    const wrapper = ref.current?.closest(".react-renderer.node-columnLayoutColumn");
     if (wrapper instanceof HTMLElement) {
-      const keep = ["react-renderer", "node-column"];
+      const keep = ["react-renderer", "node-columnLayoutColumn"];
 
       for (let i = wrapper.classList.length - 1; i >= 0; i--) {
         const cls = wrapper.classList[i];
@@ -34,10 +34,7 @@ export default function ColumnView(props: NodeViewProps) {
 
   return (
     <NodeViewWrapper
-      {...mergeAttributes(HTMLAttributes, {
-        class: classNameProp,
-        style: styleProp,
-      })}
+      className={classNameProp || undefined}
       ref={ref}
     >
       <ActionIcon

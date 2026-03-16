@@ -18,11 +18,16 @@ export interface IPage {
   deletedAt: Date;
   position: string;
   hasChildren: boolean;
+  canEdit?: boolean;
   creator: ICreator;
   lastUpdatedBy: ILastUpdatedBy;
   deletedBy: IDeletedBy;
   space: Partial<ISpace>;
   breadcrumbs: string[];
+  permissions?: {
+    canEdit: boolean;
+    hasRestriction: boolean;
+  };
 }
 
 interface ICreator {
@@ -63,7 +68,7 @@ export interface ICopyPageToSpace {
 export interface SidebarPagesParams {
   spaceId?: string;
   pageId?: string;
-  page?: number; // pagination
+  cursor?: string;
 }
 
 export interface IPageInput {

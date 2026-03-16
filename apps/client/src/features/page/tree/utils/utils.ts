@@ -1,5 +1,6 @@
 import { IPage } from "@/features/page/types/page.types.ts";
 import { SpaceTreeNode } from "@/features/page/tree/types.ts";
+import i18n from "@/i18n.ts";
 
 export function sortPositionKeys(keys: any[]) {
   return keys.sort((a, b) => {
@@ -24,6 +25,7 @@ export function buildTree(pages: IPage[]): SpaceTreeNode[] {
       hasChildren: page.hasChildren,
       spaceId: page.spaceId,
       parentPageId: page.parentPageId,
+      canEdit: page.canEdit ?? page.permissions?.canEdit,
       children: [],
     };
   });
@@ -42,7 +44,7 @@ export function findBreadcrumbPath(
 ): SpaceTreeNode[] | null {
   for (const node of tree) {
     if (!node.name || node.name.trim() === "") {
-      node.name = "untitled";
+      node.name = i18n.t("untitled");
     }
 
     if (node.id === pageId) {

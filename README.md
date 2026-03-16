@@ -9,7 +9,7 @@
 > The main reasons for stopping work are not Docmosts functionality, but what Docmost developed to (being mostly closed-source without any clear pricing structure and ignoring big parts of community contributions now - my opinion). I deleted the detailed reasoning, because it does not change this, but they still are in the commit history if anyone is interested.
 
 > [!IMPORTANT]
->If someone wants to further maintain the project, please contact me.
+> If someone wants to further maintain the project, please contact me.
 
 ## **For added and features merged ahead, see the note under Features.**
 
@@ -118,10 +118,15 @@ List as follows[^1]:
 </details>
 
 [^2]: Do not use if you plan to revert to upstream in the future. This is added to features that are not in upstream at the moment or never will. You should be able to always go back to upstream, but used blocks e.g. then are lost and not recoverable.
+
 [^3]: Force saving will save directly to the database
+
 [^4]: Clicking default colors automatically applies highlight color to make it easier to use
+
 [^5]: The Table of Contents (ToC) only displays the first 3 levels of headings.
+
 [^6]: The UI for copying redesigned; scrolling is now faster.
+
 [^7]: Updated UI and shortcuts for find and replace and better UX - Focus
 
 <br>
@@ -139,6 +144,8 @@ Enterprise features (meaning the code not the features itself) from upstream are
 See the [development documentation](https://docmost.com/docs/self-hosting/development) of Docmost which Forkmost follows
 
 ## Thanks
+
+Major thanks to [@hugokindel](https://github.com/hugokindel) who contributed to better OIDC workflows, many QoL features, and helped massively with upgrading forkmost to the latest upstream version.
 
 Major thanks to [@fuscodev](https://github.com/fuscodev), who contributed their changes from upstream themselves. Also, many pull requests I merged are based on their work.
 

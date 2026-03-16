@@ -1,26 +1,25 @@
-import {
-  BubbleMenu as BaseBubbleMenu,
-  findParentNode,
-  posToDOMRect,
-  useEditorState,
-} from "@tiptap/react";
+import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
+import { findParentNode, posToDOMRect, useEditorState } from "@tiptap/react";
 import React, { useCallback } from "react";
-import { Node as PMNode } from "prosemirror-model";
+import { Node as PMNode } from "@tiptap/pm/model";
 import {
   EditorMenuProps,
   ShouldShowProps,
 } from "@/features/editor/components/table/types/types.ts";
 import { ActionIcon, Tooltip } from "@mantine/core";
+import clsx from "clsx";
 import {
   IconAlertTriangleFilled,
   IconCircleCheckFilled,
   IconCircleXFilled,
   IconInfoCircleFilled,
   IconMoodSmile,
+  IconNotes,
 } from "@tabler/icons-react";
-import { CalloutType } from "@docmost/editor-ext";
+import { CalloutType, isTextSelected } from "@docmost/editor-ext";
 import { useTranslation } from "react-i18next";
 import EmojiPicker from "@/components/ui/emoji-picker.tsx";
+import classes from "../common/toolbar-menu.module.css";
 
 export function CalloutMenu({ editor }: EditorMenuProps) {
   const { t } = useTranslation();
@@ -30,6 +29,7 @@ export function CalloutMenu({ editor }: EditorMenuProps) {
       if (!state) {
         return false;
       }
+      if (isTextSelected(editor)) return false;
 
       return editor.isActive("callout");
     },
@@ -46,6 +46,7 @@ export function CalloutMenu({ editor }: EditorMenuProps) {
       return {
         isCallout: ctx.editor.isActive("callout"),
         isInfo: ctx.editor.isActive("callout", { type: "info" }),
+        isNote: ctx.editor.isActive("callout", { type: "note" }),
         isSuccess: ctx.editor.isActive("callout", { type: "success" }),
         isWarning: ctx.editor.isActive("callout", { type: "warning" }),
         isDanger: ctx.editor.isActive("callout", { type: "danger" }),
@@ -53,17 +54,26 @@ export function CalloutMenu({ editor }: EditorMenuProps) {
     },
   });
 
-  const getReferenceClientRect = useCallback(() => {
+  const getReferencedVirtualElement = useCallback(() => {
+    if (!editor) return;
     const { selection } = editor.state;
     const predicate = (node: PMNode) => node.type.name === "callout";
     const parent = findParentNode(predicate)(selection);
 
     if (parent) {
       const dom = editor.view.nodeDOM(parent?.pos) as HTMLElement;
-      return dom.getBoundingClientRect();
+      const domRect = dom.getBoundingClientRect();
+      return {
+        getBoundingClientRect: () => domRect,
+        getClientRects: () => [domRect],
+      };
     }
 
-    return posToDOMRect(editor.view, selection.from, selection.to);
+    const domRect = posToDOMRect(editor.view, selection.from, selection.to);
+    return {
+      getBoundingClientRect: () => domRect,
+      getClientRects: () => [domRect],
+    };
   }, [editor]);
 
   const setCalloutType = useCallback(
@@ -112,76 +122,96 @@ export function CalloutMenu({ editor }: EditorMenuProps) {
       editor={editor}
       pluginKey={`callout-menu`}
       updateDelay={0}
-      tippyOptions={{
-        getReferenceClientRect,
-        offset: [0, 10],
+      getReferencedVirtualElement={getReferencedVirtualElement}
+      options={{
         placement: "bottom",
-        zIndex: 99,
-        popperOptions: {
-          modifiers: [{ name: "flip", enabled: false }],
-        },
+        // offset: 233, //      //         offset: [0, 10],
+        // zIndex: 99,
+        flip: false,
       }}
       shouldShow={shouldShow}
     >
-      <ActionIcon.Group className="actionIconGroup">
-        <Tooltip position="top" label={t("Info")}>
+      <div className={classes.toolbar}>
+        <Tooltip position="top" label={t("Info")} withinPortal={false}>
           <ActionIcon
             onClick={() => setCalloutType("info")}
             size="lg"
             aria-label={t("Info")}
-            variant={editorState?.isInfo ? "light" : "default"}
+            variant="subtle"
+            className={clsx({ [classes.active]: editorState?.isInfo })}
           >
-            <IconInfoCircleFilled size={18} />
+            <IconInfoCircleFilled
+              size={18}
+              color="var(--mantine-color-blue-5)"
+            />
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Success")}>
+        <Tooltip position="top" label={t("Note")} withinPortal={false}>
+          <ActionIcon
+            onClick={() => setCalloutType("note")}
+            size="lg"
+            aria-label={t("Note")}
+            variant="subtle"
+            className={clsx({ [classes.active]: editorState?.isNote })}
+          >
+            <IconNotes size={18} color="var(--mantine-color-grape-5)" />
+          </ActionIcon>
+        </Tooltip>
+
+        <Tooltip position="top" label={t("Success")} withinPortal={false}>
           <ActionIcon
             onClick={() => setCalloutType("success")}
             size="lg"
             aria-label={t("Success")}
-            variant={editorState?.isSuccess ? "light" : "default"}
+            variant="subtle"
+            className={clsx({ [classes.active]: editorState?.isSuccess })}
           >
-            <IconCircleCheckFilled size={18} />
+            <IconCircleCheckFilled
+              size={18}
+              color="var(--mantine-color-green-5)"
+            />
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Warning")}>
+        <Tooltip position="top" label={t("Warning")} withinPortal={false}>
           <ActionIcon
             onClick={() => setCalloutType("warning")}
             size="lg"
             aria-label={t("Warning")}
-            variant={editorState?.isWarning ? "light" : "default"}
+            variant="subtle"
+            className={clsx({ [classes.active]: editorState?.isWarning })}
           >
-            <IconAlertTriangleFilled size={18} />
+            <IconAlertTriangleFilled
+              size={18}
+              color="var(--mantine-color-orange-5)"
+            />
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Danger")}>
+        <Tooltip position="top" label={t("Danger")} withinPortal={false}>
           <ActionIcon
             onClick={() => setCalloutType("danger")}
             size="lg"
             aria-label={t("Danger")}
-            variant={editorState?.isDanger ? "light" : "default"}
+            variant="subtle"
+            className={clsx({ [classes.active]: editorState?.isDanger })}
           >
-            <IconCircleXFilled size={18} />
+            <IconCircleXFilled size={18} color="var(--mantine-color-red-5)" />
           </ActionIcon>
         </Tooltip>
 
-        <Tooltip position="top" label={t("Custom emoji")}>
-          <EmojiPicker
-            onEmojiSelect={setCalloutIcon}
-            removeEmojiAction={removeCalloutIcon}
-            readOnly={false}
-            icon={currentIcon || <IconMoodSmile size={18} />}
-            actionIconProps={{
-              size: "lg",
-              variant: "default",
-              c: undefined,
-            }}
-          />
-        </Tooltip>
-      </ActionIcon.Group>
+        <EmojiPicker
+          onEmojiSelect={setCalloutIcon}
+          removeEmojiAction={removeCalloutIcon}
+          readOnly={false}
+          icon={currentIcon || <IconMoodSmile size={18} />}
+          actionIconProps={{
+            size: "lg",
+            variant: "subtle",
+          }}
+        />
+      </div>
     </BaseBubbleMenu>
   );
 }

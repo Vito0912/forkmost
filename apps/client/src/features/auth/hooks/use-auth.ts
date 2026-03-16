@@ -23,7 +23,7 @@ import {
   acceptInvitation,
   createWorkspace,
 } from "@/features/workspace/services/workspace-service.ts";
-import APP_ROUTE from "@/lib/app-route.ts";
+import APP_ROUTE, { getPostLoginRedirect } from "@/lib/app-route.ts";
 import { RESET } from "jotai/utils";
 import { useTranslation } from "react-i18next";
 
@@ -40,14 +40,7 @@ export default function useAuth() {
       const response = await login(data);
       setIsLoading(false);
 
-      // Check if MFA is required
-      if (response?.userHasMfa) {
-        navigate(APP_ROUTE.AUTH.MFA_CHALLENGE);
-      } else if (response?.requiresMfaSetup) {
-        navigate(APP_ROUTE.AUTH.MFA_SETUP_REQUIRED);
-      } else {
-        navigate(APP_ROUTE.HOME);
-      }
+      navigate(getPostLoginRedirect());
     } catch (err) {
       setIsLoading(false);
       console.log(err);

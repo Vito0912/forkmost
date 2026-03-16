@@ -1,9 +1,9 @@
-import { TableCell as TiptapTableCell } from "@tiptap/extension-table-cell";
+import { TableCell as TiptapTableCell } from "@tiptap/extension-table";
 
 export const TableCell = TiptapTableCell.extend({
   name: "tableCell",
   content:
-    "(paragraph  | bulletList | orderedList | taskList | blockquote | callout | image | video | attachment | mathBlock | typstBlock | details | codeBlock)+",
+    "(paragraph  | bulletList | orderedList | taskList | blockquote | callout | image | video | attachment | mathBlock | details | codeBlock)+",
 
   addAttributes() {
     return {

@@ -1,10 +1,6 @@
-import {
-  BubbleMenu,
-  BubbleMenuProps,
-  isNodeSelection,
-  useEditor,
-  useEditorState,
-} from "@tiptap/react";
+import { BubbleMenu, BubbleMenuProps } from "@tiptap/react/menus";
+import { isNodeSelection, useEditorState } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { FC, useEffect, useRef, useState } from "react";
 import {
   IconBold,
@@ -32,6 +28,7 @@ import { isCellSelection, isTextSelected } from "@docmost/editor-ext";
 import { LinkSelector } from "@/features/editor/components/bubble-menu/link-selector.tsx";
 import { useTranslation } from "react-i18next";
 import { HighlightColorSelector } from "./highlight-color-selector";
+import { showLinkMenuAtom } from "@/features/editor/atoms/editor-atoms";
 
 export interface BubbleMenuItem {
   name: string;
@@ -41,18 +38,24 @@ export interface BubbleMenuItem {
 }
 
 type EditorBubbleMenuProps = Omit<BubbleMenuProps, "children" | "editor"> & {
-  editor: ReturnType<typeof useEditor>;
+  editor: Editor | null;
 };
 
 export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
   const { t } = useTranslation();
   const [showCommentPopup, setShowCommentPopup] = useAtom(showCommentPopupAtom);
   const [, setDraftCommentId] = useAtom(draftCommentIdAtom);
+  const [showLinkMenu] = useAtom(showLinkMenuAtom);
   const showCommentPopupRef = useRef(showCommentPopup);
+  const showLinkMenuRef = useRef(showLinkMenu);
 
   useEffect(() => {
     showCommentPopupRef.current = showCommentPopup;
   }, [showCommentPopup]);
+
+  useEffect(() => {
+    showLinkMenuRef.current = showLinkMenu;
+  }, [showLinkMenu]);
 
   const editorState = useEditorState({
     editor: props.editor,
@@ -144,25 +147,20 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
         empty ||
         isNodeSelection(selection) ||
         isCellSelection(selection) ||
+        showLinkMenuRef.current ||
         showCommentPopupRef?.current
       ) {
         return false;
       }
       return isTextSelected(editor);
     },
-    tippyOptions: {
-      moveTransition: "transform 0.15s ease-out",
-      onCreate: (instance) => {
-        instance.popper.firstChild?.addEventListener("blur", (event) => {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-        });
-      },
+    options: {
+      placement: "top",
+      offset: 8,
       onHide: () => {
         setIsNodeSelectorOpen(false);
         setIsHighlightColorSelectorOpen(false);
         setIsTextAlignmentOpen(false);
-        setIsLinkSelectorOpen(false);
         setIsColorSelectorOpen(false);
       },
     },
@@ -171,11 +169,15 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
   const [isNodeSelectorOpen, setIsNodeSelectorOpen] = useState(false);
   const [isTextAlignmentSelectorOpen, setIsTextAlignmentOpen] = useState(false);
   const [isHighlightColorSelectorOpen, setIsHighlightColorSelectorOpen] = useState(false);
-  const [isLinkSelectorOpen, setIsLinkSelectorOpen] = useState(false);
   const [isColorSelectorOpen, setIsColorSelectorOpen] = useState(false);
 
+  if (showLinkMenu) return;
+
   return (
-    <BubbleMenu {...bubbleMenuProps}>
+    <BubbleMenu
+      {...bubbleMenuProps}
+      style={{ zIndex: 199, position: "relative" }}
+    >
       <div className={classes.bubbleMenu}>
         <NodeSelector
           editor={props.editor}
@@ -183,7 +185,6 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
           setIsOpen={() => {
             setIsNodeSelectorOpen(!isNodeSelectorOpen);
             setIsTextAlignmentOpen(false);
-            setIsLinkSelectorOpen(false);
             setIsColorSelectorOpen(false);
             setIsHighlightColorSelectorOpen(false);
           }}
@@ -195,7 +196,6 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
           setIsOpen={() => {
             setIsTextAlignmentOpen(!isTextAlignmentSelectorOpen);
             setIsNodeSelectorOpen(false);
-            setIsLinkSelectorOpen(false);
             setIsColorSelectorOpen(false);
             setIsHighlightColorSelectorOpen(false);
           }}
@@ -220,24 +220,13 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
           ))}
         </ActionIcon.Group>
 
-        <LinkSelector
-          editor={props.editor}
-          isOpen={isLinkSelectorOpen}
-          setIsOpen={(value) => {
-            setIsLinkSelectorOpen(value);
-            setIsNodeSelectorOpen(false);
-            setIsTextAlignmentOpen(false);
-            setIsColorSelectorOpen(false);
-            setIsHighlightColorSelectorOpen(false);
-          }}
-        />
+        <LinkSelector />
 
         <HighlightColorSelector
           editor={props.editor}
           isOpen={isHighlightColorSelectorOpen}
           setIsOpen={() => {
             setIsHighlightColorSelectorOpen(!isHighlightColorSelectorOpen);
-            setIsLinkSelectorOpen(false);
             setIsNodeSelectorOpen(false);
             setIsTextAlignmentOpen(false);
             setIsColorSelectorOpen(false);
@@ -251,21 +240,22 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsColorSelectorOpen(!isColorSelectorOpen);
             setIsNodeSelectorOpen(false);
             setIsTextAlignmentOpen(false);
-            setIsLinkSelectorOpen(false);
             setIsHighlightColorSelectorOpen(false);
           }}
         />
 
-        <ActionIcon
-          variant="default"
-          size="lg"
-          radius="0"
-          aria-label={t(commentItem.name)}
-          style={{ border: "none" }}
-          onClick={commentItem.command}
-        >
-          <IconMessage size={16} stroke={2} />
-        </ActionIcon>
+        <Tooltip label={t(commentItem.name)} withArrow withinPortal={false}>
+          <ActionIcon
+            variant="default"
+            size="lg"
+            radius="6px"
+            aria-label={t(commentItem.name)}
+            style={{ border: "none" }}
+            onClick={commentItem.command}
+          >
+            <IconMessage size={16} stroke={2} />
+          </ActionIcon>
+        </Tooltip>
       </div>
     </BubbleMenu>
   );

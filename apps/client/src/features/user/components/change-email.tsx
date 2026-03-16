@@ -6,13 +6,14 @@ import {
   Group,
   PasswordInput,
 } from "@mantine/core";
-import * as z from "zod";
+import { z } from "zod/v4";
 import { useState } from "react";
 import { useAtom } from "jotai";
 import { currentUserAtom } from "@/features/user/atoms/current-user-atom.ts";
 import { useDisclosure } from "@mantine/hooks";
 import * as React from "react";
-import { useForm, zodResolver } from "@mantine/form";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useTranslation } from "react-i18next";
 import { updateUser } from "../services/user-service";
 import { notifications } from "@mantine/notifications";
@@ -54,10 +55,12 @@ export default function ChangeEmail() {
 
 const formSchema = z.object({
   email: z
-    .string({ required_error: "New email is required" })
+    .string()
+    .min(1, { message: "New email is required" })
     .email({ message: "Please enter a valid email address" }),
   password: z
-    .string({ required_error: "Your current password is required" })
+    .string()
+    .min(1, { message: "Your current password is required" })
     .min(8, { message: "Password must be at least 8 characters long" }),
 });
 
@@ -69,7 +72,7 @@ function ChangeEmailForm({ onClose }: { onClose: () => void }) {
   const [, setCurrentUser] = useAtom(currentUserAtom);
 
   const form = useForm<FormValues>({
-    validate: zodResolver(formSchema),
+    validate: zod4Resolver(formSchema),
     initialValues: {
       password: "",
       email: "",

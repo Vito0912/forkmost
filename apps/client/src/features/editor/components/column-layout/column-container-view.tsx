@@ -1,4 +1,4 @@
-import { NodeViewProps, mergeAttributes } from "@tiptap/core";
+import { NodeViewProps } from "@tiptap/core";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 
 export default function ColumnContainerView(props: NodeViewProps) {
@@ -7,10 +7,7 @@ export default function ColumnContainerView(props: NodeViewProps) {
 
   return (
     <NodeViewWrapper
-      {...mergeAttributes(HTMLAttributes, {
-        class: classNameProp,
-        style: styleProp,
-      })}
+      className={classNameProp || undefined}
     >
       <NodeViewContent
         className="flex-layout-content"

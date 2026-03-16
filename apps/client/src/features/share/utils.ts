@@ -1,5 +1,6 @@
 import { IPage } from "@/features/page/types/page.types.ts";
 import { sortPositionKeys } from "@/features/page/tree/utils";
+import i18n from "@/i18n.ts";
 
 export type SharedPageTreeNode = {
   id: string;
@@ -32,7 +33,7 @@ export function buildSharedPageTree(
       hasChildren: false,
       spaceId: page.spaceId,
       parentPageId: page.parentPageId,
-      label: page.title || "untitled",
+      label: page.title || i18n.t("untitled"),
       value: page.id,
       children: [],
     };
@@ -65,4 +66,21 @@ export function buildSharedPageTree(
   }
 
   return sortTree(tree);
+}
+
+
+// Recursively checks if a page exists in the shared page tree.
+export function isPageInTree(
+  tree: SharedPageTreeNode[],
+  pageSlugId: string,
+): boolean {
+  for (const node of tree) {
+    if (node.slugId === pageSlugId) {
+      return true;
+    }
+    if (isPageInTree(node.children, pageSlugId)) {
+      return true;
+    }
+  }
+  return false;
 }

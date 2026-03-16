@@ -1,5 +1,6 @@
 import { NodeViewContent, NodeViewProps, NodeViewWrapper } from "@tiptap/react";
-import { ActionIcon, CopyButton, Group, Select, Tooltip, TextInput } from "@mantine/core";
+import { ActionIcon, Group, Select, Tooltip, TextInput } from "@mantine/core";
+import { CopyButton } from "@/components/common/copy-button";
 import { useEffect, useState, useRef } from "react";
 import { IconCheck, IconCopy, IconDownload, IconTextWrap, IconTextWrapDisabled, IconEyeOff, IconEye } from "@tabler/icons-react";
 import classes from "./code-block.module.css";
@@ -246,6 +247,7 @@ export default function CodeBlockView(props: NodeViewProps) {
             </Tooltip>
           </div>
         )}
+        {/* @ts-ignore */}
         <NodeViewContent as="code" className={`language-${language}`} ref={codeRef} />
       </pre>
 

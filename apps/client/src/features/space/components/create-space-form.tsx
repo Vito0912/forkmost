@@ -1,7 +1,8 @@
 import { Group, Box, Button, TextInput, Stack, Textarea } from "@mantine/core";
 import React, { useEffect } from "react";
-import { useForm, zodResolver } from "@mantine/form";
-import * as z from "zod";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
+import { z } from "zod/v4";
 import { useNavigate } from "react-router-dom";
 import { useCreateSpaceMutation } from "@/features/space/queries/space-query.ts";
 import { computeSpaceSlug } from "@/lib";
@@ -9,12 +10,12 @@ import { getSpaceUrl } from "@/lib/config.ts";
 import { useTranslation } from "react-i18next";
 
 const formSchema = z.object({
-  name: z.string().trim().min(2).max(50),
+  name: z.string().trim().min(2).max(100),
   slug: z
     .string()
     .trim()
     .min(2)
-    .max(50)
+    .max(100)
     .regex(
       /^[a-zA-Z0-9]+$/,
       "Space slug must be alphanumeric. No special characters",
@@ -29,7 +30,7 @@ export function CreateSpaceForm() {
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
-    validate: zodResolver(formSchema),
+    validate: zod4Resolver(formSchema),
     validateInputOnChange: ["slug"],
     initialValues: {
       name: "",

@@ -1,9 +1,9 @@
-import { TableHeader as TiptapTableHeader } from "@tiptap/extension-table-header";
+import { TableHeader as TiptapTableHeader } from "@tiptap/extension-table";
 
 export const TableHeader = TiptapTableHeader.extend({
   name: "tableHeader",
   content:
-    "(paragraph | heading | bulletList | orderedList | taskList | blockquote | callout | image | video | attachment | mathBlock | typstBlock | details | codeBlock)+",
+    "(paragraph | heading | bulletList | orderedList | taskList | blockquote | callout | image | video | attachment | mathBlock | details | codeBlock)+",
 
   addAttributes() {
     return {

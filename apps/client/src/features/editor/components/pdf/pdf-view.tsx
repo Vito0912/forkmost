@@ -557,7 +557,7 @@ export default function PdfView(props: PdfViewProps) {
           maxWidth: '100%',
           display: "flex",
           flexDirection: "column",
-          alignItems: !isFloating && (align === "left" || align === "right") ? "flex-start" : !isFloating && align === "right" ? "flex-end" : "center",
+          alignItems: !isFloating && align === "left" ? "flex-start" : !isFloating && align === "right" ? "flex-end" : "center",
           overflow: "hidden",
           margin: isFloating ? '0' : (align === 'left' ? '0 auto 0 0' : align === 'right' ? '0 0 0 auto' : '0 auto'),
         }}>
@@ -569,7 +569,7 @@ export default function PdfView(props: PdfViewProps) {
                 border: colorScheme === 'dark' ? '1px solid #373A40' : '1px solid #ddd',
                 borderRadius: "4px",
                 display: "block",
-                justifyContent: !isFloating && (align === "left" || align === "right") ? "flex-start" : !isFloating && align === "right" ? "flex-end" : "center",
+                justifyContent: !isFloating && align === "left" ? "flex-start" : !isFloating && align === "right" ? "flex-end" : "center",
                 overflow: "hidden",
                 backgroundColor: colorScheme === 'dark' ? '#2C2E33' : '#ffffff',
                 boxShadow: colorScheme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.1)'

@@ -1,4 +1,4 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsString, IsUUID } from 'class-validator';
 
 export class PageIdDto {
   @IsString()
@@ -8,4 +8,15 @@ export class PageIdDto {
 export class CommentIdDto {
   @IsUUID()
   commentId: string;
+}
+
+export class ResolveCommentDto {
+  @IsUUID()
+  commentId: string;
+
+  @IsUUID()
+  pageId: string;
+
+  @IsBoolean()
+  resolved: boolean;
 }

@@ -1,3 +1,5 @@
+import { IAuthProvider } from "@/features/security/types/security.types.ts";
+
 export interface IWorkspace {
   id: string;
   name: string;
@@ -18,16 +20,33 @@ export interface IWorkspace {
   emailDomains: string[];
   memberCount?: number;
   plan?: string;
-  hasLicenseKey?: boolean;
   enforceMfa?: boolean;
+  aiSearch?: boolean;
+  generativeAi?: boolean;
+  disablePublicSharing?: boolean;
+  mcpEnabled?: boolean;
+  trashRetentionDays?: number;
+  restrictApiToAdmins?: boolean;
 }
 
 export interface IWorkspaceSettings {
   ai?: IWorkspaceAiSettings;
+  sharing?: IWorkspaceSharingSettings;
+  api?: IWorkspaceApiSettings;
+}
+
+export interface IWorkspaceApiSettings {
+  restrictToAdmins?: boolean;
 }
 
 export interface IWorkspaceAiSettings {
   search?: boolean;
+  generative?: boolean;
+  mcp?: boolean;
+}
+
+export interface IWorkspaceSharingSettings {
+  disabled?: boolean;
 }
 
 export interface ICreateInvite {
@@ -63,8 +82,7 @@ export interface IPublicWorkspace {
   logo: string;
   hostname: string;
   enforceSso: boolean;
-  authProviders: any;
-  hasLicenseKey?: boolean;
+  authProviders: IAuthProvider[];
 }
 
 export interface IVersion {

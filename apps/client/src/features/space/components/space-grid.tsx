@@ -1,5 +1,4 @@
 import { Text, SimpleGrid, Card, rem, Button, Group } from "@mantine/core";
-import React, { useEffect, useState } from 'react';
 import {
   prefetchSpace,
   useGetSpacesQuery,
@@ -9,15 +8,13 @@ import { Link } from "react-router-dom";
 import classes from "./space-grid.module.css";
 import { formatMemberCount } from "@/lib";
 import { useTranslation } from "react-i18next";
-import Paginate from "@/components/common/paginate";
 import { IconArrowRight } from "@tabler/icons-react";
 import { CustomAvatar } from "@/components/ui/custom-avatar.tsx";
 import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
 
 export default function SpaceGrid() {
   const { t } = useTranslation();
-  const [ page, setPage ] = useState(1);
-  const { data, isLoading } = useGetSpacesQuery({ page, limit: 12 });
+  const { data, isLoading } = useGetSpacesQuery({ limit: 12 });
 
   const cards = data?.items.map((space, index) => (
     <Card
@@ -57,27 +54,22 @@ export default function SpaceGrid() {
         <Text fz="sm" fw={500}>
           {t("Spaces you belong to")}
         </Text>
-        <Button
-          component={Link}
-          to="/spaces"
-          variant="subtle"
-          rightSection={<IconArrowRight size={16} />}
-          size="sm"
-        >
-          {t("View all spaces")}
-        </Button>
       </Group>
-
 
       <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }}>{cards}</SimpleGrid>
 
-      {data?.items.length != 0 && (
-        <Paginate
-          currentPage={page}
-          hasPrevPage={data?.meta.hasPrevPage}
-          hasNextPage={data?.meta.hasNextPage}
-          onPageChange={setPage}
-        />
+      {data?.items && data.items.length > 9 && (
+        <Group justify="flex-end" mt="lg">
+          <Button
+            component={Link}
+            to="/spaces"
+            variant="subtle"
+            rightSection={<IconArrowRight size={16} />}
+            size="sm"
+          >
+            {t("View all spaces")}
+          </Button>
+        </Group>
       )}
     </>
   );

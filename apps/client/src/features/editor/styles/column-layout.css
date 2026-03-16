@@ -1,25 +1,27 @@
-.node-columnContainer > div > .flex-layout-content > div:first-child {
+.node-columnContainer > div > .flex-layout-content > div:first-child,
+.node-columnContainer > .flex-layout-content > div:first-child,
+.node-columnContainer .flex-layout-content > div:first-child {
   display: flex;
   flex-wrap: wrap;
   box-sizing: border-box;
   width: 100%;
 }
 
-.node-column .popover-open {
+.node-columnLayoutColumn .popover-open {
   opacity: 1;
 }
 
-.node-column {
+.node-columnLayoutColumn {
   outline: 2px solid transparent;
   transition: outline 0.3s ease-in-out;
   position: relative;
 }
 
-.node-column:hover {
+.node-columnLayoutColumn:hover {
   outline: 2px solid #70cff8;
 }
 
-.node-column .column-drag-handle {
+.node-columnLayoutColumn .column-drag-handle {
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
   position: absolute;
@@ -29,7 +31,7 @@
   cursor: grab;
 }
 
-.node-column:hover .column-drag-handle {
+.node-columnLayoutColumn:hover .column-drag-handle {
   opacity: 1;
 }
 

@@ -10,7 +10,10 @@ import {
   User,
 } from '@docmost/db/types/entity.types';
 import { PaginationOptions } from '../../pagination/pagination-options';
-import { executeWithPagination, PaginationResult } from '@docmost/db/pagination/pagination';
+import {
+  CursorPaginationResult,
+  executeWithCursorPagination,
+} from '@docmost/db/pagination/cursor-pagination';
 import { ExpressionBuilder, sql } from 'kysely';
 import { MemberInfo } from '@docmost/db/repos/space/types';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
@@ -146,8 +149,7 @@ export class UserRepo {
       .selectFrom('users')
       .select(this.baseFields)
       .where('workspaceId', '=', workspaceId)
-      .where('deletedAt', 'is', null)
-      .orderBy('createdAt', 'asc');
+      .where('deletedAt', 'is', null);
 
     if (pagination.query) {
       query = query.where((eb) =>
@@ -163,19 +165,23 @@ export class UserRepo {
       );
     }
 
-    const result = executeWithPagination(query, {
-      page: pagination.page,
+    return executeWithCursorPagination(query, {
       perPage: pagination.limit,
+      cursor: pagination.cursor,
+      beforeCursor: pagination.beforeCursor,
+      fields: [
+        { expression: 'name', direction: 'asc' },
+        { expression: 'id', direction: 'asc' },
+      ],
+      parseCursor: (cursor) => ({ name: cursor.name, id: cursor.id }),
     });
-
-    return result;
   }
 
   async getUsersInSpacesOfUser(
     workspaceId: string,
     userId: string,
-    pagination: PaginationOptions
-  ): Promise<PaginationResult<User>> {
+    pagination: PaginationOptions,
+  ): Promise<CursorPaginationResult<User>> {
     const accessibleSpaceIds = this.db
       .selectFrom(() => {
         const direct = this.db
@@ -212,28 +218,35 @@ export class UserRepo {
       .selectFrom(() => directPairs.union(groupPairs).as('mp'))
       .where('spaceId', 'in', accessibleSpaceIds)
       .select('user_id')
-      .distinct()
-      .as('uids');
+      .distinct();
 
     let query = this.db
-      .selectFrom(memberIds)
-      .innerJoin('users', 'users.id', 'uids.user_id')
-      .selectAll('users')
-      .orderBy('users.id', 'asc');
+      .selectFrom('users')
+      .select(this.baseFields)
+      .where('users.id', 'in', memberIds.select('user_id'))
+      .where('users.workspaceId', '=', workspaceId)
+      .where('users.deletedAt', 'is', null);
 
     if (pagination.query) {
       query = query.where((eb) =>
-        eb('users.name', 'ilike', `%${pagination.query}%`).or(
-          'users.email',
+        eb(
+          sql`f_unaccent(users.name)`,
           'ilike',
-          `%${pagination.query}%`
-        )
+          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+        ).or(
+          sql`users.email`,
+          'ilike',
+          sql`f_unaccent(${'%' + pagination.query + '%'})`,
+        ),
       );
     }
 
-    return executeWithPagination(query, {
-      page: pagination.page,
+    return executeWithCursorPagination(query, {
       perPage: pagination.limit,
+      cursor: pagination.cursor,
+      beforeCursor: pagination.beforeCursor,
+      fields: [{ expression: 'users.id', direction: 'asc', key: 'id' }],
+      parseCursor: (cursor) => ({ id: cursor.id }),
     });
   }
 
