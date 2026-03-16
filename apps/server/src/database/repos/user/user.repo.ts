@@ -223,7 +223,7 @@ export class UserRepo {
     let query = this.db
       .selectFrom('users')
       .select(this.baseFields)
-      .where('users.id', 'in', memberIds.select('user_id'))
+      .where('users.id', 'in', memberIds)
       .where('users.workspaceId', '=', workspaceId)
       .where('users.deletedAt', 'is', null);
 
