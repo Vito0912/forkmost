@@ -124,7 +124,7 @@ export default function SharedPage() {
         />
       </Container>
 
-      {data && !shareId && !data.hasLicenseKey && <ShareBranding />}
+      {data && !shareId && !(data.features?.length > 0) && <ShareBranding />}
     </div>
   );
 }

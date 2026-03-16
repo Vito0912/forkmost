@@ -133,20 +133,6 @@ export class SpaceService {
       }
     }
 
-    if (typeof updateSpaceDto.disablePublicSharing !== 'undefined') {
-      const workspace = await this.workspaceRepo.findById(workspaceId, {
-        withLicenseKey: true,
-      });
-
-      if (
-        !this.licenseCheckService.isValidEELicense(workspace.licenseKey)
-      ) {
-        throw new ForbiddenException(
-          'This feature requires a valid enterprise license',
-        );
-      }
-    }
-
     const spaceBefore = await this.spaceRepo.findById(
       updateSpaceDto.spaceId,
       workspaceId,

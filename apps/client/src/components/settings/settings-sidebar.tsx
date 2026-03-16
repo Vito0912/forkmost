@@ -122,7 +122,6 @@ export default function SettingsSidebar() {
     }
 
     if (item.isCloud && item.isEnterprise) {
-      if (!(isCloud() || workspace?.hasLicenseKey)) return false;
       return hasRoleAccess(item);
     }
 
@@ -135,16 +134,13 @@ export default function SettingsSidebar() {
     }
 
     if (item.isEnterprise) {
-      return workspace?.hasLicenseKey ? hasRoleAccess(item) : false;
+      return hasRoleAccess(item);
     }
 
     return hasRoleAccess(item);
   };
 
-  const isItemDisabled = (item: DataItem) => {
-    if (item.showDisabledInNonEE && item.isEnterprise) {
-      return !(isCloud() || workspace?.hasLicenseKey);
-    }
+  const isItemDisabled = (_item: DataItem) => {
     return false;
   };
 

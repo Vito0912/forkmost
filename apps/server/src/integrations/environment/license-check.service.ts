@@ -9,20 +9,23 @@ export class LicenseCheckService {
     private environmentService: EnvironmentService,
   ) {}
 
-  isValidEELicense(licenseKey: string): boolean {
-    if (this.environmentService.isCloud()) {
-      return true;
-    }
+  isValidEELicense(_licenseKey: string): boolean {
+    return true;
+  }
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const LicenseModule = require('../../ee/licence/license.service');
-      const licenseService = this.moduleRef.get(LicenseModule.LicenseService, {
-        strict: false,
-      });
-      return licenseService.isValidEELicense(licenseKey);
-    } catch {
-      return false;
-    }
+  hasFeature(_licenseKey: string, _feature: string, _plan?: string): boolean {
+    return true;
+  }
+
+  getFeatures(_licenseKey: string): string[] {
+    return [];
+  }
+
+  resolveFeatures(_licenseKey: string, _plan: string): string[] {
+    return [];
+  }
+
+  resolveTier(_licenseKey: string, _plan: string): string {
+    return 'enterprise';
   }
 }

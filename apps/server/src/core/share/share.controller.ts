@@ -19,7 +19,6 @@ import {
   ShareIdDto,
   ShareInfoDto,
   SharePageIdDto,
-  SharePasswordDto,
   UpdateShareDto,
 } from './dto/share.dto';
 import { PageRepo } from '@docmost/db/repos/page/page.repo';
@@ -29,23 +28,12 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
-import { EnvironmentService } from '../../integrations/environment/environment.service';
-import { SharePasswordRequiredException } from './exceptions/share-password-required.exception';
-import { comparePasswordHash } from '../../common/helpers';
-import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
-import { findHighestUserSpaceRole } from '@docmost/db/repos/space/utils';
-import { SpaceRole } from 'src/common/helpers/types/permission';
-import { hasLicenseOrEE } from '../../common/helpers';
+import { LicenseCheckService } from '../../integrations/environment/license-check.service';
 import { AuditEvent, AuditResource } from '../../common/events/audit-events';
 import {
   AUDIT_SERVICE,
   IAuditService,
 } from '../../integrations/audit/audit.service';
-import SpaceAbilityFactory from '../casl/abilities/space-ability.factory';
-import {
-  SpaceCaslAction,
-  SpaceCaslSubject,
-} from '../casl/interfaces/space-ability.type';
 
 @UseGuards(JwtAuthGuard)
 @Controller('shares')
@@ -56,9 +44,7 @@ export class ShareController {
     private readonly pageRepo: PageRepo,
     private readonly pagePermissionRepo: PagePermissionRepo,
     private readonly pageAccessService: PageAccessService,
-    private readonly environmentService: EnvironmentService,
-    private readonly spaceMemberRepo: SpaceMemberRepo,
-    private readonly spaceAbility: SpaceAbilityFactory,
+    private readonly licenseCheckService: LicenseCheckService,
     @Inject(AUDIT_SERVICE) private readonly auditService: IAuditService,
   ) {}
 
@@ -94,11 +80,10 @@ export class ShareController {
 
     return {
       ...shareData,
-      hasLicenseKey: hasLicenseOrEE({
-        licenseKey: workspace.licenseKey,
-        isCloud: this.environmentService.isCloud(),
-        plan: workspace.plan,
-      }),
+      features: this.licenseCheckService.resolveFeatures(
+        workspace.licenseKey,
+        workspace.plan,
+      ),
     };
   }
 
@@ -120,17 +105,6 @@ export class ShareController {
     );
     if (!sharingAllowed) {
       throw new NotFoundException('Share not found');
-    }
-
-    if (share.passwordHash) {
-      if (!dto.password) {
-        throw new SharePasswordRequiredException(share.key);
-      }
-
-      const isValidPassword = await comparePasswordHash(dto.password, share.passwordHash);
-      if (!isValidPassword) {
-        throw new SharePasswordRequiredException(share.key);
-      }
     }
 
     return share;
@@ -283,55 +257,10 @@ export class ShareController {
 
     return {
       ...treeData,
-      hasLicenseKey: hasLicenseOrEE({
-        licenseKey: workspace.licenseKey,
-        isCloud: this.environmentService.isCloud(),
-        plan: workspace.plan,
-      }),
+      features: this.licenseCheckService.resolveFeatures(
+        workspace.licenseKey,
+        workspace.plan,
+      ),
     };
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Post('/set-password')
-  async setPassword(@Body() dto: SharePasswordDto, @AuthUser() user: User) {
-    const share = await this.shareRepo.findById(dto.shareId);
-
-    if (!share) {
-      throw new NotFoundException('Share not found');
-    }
-
-    const ability = await this.spaceAbility.createForUser(user, share.spaceId);
-    if (ability.cannot(SpaceCaslAction.Edit, SpaceCaslSubject.Share)) {
-      throw new ForbiddenException();
-    }
-
-    await this.shareService.setSharePassword(dto.shareId, dto.password);
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Post('/remove-password')
-  async removePassword(
-    @Body() dto: ShareIdDto,
-    @AuthUser() user: User,
-  ) {
-    const share = await this.shareRepo.findById(dto.shareId);
-
-    if (!share) {
-      throw new NotFoundException('Share not found');
-    }
-
-    const userSpaceRoles = await this.spaceMemberRepo.getUserSpaceRoles(
-      user.id,
-      share.spaceId,
-    );
-
-    const userSpaceRole = findHighestUserSpaceRole(userSpaceRoles);
-
-    // Can created by Reader, but needs Admin permission to remove password to prevent abuse. They still can delete the share which will change the slug
-    if (userSpaceRole !== SpaceRole.ADMIN) {
-      throw new ForbiddenException();
-    }
-
-    await this.shareService.removeSharePassword(dto.shareId);
   }
 }

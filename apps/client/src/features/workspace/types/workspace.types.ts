@@ -1,3 +1,5 @@
+import { IAuthProvider } from "@/features/security/types/security.types.ts";
+
 export interface IWorkspace {
   id: string;
   name: string;
@@ -18,7 +20,6 @@ export interface IWorkspace {
   emailDomains: string[];
   memberCount?: number;
   plan?: string;
-  hasLicenseKey?: boolean;
   enforceMfa?: boolean;
   aiSearch?: boolean;
   generativeAi?: boolean;
@@ -81,8 +82,7 @@ export interface IPublicWorkspace {
   logo: string;
   hostname: string;
   enforceSso: boolean;
-  authProviders: any;
-  hasLicenseKey?: boolean;
+  authProviders: IAuthProvider[];
 }
 
 export interface IVersion {
