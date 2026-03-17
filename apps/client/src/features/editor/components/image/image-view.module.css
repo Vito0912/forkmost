@@ -26,3 +26,47 @@
     }
   }
 }
+
+.figureWrapper {
+  width: 100%;
+}
+
+.captionContainer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.captionInput {
+  width: min(100%, 480px);
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--mantine-color-gray-6);
+  padding: 2px 4px;
+  outline: none;
+  transition: border-color 120ms ease;
+
+  @mixin dark {
+    color: var(--mantine-color-dark-2);
+  }
+}
+
+.captionInput::placeholder {
+  color: var(--mantine-color-gray-5);
+
+  @mixin dark {
+    color: var(--mantine-color-dark-3);
+  }
+}
+
+.captionInput:focus {
+  border-bottom-color: var(--mantine-color-gray-5);
+
+  @mixin dark {
+    border-bottom-color: var(--mantine-color-dark-2);
+  }
+}

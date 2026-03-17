@@ -34,6 +34,39 @@ export const CustomCodeBlock = CodeBlock.extend<CodeBlockLowlightOptions>({
     };
   },
 
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      title: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute("data-title") || null,
+        renderHTML: (attributes: Record<string, any>) => {
+          if (!attributes.title) return {};
+          return { "data-title": attributes.title };
+        },
+      },
+      hideHeader: {
+        default: false,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute("data-hide-header") === "true",
+        renderHTML: (attributes: Record<string, any>) => {
+          if (!attributes.hideHeader) return {};
+          return { "data-hide-header": "true" };
+        },
+      },
+      wrapLines: {
+        default: true,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute("data-wrap-lines") !== "false",
+        renderHTML: (attributes: Record<string, any>) => {
+          if (attributes.wrapLines !== false) return {};
+          return { "data-wrap-lines": "false" };
+        },
+      },
+    };
+  },
+
   addKeyboardShortcuts() {
     return {
       ...this.parent?.(),

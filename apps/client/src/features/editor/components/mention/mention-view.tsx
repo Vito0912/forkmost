@@ -3,7 +3,6 @@ import { ActionIcon, Anchor, Text } from "@mantine/core";
 import { IconFileDescription } from "@tabler/icons-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { usePageQuery } from "@/features/page/queries/page-query.ts";
-import { useSharePageQuery } from "@/features/share/queries/share-query.ts";
 import {
   buildPageUrl,
   buildSharedPageUrl,
@@ -11,49 +10,48 @@ import {
 import { extractPageSlugId } from "@/lib";
 import classes from "./mention.module.css";
 
+const truncateText = (text: string, maxLength: number = 30): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
 export default function MentionView(props: NodeViewProps) {
   const { node } = props;
-  const { label, entityType, entityId, slugId, anchorId } = node.attrs;
-  const isPageMention = entityType === "page";
+  const { label, entityType, entityId, slugId, anchorSlug, anchorText } = node.attrs;
   const { spaceSlug, pageSlug } = useParams();
   const { shareId } = useParams();
   const navigate = useNavigate();
-
-  const location = useLocation();
-  const isShareRoute = location.pathname.startsWith("/share");
-
   const {
     data: page,
     isLoading,
     isError,
-  } = usePageQuery({ pageId: isPageMention && !isShareRoute ? slugId : null });
+  } = usePageQuery({ pageId: entityType === "page" ? slugId : null });
 
-  const { data: sharedPage } = useSharePageQuery({
-    pageId: isPageMention && isShareRoute ? slugId : undefined,
-  });
+  const location = useLocation();
+  const isShareRoute = location.pathname.startsWith("/share");
 
   const currentPageSlugId = extractPageSlugId(pageSlug);
   const isSamePage = currentPageSlugId === slugId;
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isSamePage && anchorId) {
+    if (isSamePage && anchorSlug) {
       e.preventDefault();
-      const element = document.querySelector(`[id="${anchorId}"]`);
+      const element = document.querySelector(`[id="${anchorSlug}"]`);
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
-        navigate(`#${anchorId}`, { replace: true });
+        navigate(`#${anchorSlug}`, { replace: true });
       }
     }
   };
 
-  const sharePageTitle = sharedPage?.page?.title || label;
-
   const shareSlugUrl = buildSharedPageUrl({
     shareId,
     pageSlugId: slugId,
-    pageTitle: sharePageTitle,
-    anchorId,
+    pageTitle: label,
+    anchorId: anchorSlug,
   });
+
+  const pageUrl = buildPageUrl(spaceSlug, slugId, label, anchorSlug);
 
   return (
     <NodeViewWrapper style={{ display: "inline" }} data-drag-handle>
@@ -63,63 +61,23 @@ export default function MentionView(props: NodeViewProps) {
         </Text>
       )}
 
-      {isPageMention && isShareRoute && (
-        <Anchor
-          component={Link}
-          fw={500}
-          to={shareSlugUrl}
-          onClick={handleClick}
-          underline="never"
-          className={classes.pageMentionLink}
-        >
-          <ActionIcon
-            variant="transparent"
-            color="gray"
-            component="span"
-            size={18}
-            style={{ verticalAlign: "text-bottom" }}
-          >
-            <IconFileDescription size={18} />
-          </ActionIcon>
-          <span className={classes.pageMentionText}>
-            {sharePageTitle}
-          </span>
-        </Anchor>
+      {entityType === "page" && isError && (
+        <Text component="span" c="dimmed" size="sm">
+          {label}
+        </Text>
       )}
 
-      {isPageMention && !isShareRoute && isError && (
-        <Anchor
-          component={Link}
-          fw={500}
-          to={buildPageUrl(spaceSlug, slugId, label, anchorId)}
-          onClick={handleClick}
-          underline="never"
-          className={classes.pageMentionLink}
-        >
-          <ActionIcon
-            variant="transparent"
-            color="gray"
-            component="span"
-            size={18}
-            style={{ verticalAlign: "text-bottom" }}
-          >
-            <IconFileDescription size={18} />
-          </ActionIcon>
-          <span className={classes.pageMentionText}>
-            {label}
-          </span>
-        </Anchor>
-      )}
-
-      {isPageMention && !isShareRoute && !isError && (
-        <Anchor
-          component={Link}
-          fw={500}
-          to={buildPageUrl(page?.space?.slug || spaceSlug, slugId, page?.title || label, anchorId)}
-          onClick={handleClick}
-          underline="never"
-          className={classes.pageMentionLink}
-        >
+       {entityType === "page" && !isError && (
+         <Anchor
+           component={Link}
+           fw={500}
+           to={
+             isShareRoute ? shareSlugUrl : buildPageUrl(page?.space?.slug || spaceSlug, slugId, page?.title || label, anchorSlug)
+           }
+           onClick={handleClick}
+           underline="never"
+           className={classes.pageMentionLink}
+         >
           {page?.icon ? (
             <span style={{ marginRight: "4px" }}>{page.icon}</span>
           ) : (
@@ -136,6 +94,11 @@ export default function MentionView(props: NodeViewProps) {
 
           <span className={classes.pageMentionText}>
             {page?.title || label}
+            {anchorText && (
+              <span className={classes.anchorText}>
+                {'#'}{truncateText(anchorText)}
+              </span>
+            )}
           </span>
         </Anchor>
       )}

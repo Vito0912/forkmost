@@ -8,12 +8,10 @@ import {
   IconUsersGroup,
   IconSpaces,
   IconBrush,
-  IconCoin,
+  IconWorld,
   IconLock,
   IconKey,
-  IconWorld,
   IconSparkles,
-  IconHistory,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import classes from "./settings.module.css";
@@ -21,39 +19,34 @@ import { useTranslation } from "react-i18next";
 import { isCloud } from "@/lib/config.ts";
 import useUserRole from "@/hooks/use-user-role.tsx";
 import { useAtom } from "jotai";
-import { entitlementAtom } from "@/ee/entitlement/entitlement-atom";
-import { Feature } from "@/ee/features";
-import { useUpgradeLabel } from "@/ee/hooks/use-upgrade-label";
+import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
 import {
-  prefetchApiKeyManagement,
-  prefetchApiKeys,
-  prefetchBilling,
   prefetchGroups,
-  prefetchLicense,
   prefetchShares,
   prefetchSpaces,
-  prefetchSsoProviders,
   prefetchWorkspaceMembers,
-  prefetchAuditLogs,
 } from "@/components/settings/settings-queries.tsx";
 import AppVersion from "@/components/settings/app-version.tsx";
 import { mobileSidebarAtom } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
 import { useSettingsNavigation } from "@/hooks/use-settings-navigation";
 
-type DataItem = {
+interface DataItem {
   label: string;
   icon: React.ElementType;
   path: string;
-  feature?: string;
-  role?: "admin" | "owner";
-  env?: "cloud" | "selfhosted";
-};
+  isCloud?: boolean;
+  isEnterprise?: boolean;
+  isAdmin?: boolean;
+  isOwner?: boolean;
+  isSelfhosted?: boolean;
+  showDisabledInNonEE?: boolean;
+}
 
-type DataGroup = {
+interface DataGroup {
   heading: string;
   items: DataItem[];
-};
+}
 
 const groupedData: DataGroup[] = [
   {
@@ -69,7 +62,6 @@ const groupedData: DataGroup[] = [
         label: "API keys",
         icon: IconKey,
         path: "/settings/account/api-keys",
-        feature: Feature.API_KEYS,
       },
     ],
   },
@@ -77,20 +69,17 @@ const groupedData: DataGroup[] = [
     heading: "Workspace",
     items: [
       { label: "General", icon: IconSettings, path: "/settings/workspace" },
-      { label: "Members", icon: IconUsers, path: "/settings/members" },
       {
-        label: "Billing",
-        icon: IconCoin,
-        path: "/settings/billing",
-        role: "admin",
-        env: "cloud",
+        label: "Members",
+        icon: IconUsers,
+        path: "/settings/members",
       },
       {
         label: "Security & SSO",
         icon: IconLock,
         path: "/settings/security",
-        feature: Feature.SECURITY_SETTINGS,
-        role: "admin",
+        isSelfhosted: true,
+        isAdmin: true,
       },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
       { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
@@ -99,33 +88,9 @@ const groupedData: DataGroup[] = [
         label: "API management",
         icon: IconKey,
         path: "/settings/api-keys",
-        feature: Feature.API_KEYS,
-        role: "admin",
+        isAdmin: true,
       },
-      {
-        label: "AI settings",
-        icon: IconSparkles,
-        path: "/settings/ai",
-        role: "admin",
-      },
-      {
-        label: "Audit log",
-        icon: IconHistory,
-        path: "/settings/audit",
-        feature: Feature.AUDIT_LOGS,
-        role: "owner",
-        env: "selfhosted",
-      },
-    ],
-  },
-  {
-    heading: "System",
-    items: [
-      {
-        label: "License & Edition",
-        icon: IconKey,
-        path: "/settings/license",
-      },
+      { label: "AI settings", icon: IconSparkles, path: "/settings/ai", isAdmin: true },
     ],
   },
 ];
@@ -136,8 +101,7 @@ export default function SettingsSidebar() {
   const [active, setActive] = useState(location.pathname);
   const { goBack } = useSettingsNavigation();
   const { isAdmin, isOwner } = useUserRole();
-  const [entitlements] = useAtom(entitlementAtom);
-  const upgradeLabel = useUpgradeLabel();
+  const [workspace] = useAtom(workspaceAtom);
   const [mobileSidebarOpened] = useAtom(mobileSidebarAtom);
   const toggleMobileSidebar = useToggleSidebar(mobileSidebarAtom);
 
@@ -145,20 +109,39 @@ export default function SettingsSidebar() {
     setActive(location.pathname);
   }, [location.pathname]);
 
-  const hasFeature = (f: string) =>
-    entitlements?.features?.includes(f) ?? false;
-
-  const canShowItem = (item: DataItem) => {
-    if (item.env === "cloud" && !isCloud()) return false;
-    if (item.env === "selfhosted" && isCloud()) return false;
-    if (item.role === "admin" && !isAdmin) return false;
-    if (item.role === "owner" && !isOwner) return false;
+  const hasRoleAccess = (item: DataItem) => {
+    if (item.isOwner) return isOwner;
+    if (item.isAdmin) return isAdmin;
     return true;
   };
 
-  const isItemDisabled = (item: DataItem) => {
-    if (!item.feature) return false;
-    return !hasFeature(item.feature);
+  const canShowItem = (item: DataItem) => {
+    if (item.showDisabledInNonEE && item.isEnterprise) {
+      if (item.isSelfhosted && isCloud()) return false;
+      return hasRoleAccess(item);
+    }
+
+    if (item.isCloud && item.isEnterprise) {
+      return hasRoleAccess(item);
+    }
+
+    if (item.isCloud) {
+      return isCloud() ? hasRoleAccess(item) : false;
+    }
+
+    if (item.isSelfhosted) {
+      return !isCloud() ? hasRoleAccess(item) : false;
+    }
+
+    if (item.isEnterprise) {
+      return hasRoleAccess(item);
+    }
+
+    return hasRoleAccess(item);
+  };
+
+  const isItemDisabled = (_item: DataItem) => {
+    return false;
   };
 
   const menuItems = groupedData.map((group) => {
@@ -187,28 +170,8 @@ export default function SettingsSidebar() {
             case "Groups":
               prefetchHandler = prefetchGroups;
               break;
-            case "Billing":
-              prefetchHandler = prefetchBilling;
-              break;
-            case "License & Edition":
-              if (entitlements?.tier !== "free") {
-                prefetchHandler = prefetchLicense;
-              }
-              break;
-            case "Security & SSO":
-              prefetchHandler = prefetchSsoProviders;
-              break;
             case "Public sharing":
               prefetchHandler = prefetchShares;
-              break;
-            case "API keys":
-              prefetchHandler = prefetchApiKeys;
-              break;
-            case "API management":
-              prefetchHandler = prefetchApiKeyManagement;
-              break;
-            case "Audit log":
-              prefetchHandler = prefetchAuditLogs;
               break;
             default:
               break;
@@ -246,7 +209,7 @@ export default function SettingsSidebar() {
             return (
               <Tooltip
                 key={item.label}
-                label={upgradeLabel}
+                label={t("This is an enterprise feature that was forgotten to remove. Thank Docmost maintainers for closing source most parts of the project")}
                 position="right"
                 withArrow
               >
@@ -283,19 +246,6 @@ export default function SettingsSidebar() {
       <ScrollArea w="100%">{menuItems}</ScrollArea>
 
       {!isCloud() && <AppVersion />}
-
-      {isCloud() && (
-        <div className={classes.text}>
-          <Text
-            size="sm"
-            c="dimmed"
-            component="a"
-            href="mailto:help@docmost.com"
-          >
-            help@docmost.com
-          </Text>
-        </div>
-      )}
     </div>
   );
 }

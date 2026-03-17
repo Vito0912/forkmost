@@ -1,8 +1,12 @@
+# Environment variables
 .env
-.env.dev
-.env.prod
+.env.*
+!.env.example
+
+# Data
 data
-# compiled output
+
+# Compiled output
 /dist
 /node_modules
 
@@ -38,6 +42,10 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# NX
 .nx
 .nx/installation
 .nx/cache
+
+# PNPM
+.pnpm-store/

@@ -23,6 +23,7 @@ export interface IPage {
   lastUpdatedBy: ILastUpdatedBy;
   deletedBy: IDeletedBy;
   space: Partial<ISpace>;
+  breadcrumbs: string[];
   permissions?: {
     canEdit: boolean;
     hasRestriction: boolean;

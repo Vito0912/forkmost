@@ -16,7 +16,10 @@ import { PageRepo } from '@docmost/db/repos/page/page.repo';
 import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination';
 import { QueueJob, QueueName } from '../../integrations/queue/constants';
 import { extractUserMentionIdsFromJson } from '../../common/helpers/prosemirror/utils';
-import { ICommentNotificationJob } from '../../integrations/queue/constants/queue.interface';
+import {
+  ICommentNotificationJob,
+  ICommentResolvedNotificationJob,
+} from '../../integrations/queue/constants/queue.interface';
 import { WsService } from '../../ws/ws.service';
 
 @Injectable()
@@ -174,6 +177,53 @@ export class CommentService {
     });
 
     return comment;
+  }
+
+  async resolve(
+    comment: Comment,
+    resolved: boolean,
+    authUser: User,
+  ): Promise<Comment> {
+    const now = new Date();
+
+    await this.commentRepo.updateComment(
+      {
+        resolvedAt: resolved ? now : null,
+        resolvedById: resolved ? authUser.id : null,
+        updatedAt: now,
+      },
+      comment.id,
+    );
+
+    const updatedComment = await this.commentRepo.findById(comment.id, {
+      includeCreator: true,
+      includeResolvedBy: true,
+    });
+
+    this.wsService.emitCommentEvent(comment.spaceId, comment.pageId, {
+      operation: 'commentUpdated',
+      pageId: comment.pageId,
+      comment: updatedComment,
+    });
+
+    if (resolved) {
+      const jobData: ICommentResolvedNotificationJob = {
+        commentId: comment.id,
+        commentCreatorId: comment.creatorId,
+        pageId: comment.pageId,
+        spaceId: comment.spaceId,
+        workspaceId: comment.workspaceId,
+        actorId: authUser.id,
+      };
+
+      this.notificationQueue
+        .add(QueueJob.COMMENT_RESOLVED_NOTIFICATION, jobData)
+        .catch((err) =>
+          this.logger.warn(`Failed to queue comment-resolved notification: ${err.message}`),
+        );
+    }
+
+    return updatedComment;
   }
 
   private async queueCommentNotification(

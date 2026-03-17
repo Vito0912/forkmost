@@ -21,6 +21,7 @@ import { ShareModule } from './share/share.module';
 import { NotificationModule } from './notification/notification.module';
 import { WatcherModule } from './watcher/watcher.module';
 import { ClsMiddleware } from 'nestjs-cls';
+import { ApiKeyModule } from './api-key/api-key.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ClsMiddleware } from 'nestjs-cls';
     ShareModule,
     NotificationModule,
     WatcherModule,
+    ApiKeyModule,
   ],
 })
 export class CoreModule implements NestModule {

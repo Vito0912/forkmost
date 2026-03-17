@@ -101,7 +101,9 @@ export function isAttachmentNode(nodeType: string) {
   const attachmentNodeTypes = [
     'attachment',
     'image',
+    'audio',
     'video',
+    'pdf',
     'excalidraw',
     'drawio',
   ];
