@@ -57,7 +57,7 @@ export default function CreateApiKeyModal() {
     let expiresAt: string | undefined;
 
     if (values.expiration === "custom" && values.customDate) {
-      expiresAt = values.customDate.toISOString();
+      expiresAt = new Date(values.customDate).toISOString();
     } else if (values.expiration !== "never") {
       const days = parseInt(values.expiration, 10);
       expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -106,7 +106,7 @@ export default function CreateApiKeyModal() {
                 <DateInput
                   label={t("Custom expiration date")}
                   placeholder={t("Select expiration date")}
-                  minDate={new Date()}
+                  minDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
                   required
                   {...form.getInputProps("customDate")}
                 />

@@ -67,15 +67,20 @@ export function useCreateCommentMutation() {
       ) as InfiniteData<IPagination<IComment>> | undefined;
 
       if (cache && cache.pages.length > 0) {
-        const lastIdx = cache.pages.length - 1;
-        queryClient.setQueryData(RQ_KEY(newComment.pageId), {
-          ...cache,
-          pages: cache.pages.map((page, i) =>
-            i === lastIdx
-              ? { ...page, items: [...page.items, newComment] }
-              : page,
-          ),
-        });
+        const alreadyExists = cache.pages.some((page) =>
+          page.items.some((c) => c.id === newComment.id),
+        );
+        if (!alreadyExists) {
+          const lastIdx = cache.pages.length - 1;
+          queryClient.setQueryData(RQ_KEY(newComment.pageId), {
+            ...cache,
+            pages: cache.pages.map((page, i) =>
+              i === lastIdx
+                ? { ...page, items: [...page.items, newComment] }
+                : page,
+            ),
+          });
+        }
       }
 
       notifications.show({ message: t("Comment created successfully") });
