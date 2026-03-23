@@ -4,6 +4,11 @@ import { z } from 'zod';
 import { CommentService } from '../../../core/comment/comment.service';
 import { PageRepo } from '@docmost/db/repos/page/page.repo';
 import { PageAccessService } from '../../../core/page/page-access/page-access.service';
+import SpaceAbilityFactory from '../../../core/casl/abilities/space-ability.factory';
+import {
+  SpaceCaslAction,
+  SpaceCaslSubject,
+} from '../../../core/casl/interfaces/space-ability.type';
 import { User, Workspace } from '@docmost/db/types/entity.types';
 import { htmlToJson } from '../../../collaboration/collaboration.util';
 
@@ -72,6 +77,7 @@ export function registerCommentTools(
   commentService: CommentService,
   pageRepo: PageRepo,
   pageAccessService: PageAccessService,
+  spaceAbility: SpaceAbilityFactory,
 ) {
   // get_comments: Matches CommentController.findPageComments → pageAccessService.validateCanView
   server.tool(
@@ -179,6 +185,54 @@ export function registerCommentTools(
           pageId: updated.pageId,
           content: updated.content,
           updatedAt: updated.updatedAt,
+        });
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  // delete_comment: Matches CommentController.delete
+  // → pageAccessService.validateCanEdit + (isOwner OR spaceAdmin)
+  server.tool(
+    'delete_comment',
+    'Delete a comment',
+    {
+      commentId: z.string().describe('Comment ID'),
+    },
+    async ({ commentId }) => {
+      try {
+        const comment = await commentService.findById(commentId);
+
+        assertWorkspace(comment.workspaceId, workspace.id, 'Comment');
+
+        const page = await pageRepo.findById(comment.pageId);
+        if (!page) {
+          throw new NotFoundException('Page not found');
+        }
+
+        // Check page-level edit permission first
+        await pageAccessService.validateCanEdit(page, user);
+
+        // Check if user is the comment owner
+        const isOwner = comment.creatorId === user.id;
+
+        if (isOwner) {
+          await commentService.delete(comment.id);
+        } else {
+          // Space admin can delete any comment
+          const ability = await spaceAbility.createForUser(user, comment.spaceId);
+          if (ability.cannot(SpaceCaslAction.Manage, SpaceCaslSubject.Settings)) {
+            throw new ForbiddenException(
+              'You can only delete your own comments or must be a space admin',
+            );
+          }
+          await commentService.delete(comment.id);
+        }
+
+        return textResult({
+          message: 'Comment deleted successfully',
+          commentId: comment.id,
         });
       } catch (error) {
         return errorResult(error);

@@ -25,6 +25,8 @@ describe('Comment Tools Authorization', () => {
   let commentService: Record<string, jest.Mock>;
   let pageRepo: Record<string, jest.Mock>;
   let pageAccessService: Record<string, jest.Mock>;
+  let spaceAbility: Record<string, jest.Mock>;
+  let mockAbility: { can: jest.Mock; cannot: jest.Mock };
 
   beforeEach(() => {
     toolHandlers.clear();
@@ -37,11 +39,17 @@ describe('Comment Tools Authorization', () => {
       }),
     };
 
+    mockAbility = {
+      can: jest.fn().mockReturnValue(true),
+      cannot: jest.fn().mockReturnValue(false),
+    };
+
     commentService = {
       findByPageId: jest.fn().mockResolvedValue({ items: [mockComment] }),
       create: jest.fn().mockResolvedValue(mockComment),
       findById: jest.fn().mockResolvedValue(mockComment),
       update: jest.fn().mockResolvedValue({ ...mockComment, updatedAt: new Date() }),
+      delete: jest.fn().mockResolvedValue(undefined),
     };
 
     pageRepo = {
@@ -53,6 +61,10 @@ describe('Comment Tools Authorization', () => {
       validateCanEdit: jest.fn().mockResolvedValue({ hasRestriction: false }),
     };
 
+    spaceAbility = {
+      createForUser: jest.fn().mockResolvedValue(mockAbility),
+    };
+
     registerCommentTools(
       mockServer as any,
       mockUser,
@@ -60,6 +72,7 @@ describe('Comment Tools Authorization', () => {
       commentService as any,
       pageRepo as any,
       pageAccessService as any,
+      spaceAbility as any,
     );
   });
 
@@ -156,6 +169,78 @@ describe('Comment Tools Authorization', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('not found');
+    });
+  });
+
+  describe('delete_comment', () => {
+    it('should delete comment when user is the owner', async () => {
+      const result = await callTool('delete_comment', { commentId: 'comment-1' });
+
+      expect(commentService.findById).toHaveBeenCalledWith('comment-1');
+      expect(pageAccessService.validateCanEdit).toHaveBeenCalledWith(mockPage, mockUser);
+      expect(commentService.delete).toHaveBeenCalledWith('comment-1');
+      expect(result.isError).toBe(false);
+    });
+
+    it('should delete comment when user is space admin', async () => {
+      const otherUserComment = { ...mockComment, creatorId: 'other-user' };
+      commentService.findById.mockResolvedValue(otherUserComment);
+
+      const result = await callTool('delete_comment', { commentId: 'comment-1' });
+
+      expect(spaceAbility.createForUser).toHaveBeenCalledWith(mockUser, 'space-1');
+      expect(commentService.delete).toHaveBeenCalledWith('comment-1');
+      expect(result.isError).toBe(false);
+    });
+
+    it('should deny when user cannot edit page', async () => {
+      pageAccessService.validateCanEdit.mockRejectedValue(new ForbiddenException());
+
+      const result = await callTool('delete_comment', { commentId: 'comment-1' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Permission denied');
+      expect(commentService.delete).not.toHaveBeenCalled();
+    });
+
+    it('should deny when user is not owner and not space admin', async () => {
+      const otherUserComment = { ...mockComment, creatorId: 'other-user' };
+      commentService.findById.mockResolvedValue(otherUserComment);
+      mockAbility.cannot.mockReturnValue(true);
+
+      const result = await callTool('delete_comment', { commentId: 'comment-1' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('You can only delete your own comments or must be a space admin');
+      expect(commentService.delete).not.toHaveBeenCalled();
+    });
+
+    it('should error when comment not found', async () => {
+      commentService.findById.mockRejectedValue(new NotFoundException('Comment not found'));
+
+      const result = await callTool('delete_comment', { commentId: 'missing' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('not found');
+    });
+
+    it('should error when page not found', async () => {
+      pageRepo.findById.mockResolvedValue(null);
+
+      const result = await callTool('delete_comment', { commentId: 'comment-1' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('not found');
+    });
+
+    it('should deny when comment is in different workspace', async () => {
+      commentService.findById.mockResolvedValue({ ...mockComment, workspaceId: 'other-ws' });
+
+      const result = await callTool('delete_comment', { commentId: 'comment-1' });
+
+      expect(result.isError).toBe(true);
+      expect(pageAccessService.validateCanEdit).not.toHaveBeenCalled();
+      expect(commentService.delete).not.toHaveBeenCalled();
     });
   });
 });
