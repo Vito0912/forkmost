@@ -476,4 +476,38 @@ export function registerPageTools(
       }
     },
   );
+
+  // delete_page: Matches PageController.delete (soft delete / trash)
+  // → pageAccessService.validateCanEdit
+  server.tool(
+    'delete_page',
+    'Move a page to trash (soft delete)',
+    {
+      pageId: z.string().describe('The page ID'),
+    },
+    async ({ pageId }) => {
+      try {
+        const page = await pageRepo.findById(pageId);
+
+        if (!page) {
+          throw new NotFoundException('Page not found');
+        }
+
+        assertWorkspace(page.workspaceId, workspace.id, 'Page');
+
+        // User needs edit permission to delete
+        await pageAccessService.validateCanEdit(page, user);
+
+        await pageService.removePage(pageId, user.id, workspace.id);
+
+        return textResult({
+          message: 'Page moved to trash successfully',
+          pageId: page.id,
+          title: page.title,
+        });
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 }

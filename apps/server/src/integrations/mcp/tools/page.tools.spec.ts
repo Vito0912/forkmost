@@ -53,6 +53,7 @@ describe('Page Tools Authorization', () => {
       duplicatePage: jest.fn().mockResolvedValue({ id: 'dup-1', title: 'Copy', spaceId: 'space-1' }),
       movePage: jest.fn().mockResolvedValue(undefined),
       movePageToSpace: jest.fn().mockResolvedValue(undefined),
+      removePage: jest.fn().mockResolvedValue(undefined),
     };
 
     pageRepo = {
@@ -352,6 +353,46 @@ describe('Page Tools Authorization', () => {
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('Permission denied');
       expect(pageService.movePageToSpace).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('delete_page', () => {
+    it('should call validateCanEdit and removePage', async () => {
+      const result = await callTool('delete_page', { pageId: 'page-1' });
+
+      expect(pageAccessService.validateCanEdit).toHaveBeenCalledWith(mockPage, mockUser);
+      expect(pageService.removePage).toHaveBeenCalledWith('page-1', mockUser.id, mockWorkspace.id);
+      expect(result.isError).toBe(false);
+    });
+
+    it('should deny when validateCanEdit throws', async () => {
+      pageAccessService.validateCanEdit.mockRejectedValue(new ForbiddenException());
+
+      const result = await callTool('delete_page', { pageId: 'page-1' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Permission denied');
+      expect(pageService.removePage).not.toHaveBeenCalled();
+    });
+
+    it('should error when page not found', async () => {
+      pageRepo.findById.mockResolvedValue(null);
+
+      const result = await callTool('delete_page', { pageId: 'missing' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('not found');
+      expect(pageService.removePage).not.toHaveBeenCalled();
+    });
+
+    it('should deny when page is in different workspace', async () => {
+      pageRepo.findById.mockResolvedValue({ ...mockPage, workspaceId: 'other-ws' });
+
+      const result = await callTool('delete_page', { pageId: 'page-1' });
+
+      expect(result.isError).toBe(true);
+      expect(pageAccessService.validateCanEdit).not.toHaveBeenCalled();
+      expect(pageService.removePage).not.toHaveBeenCalled();
     });
   });
 });

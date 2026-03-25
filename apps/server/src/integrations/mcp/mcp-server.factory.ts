@@ -64,6 +64,7 @@ export class McpServerFactory {
       this.commentService,
       this.pageRepo,
       this.pageAccessService,
+      this.spaceAbility,
     );
     registerOtherTools(
       server,

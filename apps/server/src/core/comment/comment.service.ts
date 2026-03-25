@@ -226,6 +226,10 @@ export class CommentService {
     return updatedComment;
   }
 
+  async delete(commentId: string): Promise<void> {
+    await this.commentRepo.deleteComment(commentId);
+  }
+
   private async queueCommentNotification(
     content: any,
     oldMentionIds: string[],
