@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: docmost
+      POSTGRES_USER: docmost
+      POSTGRES_PASSWORD: STRONG_DB_PASSWORD
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  forkmost:
+  db_data:
+  redis_data:

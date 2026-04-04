@@ -9,11 +9,12 @@ import {
   IconStrikethrough,
   IconUnderline,
   IconMessage,
-  IconSparkles,
+  IconSubscript,
+  IconSuperscript,
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import classes from "./bubble-menu.module.css";
-import { ActionIcon, Button, rem, Tooltip } from "@mantine/core";
+import { ActionIcon, rem, Tooltip } from "@mantine/core";
 import { ColorSelector } from "./color-selector";
 import { NodeSelector } from "./node-selector";
 import { TextAlignmentSelector } from "./text-alignment-selector";
@@ -21,13 +22,13 @@ import {
   draftCommentIdAtom,
   showCommentPopupAtom,
 } from "@/features/comment/atoms/comment-atom";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { v7 as uuid7 } from "uuid";
 import { isCellSelection, isTextSelected } from "@docmost/editor-ext";
 import { LinkSelector } from "@/features/editor/components/bubble-menu/link-selector.tsx";
 import { useTranslation } from "react-i18next";
-import { showAiMenuAtom, showLinkMenuAtom } from "@/features/editor/atoms/editor-atoms";
-import { workspaceAtom } from "@/features/user/atoms/current-user-atom";
+import { HighlightColorSelector } from "./highlight-color-selector";
+import { showLinkMenuAtom } from "@/features/editor/atoms/editor-atoms";
 
 export interface BubbleMenuItem {
   name: string;
@@ -42,23 +43,15 @@ type EditorBubbleMenuProps = Omit<BubbleMenuProps, "children" | "editor"> & {
 
 export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
   const { t } = useTranslation();
-  const [showAiMenu, setShowAiMenu] = useAtom(showAiMenuAtom);
   const [showCommentPopup, setShowCommentPopup] = useAtom(showCommentPopupAtom);
-  const workspace = useAtomValue(workspaceAtom);
-  const isGenerativeAiEnabled = workspace?.settings?.ai?.generative === true;
   const [, setDraftCommentId] = useAtom(draftCommentIdAtom);
-  const showCommentPopupRef = useRef(showCommentPopup);
-  const showAiMenuRef = useRef(showAiMenu);
   const [showLinkMenu] = useAtom(showLinkMenuAtom);
+  const showCommentPopupRef = useRef(showCommentPopup);
   const showLinkMenuRef = useRef(showLinkMenu);
 
   useEffect(() => {
     showCommentPopupRef.current = showCommentPopup;
   }, [showCommentPopup]);
-
-  useEffect(() => {
-    showAiMenuRef.current = showAiMenu;
-  }, [showAiMenu]);
 
   useEffect(() => {
     showLinkMenuRef.current = showLinkMenu;
@@ -76,6 +69,8 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
         isItalic: ctx.editor.isActive("italic"),
         isUnderline: ctx.editor.isActive("underline"),
         isStrike: ctx.editor.isActive("strike"),
+        isSubscript: ctx.editor.isActive("subscript"),
+        isSuperscript: ctx.editor.isActive("superscript"),
         isCode: ctx.editor.isActive("code"),
         isComment: ctx.editor.isActive("comment"),
       };
@@ -106,6 +101,18 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
       isActive: () => editorState?.isStrike,
       command: () => props.editor.chain().focus().toggleStrike().run(),
       icon: IconStrikethrough,
+    },
+    {
+      name: "Subscript",
+      isActive: () => editorState?.isSubscript,
+      command: () => props.editor.chain().focus().toggleSubscript().run(),
+      icon: IconSubscript,
+    },
+    {
+      name: "Superscript",
+      isActive: () => editorState?.isSuperscript,
+      command: () => props.editor.chain().focus().toggleSuperscript().run(),
+      icon: IconSuperscript,
     },
     {
       name: "Code",
@@ -140,7 +147,6 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
         empty ||
         isNodeSelection(selection) ||
         isCellSelection(selection) ||
-        showAiMenuRef.current ||
         showLinkMenuRef.current ||
         showCommentPopupRef?.current
       ) {
@@ -153,6 +159,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
       offset: 8,
       onHide: () => {
         setIsNodeSelectorOpen(false);
+        setIsHighlightColorSelectorOpen(false);
         setIsTextAlignmentOpen(false);
         setIsColorSelectorOpen(false);
       },
@@ -161,10 +168,10 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
 
   const [isNodeSelectorOpen, setIsNodeSelectorOpen] = useState(false);
   const [isTextAlignmentSelectorOpen, setIsTextAlignmentOpen] = useState(false);
+  const [isHighlightColorSelectorOpen, setIsHighlightColorSelectorOpen] = useState(false);
   const [isColorSelectorOpen, setIsColorSelectorOpen] = useState(false);
 
-  // Hide the bubble menu immediately when AI menu is shown
-  if (showAiMenu || showLinkMenu) return;
+  if (showLinkMenu) return;
 
   return (
     <BubbleMenu
@@ -172,22 +179,6 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
       style={{ zIndex: 199, position: "relative" }}
     >
       <div className={classes.bubbleMenu}>
-        {isGenerativeAiEnabled && (
-          <>
-            <Button
-              variant="default"
-              className={clsx(classes.buttonRoot)}
-              radius="0"
-              leftSection={<IconSparkles size={16} />}
-              onClick={() => {
-                setShowAiMenu(true);
-              }}
-            >
-              {t("Ask AI")}
-            </Button>
-            <div className={classes.divider} />
-          </>
-        )}
         <NodeSelector
           editor={props.editor}
           isOpen={isNodeSelectorOpen}
@@ -195,6 +186,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsNodeSelectorOpen(!isNodeSelectorOpen);
             setIsTextAlignmentOpen(false);
             setIsColorSelectorOpen(false);
+            setIsHighlightColorSelectorOpen(false);
           }}
         />
 
@@ -205,6 +197,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsTextAlignmentOpen(!isTextAlignmentSelectorOpen);
             setIsNodeSelectorOpen(false);
             setIsColorSelectorOpen(false);
+            setIsHighlightColorSelectorOpen(false);
           }}
         />
 
@@ -229,6 +222,17 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
 
         <LinkSelector />
 
+        <HighlightColorSelector
+          editor={props.editor}
+          isOpen={isHighlightColorSelectorOpen}
+          setIsOpen={() => {
+            setIsHighlightColorSelectorOpen(!isHighlightColorSelectorOpen);
+            setIsNodeSelectorOpen(false);
+            setIsTextAlignmentOpen(false);
+            setIsColorSelectorOpen(false);
+          }}
+        />
+
         <ColorSelector
           editor={props.editor}
           isOpen={isColorSelectorOpen}
@@ -236,6 +240,7 @@ export const EditorBubbleMenu: FC<EditorBubbleMenuProps> = (props) => {
             setIsColorSelectorOpen(!isColorSelectorOpen);
             setIsNodeSelectorOpen(false);
             setIsTextAlignmentOpen(false);
+            setIsHighlightColorSelectorOpen(false);
           }}
         />
 

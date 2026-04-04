@@ -31,6 +31,6 @@ export async function searchShare(
 export async function searchAttachments(
   params: IPageSearchParams,
 ): Promise<IAttachmentSearch[]> {
-  const req = await api.post<{ items: IAttachmentSearch[] }>("/search-attachments", params);
+  const req = await api.post<{ items: IAttachmentSearch[] }>("/search/attachments", params);
   return req.data.items;
 }

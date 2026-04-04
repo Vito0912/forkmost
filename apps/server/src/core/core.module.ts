@@ -22,6 +22,7 @@ import { NotificationModule } from './notification/notification.module';
 import { WatcherModule } from './watcher/watcher.module';
 import { SessionModule } from './session/session.module';
 import { ClsMiddleware } from 'nestjs-cls';
+import { ApiKeyModule } from './api-key/api-key.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ClsMiddleware } from 'nestjs-cls';
     NotificationModule,
     WatcherModule,
     SessionModule,
+    ApiKeyModule,
   ],
 })
 export class CoreModule implements NestModule {

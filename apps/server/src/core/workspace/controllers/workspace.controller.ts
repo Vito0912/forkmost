@@ -35,6 +35,7 @@ import { EnvironmentService } from '../../../integrations/environment/environmen
 import { LicenseCheckService } from '../../../integrations/environment/license-check.service';
 import { CheckHostnameDto } from '../dto/check-hostname.dto';
 import { RemoveWorkspaceUserDto } from '../dto/remove-workspace-user.dto';
+import { ChangeWorkspaceMemberPasswordDto } from '../../auth/dto/change-password.dto';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 
 @UseGuards(JwtAuthGuard)
@@ -124,7 +125,7 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    return this.workspaceService.getWorkspaceUsers(workspace.id, pagination);
+    return this.workspaceService.getWorkspaceUsers(user, workspace.id, pagination);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -157,6 +158,27 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
     await this.workspaceService.activateUser(user, dto.userId, workspace.id);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('members/change-password')
+  async changePasswordForWorkspaceMember(
+    @Body() dto: ChangeWorkspaceMemberPasswordDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const ability = this.workspaceAbility.createForUser(user, workspace);
+    if (
+      ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.Member)
+    ) {
+      throw new ForbiddenException();
+    }
+
+    await this.workspaceService.changeUserPassword(
+      dto,
+      user.id,
+      workspace.id,
+    );
   }
 
   @HttpCode(HttpStatus.OK)

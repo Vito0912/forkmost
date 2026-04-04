@@ -19,6 +19,7 @@ import {
   ShareIdDto,
   ShareInfoDto,
   SharePageIdDto,
+  SharePasswordDto,
   UpdateShareDto,
 } from './dto/share.dto';
 import { PageRepo } from '@docmost/db/repos/page/page.repo';
@@ -262,5 +263,43 @@ export class ShareController {
         workspace.plan,
       ),
     };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('/set-password')
+  async setPassword(@Body() dto: SharePasswordDto, @AuthUser() user: User) {
+    const share = await this.shareRepo.findById(dto.shareId);
+
+    if (!share) {
+      throw new NotFoundException('Share not found');
+    }
+
+    const page = await this.pageRepo.findById(share.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
+    }
+
+    await this.pageAccessService.validateCanEdit(page, user);
+
+    await this.shareService.setSharePassword(dto.shareId, dto.password);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('/remove-password')
+  async removePassword(@Body() dto: ShareIdDto, @AuthUser() user: User) {
+    const share = await this.shareRepo.findById(dto.shareId);
+
+    if (!share) {
+      throw new NotFoundException('Share not found');
+    }
+
+    const page = await this.pageRepo.findById(share.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
+    }
+
+    await this.pageAccessService.validateCanEdit(page, user);
+
+    await this.shareService.removeSharePassword(dto.shareId);
   }
 }

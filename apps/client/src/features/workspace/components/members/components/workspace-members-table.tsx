@@ -110,6 +110,7 @@ export default function WorkspaceMembersTable() {
                     {isAdmin && (
                       <MemberActionMenu
                         userId={user.id}
+                        userName={user.name}
                         deactivatedAt={user.deactivatedAt}
                       />
                     )}

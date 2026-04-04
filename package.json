@@ -1,7 +1,7 @@
 {
-  "name": "docmost",
-  "homepage": "https://docmost.com",
-  "version": "0.71.0",
+  "name": "forkmost",
+  "homepage": "https://github.com/Vito0912/forkmost",
+  "version": "0.70.3",
   "private": true,
   "scripts": {
     "build": "nx run-many -t build",
@@ -32,6 +32,7 @@
     "@tiptap/core": "3.20.4",
     "@tiptap/extension-audio": "3.20.4",
     "@tiptap/extension-code-block": "3.20.4",
+    "@tiptap/extension-code-block-lowlight": "^3.20.4",
     "@tiptap/extension-collaboration": "3.20.4",
     "@tiptap/extension-collaboration-caret": "3.20.4",
     "@tiptap/extension-color": "3.20.4",
@@ -58,6 +59,7 @@
     "@tiptap/starter-kit": "3.20.4",
     "@tiptap/suggestion": "3.20.4",
     "@tiptap/y-tiptap": "3.0.2",
+    "@types/qrcode": "^1.5.5",
     "bytes": "^3.1.2",
     "cross-env": "^10.1.0",
     "date-fns": "^4.1.0",

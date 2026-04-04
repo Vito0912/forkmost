@@ -4,6 +4,7 @@ import AccountTheme from "@/features/user/components/account-theme.tsx";
 import PageWidthPref from "@/features/user/components/page-width-pref.tsx";
 import PageEditPref from "@/features/user/components/page-state-pref";
 import NotificationPref from "@/features/user/components/notification-pref";
+import SpellcheckPref from "@/features/user/components/spellcheck-pref";
 import { getAppName } from "@/lib/config.ts";
 import { Divider } from "@mantine/core";
 import { Helmet } from "react-helmet-async";
@@ -38,6 +39,10 @@ export default function AccountPreferences() {
       <Divider my={"md"} />
 
       <NotificationPref />
+
+      <Divider my={"md"} />
+
+      <SpellcheckPref />
     </>
   );
 }

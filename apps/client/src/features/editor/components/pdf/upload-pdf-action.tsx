@@ -18,7 +18,11 @@ export const uploadPdfAction = handlePdfUpload({
     }
   },
   validateFn: (file) => {
-    if (file.type !== "application/pdf") {
+    if (!file.type.includes("application/pdf")) {
+      notifications.show({
+        color: "red",
+        message: i18n.t("Please upload a valid PDF file."),
+      });
       return false;
     }
 

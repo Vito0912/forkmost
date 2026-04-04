@@ -5,7 +5,6 @@ import {
   FileButton,
   Group,
   Text,
-  Tooltip,
 } from "@mantine/core";
 import {
   IconBrandNotion,
@@ -27,12 +26,8 @@ import { buildTree } from "@/features/page/tree/utils";
 import { IPage } from "@/features/page/types/page.types.ts";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ConfluenceIcon } from "@/components/icons/confluence-icon.tsx";
 import { getFileImportSizeLimit } from "@/lib/config.ts";
 import { formatBytes } from "@/lib";
-import { useHasFeature } from "@/ee/hooks/use-feature";
-import { Feature } from "@/ee/features";
-import { useUpgradeLabel } from "@/ee/hooks/use-upgrade-label";
 import { getFileTaskById } from "@/features/file-task/services/file-task-service.ts";
 import { queryClient } from "@/main.tsx";
 import { useQueryEmit } from "@/features/websocket/use-query-emit.ts";
@@ -91,12 +86,7 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
   const htmlFileRef = useRef<() => void>(null);
   const docxFileRef = useRef<() => void>(null);
   const notionFileRef = useRef<() => void>(null);
-  const confluenceFileRef = useRef<() => void>(null);
   const zipFileRef = useRef<() => void>(null);
-
-  const canUseConfluence = useHasFeature(Feature.CONFLUENCE_IMPORT);
-  const canUseDocx = useHasFeature(Feature.DOCX_IMPORT);
-  const upgradeLabel = useUpgradeLabel();
 
   const handleZipUpload = async (selectedFile: File, source: string) => {
     if (!selectedFile) {
@@ -143,8 +133,6 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
       // Reset file input after successful upload
       if (source === "notion" && notionFileRef.current) {
         notionFileRef.current();
-      } else if (source === "confluence" && confluenceFileRef.current) {
-        confluenceFileRef.current();
       } else if (source === "generic" && zipFileRef.current) {
         zipFileRef.current();
       }
@@ -361,20 +349,14 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
           resetRef={docxFileRef}
         >
           {(props) => (
-            <Tooltip
-              label={upgradeLabel}
-              disabled={canUseDocx}
+            <Button
+              justify="start"
+              variant="default"
+              leftSection={<IconFileTypeDocx size={18} />}
+              {...props}
             >
-              <Button
-                disabled={!canUseDocx}
-                justify="start"
-                variant="default"
-                leftSection={<IconFileTypeDocx size={18} />}
-                {...props}
-              >
-                Word (DOCX)
-              </Button>
-            </Tooltip>
+              Word (DOCX)
+            </Button>
           )}
         </FileButton>
 
@@ -392,28 +374,6 @@ function ImportFormatSelection({ spaceId, onClose }: ImportFormatSelection) {
             >
               Notion
             </Button>
-          )}
-        </FileButton>
-        <FileButton
-          onChange={(file) => handleZipUpload(file, "confluence")}
-          accept="application/zip"
-          resetRef={confluenceFileRef}
-        >
-          {(props) => (
-            <Tooltip
-              label={upgradeLabel}
-              disabled={canUseConfluence}
-            >
-              <Button
-                disabled={!canUseConfluence}
-                justify="start"
-                variant="default"
-                leftSection={<ConfluenceIcon size={18} />}
-                {...props}
-              >
-                Confluence
-              </Button>
-            </Tooltip>
           )}
         </FileButton>
       </SimpleGrid>

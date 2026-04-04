@@ -23,7 +23,7 @@ export default class WorkspaceAbilityFactory {
       case UserRole.ADMIN:
         return buildWorkspaceAdminAbility();
       case UserRole.MEMBER:
-        return buildWorkspaceMemberAbility();
+        return buildWorkspaceMemberAbility(workspace);
       default:
         throw new NotFoundException('Workspace permissions not found');
     }
@@ -62,7 +62,7 @@ function buildWorkspaceAdminAbility() {
   return build();
 }
 
-function buildWorkspaceMemberAbility() {
+function buildWorkspaceMemberAbility(workspace: Workspace) {
   const { can, build } = new AbilityBuilder<MongoAbility<IWorkspaceAbility>>(
     createMongoAbility,
   );
@@ -71,7 +71,14 @@ function buildWorkspaceMemberAbility() {
   can(WorkspaceCaslAction.Read, WorkspaceCaslSubject.Space);
   can(WorkspaceCaslAction.Read, WorkspaceCaslSubject.Group);
   can(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.Attachment);
-  can(WorkspaceCaslAction.Create, WorkspaceCaslSubject.API);
+
+  const settings = (workspace.settings ?? {}) as {
+    api?: { restrictToAdmins?: boolean };
+  };
+  const restrictToAdmins = settings.api?.restrictToAdmins === true;
+  if (!restrictToAdmins) {
+    can(WorkspaceCaslAction.Create, WorkspaceCaslSubject.API);
+  }
 
   return build();
 }

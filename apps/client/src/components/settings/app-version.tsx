@@ -4,6 +4,7 @@ import classes from "@/components/settings/settings.module.css";
 import { Indicator, Text, Tooltip } from "@mantine/core";
 import React from "react";
 import semverGt from "semver/functions/gt";
+import semverCoerce from "semver/functions/coerce";
 import { useTranslation } from "react-i18next";
 
 export default function AppVersion() {
@@ -11,10 +12,15 @@ export default function AppVersion() {
   const { data: appVersion } = useAppVersion(!isCloud());
   let hasUpdate = false;
   try {
-    hasUpdate =
-      appVersion &&
-      parseFloat(appVersion.latestVersion) > 0 &&
-      semverGt(appVersion.latestVersion, appVersion.currentVersion);
+    if (appVersion && parseFloat(appVersion.latestVersion) > 0) {
+      // Forkmost uses vX.Y.Z.W versioning (4 segments) which is not valid semver.
+      // Coerce both versions to valid semver before comparison.
+      const latest = semverCoerce(appVersion.latestVersion);
+      const current = semverCoerce(appVersion.currentVersion);
+      if (latest && current) {
+        hasUpdate = semverGt(latest, current);
+      }
+    }
   } catch (err) {
     console.error(err);
   }
@@ -37,7 +43,7 @@ export default function AppVersion() {
           disabled={!hasUpdate}
           onClick={() => {
             window.open(
-              "https://github.com/docmost/docmost/releases",
+              "https://github.com/vito0912/forkmost/releases",
               "_blank",
             );
           }}
@@ -47,10 +53,10 @@ export default function AppVersion() {
             c="dimmed"
             component="a"
             mr={45}
-            href="https://github.com/docmost/docmost/releases"
+            href="https://github.com/vito0912/forkmost/releases"
             target="_blank"
           >
-            {appVersion?.currentVersion && <>v{appVersion?.currentVersion}</>}
+            v{APP_VERSION} - Forkmost
           </Text>
         </Indicator>
       </Tooltip>

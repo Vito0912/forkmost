@@ -19,7 +19,6 @@ import {
   ResponsiveSettingsRow,
 } from "@/components/ui/responsive-settings-row.tsx";
 
-
 interface SpaceDetailsProps {
   spaceId: string;
   readOnly?: boolean;

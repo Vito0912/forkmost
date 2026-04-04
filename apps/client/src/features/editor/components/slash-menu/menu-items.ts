@@ -6,6 +6,9 @@ import {
   IconH1,
   IconH2,
   IconH3,
+  IconH4,
+  IconH5,
+  IconH6,
   IconInfoCircle,
   IconList,
   IconListNumbers,
@@ -22,19 +25,22 @@ import {
   IconCalendar,
   IconAppWindow,
   IconSitemap,
+  IconColumns,
+  IconHeadphones,
   IconColumns3,
   IconColumns2,
   IconTag,
+  IconListTree,
 } from "@tabler/icons-react";
+
 import {
   CommandProps,
   SlashMenuGroupedItemsType,
 } from "@/features/editor/components/slash-menu/types";
 import { uploadImageAction } from "@/features/editor/components/image/upload-image-action.tsx";
 import { uploadVideoAction } from "@/features/editor/components/video/upload-video-action.tsx";
-import { uploadAudioAction } from "@/features/editor/components/audio/upload-audio-action.tsx";
-import { uploadAttachmentAction } from "@/features/editor/components/attachment/upload-attachment-action.tsx";
 import { uploadPdfAction } from "@/features/editor/components/pdf/upload-pdf-action.tsx";
+import { uploadAttachmentAction } from "@/features/editor/components/attachment/upload-attachment-action.tsx";
 import IconExcalidraw from "@/components/icons/icon-excalidraw";
 import IconMermaid from "@/components/icons/icon-mermaid";
 import IconDrawio from "@/components/icons/icon-drawio";
@@ -52,6 +58,7 @@ import {
   VimeoIcon,
   YoutubeIcon,
 } from "@/components/icons";
+import { uploadAudioAction } from "@/features/editor/components/audio/upload-audio-action.ts";
 
 const CommandGroups: SlashMenuGroupedItemsType = {
   basic: [
@@ -80,8 +87,8 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     },
     {
       title: "Heading 1",
-      description: "Big section heading.",
-      searchTerms: ["title", "big", "large"],
+      description: "Maximum size section heading.",
+      searchTerms: ["title", "max", "large"],
       icon: IconH1,
       command: ({ editor, range }: CommandProps) => {
         editor
@@ -94,8 +101,8 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     },
     {
       title: "Heading 2",
-      description: "Medium section heading.",
-      searchTerms: ["subtitle", "medium"],
+      description: "Big section heading.",
+      searchTerms: ["subtitle", "big"],
       icon: IconH2,
       command: ({ editor, range }: CommandProps) => {
         editor
@@ -108,8 +115,8 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     },
     {
       title: "Heading 3",
-      description: "Small section heading.",
-      searchTerms: ["subtitle", "small"],
+      description: "Medium section heading.",
+      searchTerms: ["typography", "medium"],
       icon: IconH3,
       command: ({ editor, range }: CommandProps) => {
         editor
@@ -117,6 +124,48 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           .focus()
           .deleteRange(range)
           .setNode("heading", { level: 3 })
+          .run();
+      },
+    },
+    {
+      title: "Heading 4",
+      description: "Small section heading.",
+      searchTerms: ["small"],
+      icon: IconH4,
+      command: ({ editor, range }: CommandProps) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .setNode("heading", { level: 4 })
+          .run();
+      },
+    },
+    {
+      title: "Heading 5",
+      description: "Very small section heading.",
+      searchTerms: ["verysmall"],
+      icon: IconH5,
+      command: ({ editor, range }: CommandProps) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .setNode("heading", { level: 5 })
+          .run();
+      },
+    },
+    {
+      title: "Heading 6",
+      description: "Minimum size section heading.",
+      searchTerms: ["min"],
+      icon: IconH6,
+      command: ({ editor, range }: CommandProps) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .setNode("heading", { level: 6 })
           .run();
       },
     },
@@ -170,8 +219,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload image
@@ -203,8 +251,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload video
@@ -231,63 +278,49 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "Audio",
       description: "Upload any audio from your device.",
-      searchTerms: ["audio", "music", "sound", "mp3", "media", "file", "attachment"],
-      icon: IconMusic,
+      searchTerms: ["audio", "mp3", "media", "m4a", "opus"],
+      icon: IconHeadphones,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload audio
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "audio/*";
-        input.multiple = true;
-        input.style.display = "none";
-        document.body.appendChild(input);
         input.onchange = async () => {
           if (input.files?.length) {
-            for (const file of input.files) {
-              const pos = editor.view.state.selection.from;
-
-              uploadAudioAction(file, editor, pos, pageId);
-            }
+            const file = input.files[0];
+            const pos = editor.view.state.selection.from;
+            uploadAudioAction(file, editor, pos, pageId);
           }
-
-          input.remove();
         };
         input.click();
       },
     },
     {
-      title: "Embed PDF",
-      description: "Upload and embed a PDF file.",
-      searchTerms: ["pdf", "document", "embed"],
+      title: "PDF",
+      description: "Upload and view PDF files directly.",
+      searchTerms: ["pdf", "document", "file"],
       icon: IconFileTypePdf,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
+        // upload pdf
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "application/pdf";
-        input.style.display = "none";
-        document.body.appendChild(input);
         input.onchange = async () => {
           if (input.files?.length) {
-            for (const file of input.files) {
-              const pos = editor.view.state.selection.from;
-
-              uploadPdfAction(file, editor, pos, pageId);
-            }
+            const file = input.files[0];
+            const pos = editor.view.state.selection.from;
+            uploadPdfAction(file, editor.view, pos, pageId);
           }
-
-          input.remove();
         };
         input.click();
       },
@@ -300,8 +333,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
 
-        // @ts-ignore
-        const pageId = editor.storage?.pageId;
+        const pageId = (editor.storage as { pageId?: string })?.pageId;
         if (!pageId) return;
 
         // upload file
@@ -336,6 +368,19 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           .focus()
           .deleteRange(range)
           .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+          .run(),
+    },
+    {
+      title: "Column layout",
+      description: "Insert a column layout.",
+      searchTerms: ["columns", "layout", "flex"],
+      icon: IconColumns,
+      command: ({ editor, range }: CommandProps) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .clAddColumnLayout("Column 1", "Column 2")
           .run(),
     },
     {
@@ -466,6 +511,15 @@ const CommandGroups: SlashMenuGroupedItemsType = {
           .deleteRange(range)
           .setStatus({ text: "", color: "gray" })
           .run();
+      },
+    },
+    {
+      title: "Table of contents",
+      description: "Insert a table of contents block.",
+      searchTerms: ["toc", "table of contents", "outline", "headings", "navigation"],
+      icon: IconListTree,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertTocNode().run();
       },
     },
     {

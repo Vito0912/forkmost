@@ -10,20 +10,20 @@ const APP_ROUTE = {
     PASSWORD_RESET: "/password-reset",
     CREATE_WORKSPACE: "/create",
     SELECT_WORKSPACE: "/select",
-    MFA_CHALLENGE: "/login/mfa",
-    MFA_SETUP_REQUIRED: "/login/mfa/setup",
-    VERIFY_EMAIL: "/verify-email",
+    OIDC_CALLBACK: "/auth/oidc/callback",
   },
   SETTINGS: {
     ACCOUNT: {
       PROFILE: "/settings/account/profile",
       PREFERENCES: "/settings/account/preferences",
+      API_KEYS: "/settings/account/api-keys",
     },
     WORKSPACE: {
       GENERAL: "/settings/workspace",
       MEMBERS: "/settings/members",
       GROUPS: "/settings/groups",
       SPACES: "/settings/spaces",
+      AI: "/settings/ai",
       BILLING: "/settings/billing",
       SECURITY: "/settings/security",
     },
