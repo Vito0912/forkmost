@@ -8,11 +8,13 @@ import {
   createComment,
   deleteComment,
   getPageComments,
+  resolveComment,
   updateComment,
 } from "@/features/comment/services/comment-service";
 import {
   ICommentParams,
   IComment,
+  IResolveComment,
 } from "@/features/comment/types/comment.types";
 import { notifications } from "@mantine/notifications";
 import { IPagination } from "@/lib/types.ts";
@@ -65,15 +67,20 @@ export function useCreateCommentMutation() {
       ) as InfiniteData<IPagination<IComment>> | undefined;
 
       if (cache && cache.pages.length > 0) {
-        const lastIdx = cache.pages.length - 1;
-        queryClient.setQueryData(RQ_KEY(newComment.pageId), {
-          ...cache,
-          pages: cache.pages.map((page, i) =>
-            i === lastIdx
-              ? { ...page, items: [...page.items, newComment] }
-              : page,
-          ),
-        });
+        const alreadyExists = cache.pages.some((page) =>
+          page.items.some((c) => c.id === newComment.id),
+        );
+        if (!alreadyExists) {
+          const lastIdx = cache.pages.length - 1;
+          queryClient.setQueryData(RQ_KEY(newComment.pageId), {
+            ...cache,
+            pages: cache.pages.map((page, i) =>
+              i === lastIdx
+                ? { ...page, items: [...page.items, newComment] }
+                : page,
+            ),
+          });
+        }
       }
 
       notifications.show({ message: t("Comment created successfully") });
@@ -153,4 +160,21 @@ export function useDeleteCommentMutation(pageId?: string) {
   });
 }
 
-// EE: useResolveCommentMutation has been moved to @/ee/comment/queries/comment-query
+export function useResolveCommentMutation() {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  return useMutation<IComment, Error, IResolveComment>({
+    mutationFn: (data) => resolveComment(data),
+    onSuccess: (resolved) => {
+      queryClient.invalidateQueries({ queryKey: RQ_KEY(resolved.pageId) });
+    },
+    onError: () => {
+      notifications.show({
+        message: t("Failed to resolve comment"),
+        color: "red",
+      });
+    },
+  });
+}
+

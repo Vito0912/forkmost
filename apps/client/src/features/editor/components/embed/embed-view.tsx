@@ -1,5 +1,5 @@
 import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import clsx from "clsx";
 import {
   ActionIcon,
@@ -10,9 +10,11 @@ import {
   Popover,
   Text,
   TextInput,
+  Center,
+  Stack,
 } from "@mantine/core";
-import { IconEdit } from "@tabler/icons-react";
-import { z } from "zod/v4";
+import { IconEdit, IconPlayerPlay } from "@tabler/icons-react";
+import { z } from "zod";
 import { useForm } from "@mantine/form";
 import { zod4Resolver } from "mantine-form-zod-resolver";
 import { notifications } from "@mantine/notifications";
@@ -33,7 +35,10 @@ const schema = z.object({
 export default function EmbedView(props: NodeViewProps) {
   const { t } = useTranslation();
   const { node, selected, updateAttributes, editor } = props;
-  const { src, provider, width: nodeWidth, height: nodeHeight } = node.attrs;
+  const { src, provider, width: nodeWidth, height: nodeHeight, resizable = true, lazyLoad = false } = node.attrs;
+
+  const [isResizable, setIsResizable] = useState<boolean>(resizable);
+  const [shouldLoadIframe, setShouldLoadIframe] = useState<boolean>(!lazyLoad);
 
   const embedUrl = useMemo(() => {
     if (src) {
@@ -55,6 +60,18 @@ export default function EmbedView(props: NodeViewProps) {
     },
     [updateAttributes],
   );
+
+  useEffect(() => {
+    setIsResizable(!!resizable);
+  }, [resizable]);
+
+  useEffect(() => {
+    setShouldLoadIframe(!lazyLoad);
+  }, [lazyLoad]);
+
+  const handleLoadIframe = useCallback(() => {
+    setShouldLoadIframe(true);
+  }, []);
 
   async function onSubmit(data: { url: string }) {
     if (!editor.isEditable) {
@@ -85,29 +102,88 @@ export default function EmbedView(props: NodeViewProps) {
     <NodeViewWrapper data-drag-handle className={classes.embedNodeView}>
       {embedUrl ? (
         <div className={classes.embedContainer}>
-          <ResizableWrapper
-            initialWidth={nodeWidth || 640}
-            initialHeight={nodeHeight || 480}
-            minWidth={200}
-            maxWidth={1200}
-            minHeight={200}
-            maxHeight={1200}
-            onResize={handleResize}
-            isEditable={editor.isEditable}
-            selected={selected}
-            className={clsx(classes.embedWrapper, {
-              "ProseMirror-selectednode": selected,
-            })}
-          >
-            <iframe
-              className={classes.embedIframe}
-              src={sanitizeUrl(embedUrl)}
-              allow="encrypted-media"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              allowFullScreen
-              frameBorder="0"
-            />
-          </ResizableWrapper>
+          {!shouldLoadIframe ? (
+            <Card
+              radius="md"
+              p="lg"
+              withBorder
+              className={clsx(classes.embedPlaceholder, {
+                "ProseMirror-selectednode": selected,
+              })}
+              style={{
+                height: nodeHeight || 480,
+                width: nodeWidth || 640,
+              }}
+            >
+              <Center style={{ height: "100%" }}>
+                <Stack align="center" gap="md">
+                  <ActionIcon
+                    variant="filled"
+                    size="xl"
+                    radius="xl"
+                    color="blue"
+                  >
+                    <IconPlayerPlay size={24} />
+                  </ActionIcon>
+                  <Text size="lg" fw={500} ta="center">
+                    {t("Click to load {{provider}}", {
+                      provider: getEmbedProviderById(provider)?.name || provider,
+                    })}
+                  </Text>
+                  <Button
+                    onClick={handleLoadIframe}
+                    variant="filled"
+                    leftSection={<IconPlayerPlay size={16} />}
+                  >
+                    {t("Load Embed")}
+                  </Button>
+                </Stack>
+              </Center>
+            </Card>
+          ) : isResizable ? (
+            <ResizableWrapper
+              initialWidth={nodeWidth || 640}
+              initialHeight={nodeHeight || 480}
+              minWidth={200}
+              maxWidth={1200}
+              minHeight={200}
+              maxHeight={1200}
+              onResize={handleResize}
+              isEditable={editor.isEditable}
+              selected={selected}
+              className={clsx(classes.embedWrapper, {
+                "ProseMirror-selectednode": selected,
+              })}
+            >
+              <iframe
+                className={classes.embedIframe}
+                src={sanitizeUrl(embedUrl)}
+                allow="encrypted-media"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                allowFullScreen
+                frameBorder="0"
+              />
+            </ResizableWrapper>
+          ) : (
+            <div
+              className={clsx(classes.embedWrapper, {
+                "ProseMirror-selectednode": selected,
+              })}
+              style={{
+                height: nodeHeight || 480,
+                width: nodeWidth || 640,
+              }}
+            >
+              <iframe
+                className={classes.embedIframe}
+                src={sanitizeUrl(embedUrl)}
+                allow="encrypted-media"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                allowFullScreen
+                frameBorder="0"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <Popover

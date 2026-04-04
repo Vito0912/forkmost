@@ -9,6 +9,7 @@ import Paginate from "@/components/common/paginate.tsx";
 import { queryClient } from "@/main.tsx";
 import { getGroupMembers } from "@/features/group/services/group-service.ts";
 import { AutoTooltipText } from "@/components/ui/auto-tooltip-text.tsx";
+import useUserRole from "@/hooks/use-user-role.tsx";
 import { SearchInput } from "@/components/common/search-input.tsx";
 import NoTableResults from "@/components/common/no-table-results.tsx";
 import { usePaginateAndSearch } from "@/hooks/use-paginate-and-search.tsx";
@@ -17,6 +18,7 @@ export default function GroupList() {
   const { t } = useTranslation();
   const { search, cursor, goNext, goPrev, handleSearch } = usePaginateAndSearch();
   const { data, isLoading } = useGetGroupsQuery({ cursor, query: search });
+  const { isAdmin } = useUserRole();
 
   const prefetchGroupMembers = (groupId: string) => {
     queryClient.prefetchQuery({
@@ -39,49 +41,63 @@ export default function GroupList() {
 
           <Table.Tbody>
             {data?.items.length > 0 ? (
-            data?.items.map((group: IGroup, index: number) => (
-              <Table.Tr key={index}>
-                <Table.Td onMouseEnter={() => prefetchGroupMembers(group.id)}>
-                  <Anchor
-                    size="sm"
-                    underline="never"
-                    style={{
-                      cursor: "pointer",
-                      color: "var(--mantine-color-text)",
-                    }}
-                    component={Link}
-                    to={`/settings/groups/${group.id}`}
-                  >
-                    <Group gap="sm" wrap="nowrap">
-                      <IconGroupCircle />
-                      <div style={{ minWidth: 0, overflow: "hidden" }}>
-                        <AutoTooltipText fz="sm" fw={500} lineClamp={1}>
-                          {group.name}
-                        </AutoTooltipText>
-                        <Text fz="xs" c="dimmed" lineClamp={2}>
-                          {group.description}
-                        </Text>
-                      </div>
-                    </Group>
-                  </Anchor>
-                </Table.Td>
-                <Table.Td>
-                  <Anchor
-                    size="sm"
-                    underline="never"
-                    style={{
-                      cursor: "pointer",
-                      color: "var(--mantine-color-text)",
-                      whiteSpace: "nowrap",
-                    }}
-                    component={Link}
-                    to={`/settings/groups/${group.id}`}
-                  >
-                    {formatMemberCount(group.memberCount, t)}
-                  </Anchor>
-                </Table.Td>
-              </Table.Tr>
-            ))
+            data?.items.map((group: IGroup, index: number) => {
+              const groupDisplay = (
+                <Group gap="sm" wrap="nowrap">
+                  <IconGroupCircle />
+                  <div style={{ minWidth: 0, overflow: "hidden" }}>
+                    <AutoTooltipText fz="sm" fw={500} lineClamp={1}>
+                      {group.name}
+                    </AutoTooltipText>
+                    <Text fz="xs" c="dimmed" lineClamp={2}>
+                      {group.description}
+                    </Text>
+                  </div>
+                </Group>
+              );
+
+              return (
+                <Table.Tr key={index}>
+                  <Table.Td onMouseEnter={() => prefetchGroupMembers(group.id)}>
+                    {isAdmin ? (
+                      <Anchor
+                        size="sm"
+                        underline="never"
+                        style={{
+                          cursor: "pointer",
+                          color: "var(--mantine-color-text)",
+                        }}
+                        component={Link}
+                        to={`/settings/groups/${group.id}`}
+                      >
+                        {groupDisplay}
+                      </Anchor>
+                    ) : (
+                      groupDisplay
+                    )}
+                  </Table.Td>
+                  <Table.Td>
+                    {isAdmin ? (
+                      <Anchor
+                        size="sm"
+                        underline="never"
+                        style={{
+                          cursor: "pointer",
+                          color: "var(--mantine-color-text)",
+                          whiteSpace: "nowrap",
+                        }}
+                        component={Link}
+                        to={`/settings/groups/${group.id}`}
+                      >
+                        {formatMemberCount(group.memberCount, t)}
+                      </Anchor>
+                    ) : (
+                      formatMemberCount(group.memberCount, t)
+                    )}
+                  </Table.Td>
+                </Table.Tr>
+              );
+            })
             ) : (
               <NoTableResults colSpan={2} />
             )}

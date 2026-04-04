@@ -5,12 +5,14 @@ import { StorageModule } from '../storage/storage.module';
 import { FileImportTaskService } from './services/file-import-task.service';
 import { FileTaskProcessor } from './processors/file-task.processor';
 import { ImportAttachmentService } from './services/import-attachment.service';
+import { DocxImportService } from './services/docx-import.service';
 import { FileTaskController } from './file-task.controller';
 import { PageModule } from '../../core/page/page.module';
 
 @Module({
   providers: [
     ImportService,
+    DocxImportService,
     FileImportTaskService,
     FileTaskProcessor,
     ImportAttachmentService,

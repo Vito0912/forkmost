@@ -6,11 +6,10 @@ import { TaskList, TaskItem } from "@tiptap/extension-list";
 import { Placeholder, CharacterCount } from "@tiptap/extensions";
 import { Superscript } from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
+
 import { Typography } from "@tiptap/extension-typography";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import GlobalDragHandle from "tiptap-extension-global-drag-handle";
-import { Youtube } from "@tiptap/extension-youtube";
 import SlashCommand from "@/features/editor/extensions/slash-command";
 import { Collaboration, isChangeOrigin } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
@@ -30,6 +29,8 @@ import {
   TiptapImage,
   Callout,
   TiptapVideo,
+  TiptapPdf,
+  Audio,
   LinkExtension,
   Selection,
   Attachment,
@@ -40,6 +41,9 @@ import {
   SearchAndReplace,
   Mention,
   TableDndExtension,
+  ExtraLigatures,
+  ColumnContainer,
+  ColumnLayoutColumn,
   Subpages,
   Heading,
   Highlight,
@@ -47,13 +51,21 @@ import {
   SharedStorage,
   Columns,
   Column,
-  Status
+  Status,
+  ListNormalization,
+  NodeBackground,
+  TocNode,
 } from "@docmost/editor-ext";
 import {
   randomElement,
   userColors,
 } from "@/features/editor/extensions/utils.ts";
 import { IUser } from "@/features/user/types/user.types.ts";
+import MathInlineView from "@/features/editor/components/math/math-inline.tsx";
+import MathBlockView from "@/features/editor/components/math/math-block.tsx";
+import GlobalDragHandle from "tiptap-extension-global-drag-handle";
+import { Youtube } from "@tiptap/extension-youtube";
+import ImageView from "@/features/editor/components/image/image-view.tsx";
 import {
   createImageHandle,
   imageResizeClasses,
@@ -62,12 +74,11 @@ import {
   createResizeHandle,
   buildResizeClasses,
 } from "@/features/editor/components/common/node-resize-handles.ts";
-import MathInlineView from "@/features/editor/components/math/math-inline.tsx";
-import MathBlockView from "@/features/editor/components/math/math-block.tsx";
-import ImageView from "@/features/editor/components/image/image-view.tsx";
 import CalloutView from "@/features/editor/components/callout/callout-view.tsx";
 import StatusView from "@/features/editor/components/status/status-view.tsx";
 import VideoView from "@/features/editor/components/video/video-view.tsx";
+import PdfView from "@/features/editor/components/pdf/pdf-view.tsx";
+import AudioView from "@/features/editor/components/audio/audio-view.tsx";
 import AttachmentView from "@/features/editor/components/attachment/attachment-view.tsx";
 import CodeBlockView from "@/features/editor/components/code-block/code-block-view.tsx";
 import DrawioView from "../components/drawio/drawio-view";
@@ -92,7 +103,11 @@ import LinkView from "@/features/editor/components/link/link-view.tsx";
 import i18n from "@/i18n.ts";
 import { MarkdownClipboard } from "@/features/editor/extensions/markdown-clipboard.ts";
 import EmojiCommand from "./emoji-command";
+
 import { countWords } from "alfaaz";
+import ColumnContainerView from "@/features/editor/components/column-layout/column-container-view";
+import ColumnView from "@/features/editor/components/column-layout/column-view";
+import TocNodeView from "@/features/editor/components/toc-node/toc-node-view";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
@@ -157,6 +172,7 @@ export const mainExtensions = [
         const parentName = $pos.parent.type.name;
         if (
           parentName === "column" ||
+          parentName === "columnLayoutColumn" ||
           parentName === "tableCell" ||
           parentName === "tableHeader" ||
           parentName === "callout" ||
@@ -188,6 +204,7 @@ export const mainExtensions = [
     multicolor: true,
   }),
   Typography,
+  ExtraLigatures,
   TrailingNode,
   GlobalDragHandle,
   TextStyle,
@@ -225,7 +242,10 @@ export const mainExtensions = [
     allowTableNodeSelection: true,
   }),
   TableRow,
-  TableCell,
+  // Full credit for this change goes to https://github.com/docmost/docmost/pull/679/commits/8014e0876bb5baa8f7c4b6b7c280224609dd393c. Fore more infos see https://prosemirror.net/docs/guide/#schema.content_expressions
+  TableCell.extend({
+    content: "block+",
+  }),
   TableHeader,
   TableDndExtension,
   MathInline.configure({
@@ -268,6 +288,12 @@ export const mainExtensions = [
       createCustomHandle: createResizeHandle,
       className: buildResizeClasses("node-video"),
     },
+  }),
+  TiptapPdf.configure({
+    view: PdfView,
+  }),
+  Audio.configure({
+    view: AudioView,
   }),
   Callout.configure({
     view: CalloutView,
@@ -325,11 +351,30 @@ export const mainExtensions = [
   CharacterCount.configure({
     wordCounter: (text) => countWords(text),
   }),
+  ColumnContainer.configure({
+    view: ColumnContainerView,
+  }),
+  ColumnLayoutColumn.configure({
+    view: ColumnView,
+  }),
   SearchAndReplace.extend({
     addKeyboardShortcuts() {
       return {
         "Mod-f": () => {
           const event = new CustomEvent("openFindDialogFromEditor", {});
+          document.dispatchEvent(event);
+          return true;
+        },
+        "Mod-h": () => {
+          const event = new CustomEvent(
+            "openFindAndReplaceDialogFromEditor",
+            {},
+          );
+          document.dispatchEvent(event);
+          return true;
+        },
+        "Alt-c": () => {
+          const event = new CustomEvent("matchCaseToggle", {});
           document.dispatchEvent(event);
           return true;
         },
@@ -343,6 +388,11 @@ export const mainExtensions = [
   }).configure(),
   Columns,
   Column,
+  ListNormalization,
+  NodeBackground,
+  TocNode.configure({
+    view: TocNodeView,
+  }),
 ] as any;
 
 type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];
