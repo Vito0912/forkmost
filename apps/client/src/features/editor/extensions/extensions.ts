@@ -108,6 +108,7 @@ import { countWords } from "alfaaz";
 import ColumnContainerView from "@/features/editor/components/column-layout/column-container-view";
 import ColumnView from "@/features/editor/components/column-layout/column-view";
 import TocNodeView from "@/features/editor/components/toc-node/toc-node-view";
+import AutoJoiner from "@/features/editor/extensions/autojoiner.ts";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
@@ -268,8 +269,8 @@ export const mainExtensions = [
     resize: {
       enabled: true,
       directions: ["left", "right"],
-      minWidth: 80,
-      minHeight: 40,
+      minWidth: 24,
+      minHeight: 16,
       alwaysPreserveAspectRatio: true,
       //@ts-ignore
       createCustomHandle: createImageHandle,
@@ -281,8 +282,8 @@ export const mainExtensions = [
     resize: {
       enabled: true,
       directions: ["left", "right"],
-      minWidth: 80,
-      minHeight: 40,
+      minWidth: 24,
+      minHeight: 16,
       alwaysPreserveAspectRatio: true,
       //@ts-ignore
       createCustomHandle: createResizeHandle,
@@ -315,8 +316,8 @@ export const mainExtensions = [
     resize: {
       enabled: true,
       directions: ["left", "right"],
-      minWidth: 80,
-      minHeight: 40,
+      minWidth: 24,
+      minHeight: 16,
       alwaysPreserveAspectRatio: true,
       //@ts-ignore
       createCustomHandle: createResizeHandle,
@@ -328,8 +329,8 @@ export const mainExtensions = [
     resize: {
       enabled: true,
       directions: ["left", "right"],
-      minWidth: 80,
-      minHeight: 40,
+      minWidth: 24,
+      minHeight: 16,
       alwaysPreserveAspectRatio: true,
       //@ts-ignore
       createCustomHandle: createResizeHandle,
@@ -392,6 +393,9 @@ export const mainExtensions = [
   NodeBackground,
   TocNode.configure({
     view: TocNodeView,
+  }),
+  AutoJoiner.configure({
+    elementsToJoin: [],
   }),
 ] as any;
 

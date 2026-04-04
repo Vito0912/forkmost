@@ -10,8 +10,13 @@ export interface ISpaceSharingSettings {
   disabled?: boolean;
 }
 
+export interface ISpaceCommentsSettings {
+  allowViewerComments?: boolean;
+}
+
 export interface ISpaceSettings {
   sharing?: ISpaceSharingSettings;
+  comments?: ISpaceCommentsSettings;
 }
 
 export interface ISpace {
@@ -30,6 +35,7 @@ export interface ISpace {
   settings?: ISpaceSettings;
   // for updates
   disablePublicSharing?: boolean;
+  allowViewerComments?: boolean;
 }
 
 interface IMembership {

@@ -13,6 +13,7 @@ import { Graph, Space, User } from '@docmost/db/types/entity.types';
 import { UpdateSpaceDto } from '../dto/update-space.dto';
 import { executeTx } from '@docmost/db/utils';
 import { InjectKysely } from 'nestjs-kysely';
+import { Feature } from '../../../common/features';
 import { SpaceMemberService } from './space-member.service';
 import { SpaceRole } from '../../../common/helpers/types/permission';
 import { QueueJob, QueueName } from 'src/integrations/queue/constants';
@@ -163,6 +164,22 @@ export class SpaceService {
         if (updateSpaceDto.disablePublicSharing) {
           await this.shareRepo.deleteBySpaceId(updateSpaceDto.spaceId, trx);
         }
+      }
+
+      if (typeof updateSpaceDto.allowViewerComments !== 'undefined') {
+        const prev = settingsBefore?.comments?.allowViewerComments ?? false;
+        if (prev !== updateSpaceDto.allowViewerComments) {
+          before.allowViewerComments = prev;
+          after.allowViewerComments = updateSpaceDto.allowViewerComments;
+        }
+
+        await this.spaceRepo.updateCommentSettings(
+          updateSpaceDto.spaceId,
+          workspaceId,
+          'allowViewerComments',
+          updateSpaceDto.allowViewerComments,
+          trx,
+        );
       }
 
       updatedSpace = await this.spaceRepo.updateSpace(

@@ -27,6 +27,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { ClsModule } from 'nestjs-cls';
 import { NoopAuditModule } from './integrations/audit/audit.module';
 import { McpModule } from './integrations/mcp/mcp.module';
+import { ThrottleModule } from './integrations/throttle/throttle.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { McpModule } from './integrations/mcp/mcp.module';
     SecurityModule,
     TelemetryModule,
     McpModule,
+    ThrottleModule,
   ],
   controllers: [AppController],
   providers: [

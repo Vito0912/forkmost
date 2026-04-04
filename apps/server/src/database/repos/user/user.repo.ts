@@ -17,6 +17,7 @@ import {
 import { ExpressionBuilder, sql } from 'kysely';
 import { MemberInfo } from '@docmost/db/repos/space/types';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
+import { NotificationSettingKey } from '../../../core/notification/notification.constants';
 
 @Injectable()
 export class UserRepo {
@@ -261,6 +262,24 @@ export class UserRepo {
         settings: sql`COALESCE(settings, '{}'::jsonb)
                 || jsonb_build_object('preferences', COALESCE(settings->'preferences', '{}'::jsonb) 
                 || jsonb_build_object('${sql.raw(prefKey)}', ${sql.lit(prefValue)}))`,
+        updatedAt: new Date(),
+      })
+      .where('id', '=', userId)
+      .returning(this.baseFields)
+      .executeTakeFirst();
+  }
+
+  async updateNotificationSetting(
+    userId: string,
+    settingKey: NotificationSettingKey,
+    settingValue: boolean,
+  ) {
+    return await this.db
+      .updateTable('users')
+      .set({
+        settings: sql`COALESCE(settings, '{}'::jsonb)
+                || jsonb_build_object('notifications', COALESCE(settings->'notifications', '{}'::jsonb)
+                || jsonb_build_object(${sql.lit(settingKey)}, ${sql.lit(settingValue)}))`,
         updatedAt: new Date(),
       })
       .where('id', '=', userId)

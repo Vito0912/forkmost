@@ -12,9 +12,9 @@ type CommentMenuProps = {
   isParentComment?: boolean;
 };
 
-function CommentMenu({ 
-  onEditComment, 
-  onDeleteComment, 
+function CommentMenu({
+  onEditComment,
+  onDeleteComment,
   onResolveComment,
   canEdit = true,
   isResolved = false,
@@ -47,11 +47,11 @@ function CommentMenu({
           </Menu.Item>
         )}
         {isParentComment && (
-          <Menu.Item 
-            onClick={onResolveComment} 
+          <Menu.Item
+            onClick={onResolveComment}
             leftSection={
-              isResolved ? 
-                <IconCircleCheckFilled size={14} /> : 
+              isResolved ?
+                <IconCircleCheckFilled size={14} /> :
                 <IconCircleCheck size={14} />
             }
           >

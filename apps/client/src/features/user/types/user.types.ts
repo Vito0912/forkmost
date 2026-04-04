@@ -20,6 +20,11 @@ export interface IUser {
   deletedAt: Date;
   fullPageWidth: boolean; // used for update
   pageEditMode: string; // used for update
+  notificationPageUpdates: boolean; // used for update
+  notificationPageUserMention: boolean; // used for update
+  notificationCommentUserMention: boolean; // used for update
+  notificationCommentCreated: boolean; // used for update
+  notificationCommentResolved: boolean; // used for update
   hasGeneratedPassword?: boolean;
   spellcheck: boolean; // used for update
   isAvatarExternallyManaged?: boolean;
@@ -35,6 +40,13 @@ export interface IUserSettings {
     fullPageWidth: boolean;
     pageEditMode: string;
     spellcheck: boolean;
+  };
+  notifications?: {
+    "page.updated"?: boolean;
+    "page.userMention"?: boolean;
+    "comment.userMention"?: boolean;
+    "comment.created"?: boolean;
+    "comment.resolved"?: boolean;
   };
 }
 

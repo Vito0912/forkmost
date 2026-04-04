@@ -471,6 +471,10 @@ export class AttachmentController {
     const rangeHeader = req.headers.range;
 
     res.header('Accept-Ranges', 'bytes');
+    res.header(
+      'Content-Security-Policy',
+      "base-uri 'none'; object-src 'self'; default-src 'self';",
+    );
 
     if (!inlineFileExtensions.includes(attachment.fileExt)) {
       res.header(

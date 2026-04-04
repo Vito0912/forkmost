@@ -15,7 +15,9 @@ import {
   IconMath,
   IconMathFunction,
   IconMovie,
+  IconMusic,
   IconPaperclip,
+  IconFileTypePdf,
   IconPhoto,
   IconTable,
   IconTypography,
@@ -25,7 +27,6 @@ import {
   IconSitemap,
   IconColumns,
   IconHeadphones,
-  IconFileTypePdf,
   IconColumns3,
   IconColumns2,
   IconTag,
@@ -213,7 +214,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "Image",
       description: "Upload any image from your device.",
-      searchTerms: ["photo", "picture", "media"],
+      searchTerms: ["photo", "picture", "media", "file", "attachment"],
       icon: IconPhoto,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
@@ -245,7 +246,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "Video",
       description: "Upload any video from your device.",
-      searchTerms: ["video", "mp4", "media"],
+      searchTerms: ["video", "mp4", "media", "file", "attachment"],
       icon: IconMovie,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
@@ -327,7 +328,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "File attachment",
       description: "Upload any file from your device.",
-      searchTerms: ["file", "attachment", "upload", "pdf", "csv", "zip"],
+      searchTerms: ["file", "attachment", "upload", "csv", "zip"],
       icon: IconPaperclip,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
@@ -471,7 +472,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
         editor.chain().focus().deleteRange(range).setDrawio().run(),
     },
     {
-      title: "Excalidraw diagram",
+      title: "Excalidraw (Whiteboard)",
       description: "Draw and sketch excalidraw diagrams",
       searchTerms: ["diagrams", "draw", "sketch", "whiteboard"],
       icon: IconExcalidraw,
@@ -669,7 +670,7 @@ const CommandGroups: SlashMenuGroupedItemsType = {
     {
       title: "YouTube",
       description: "Embed YouTube video",
-      searchTerms: ["youtube", "yt"],
+      searchTerms: ["youtube", "yt", "media", "video"],
       icon: YoutubeIcon,
       command: ({ editor, range }: CommandProps) => {
         editor
@@ -768,7 +769,11 @@ export const getSuggestionItems = ({
     });
 
     if (filteredItems.length) {
-      filteredGroups[group] = filteredItems;
+      filteredGroups[group] = filteredItems.sort((a, b) => {
+        const aTitle = a.title.toLowerCase().includes(search) ? 0 : 1;
+        const bTitle = b.title.toLowerCase().includes(search) ? 0 : 1;
+        return aTitle - bTitle;
+      });
     }
   }
 

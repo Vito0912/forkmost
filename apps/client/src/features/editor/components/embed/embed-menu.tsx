@@ -1,5 +1,5 @@
 import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react/menus";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback } from "react";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import { IconArrowsMaximize, IconArrowsMinimize, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 import { Editor } from "@tiptap/core";
@@ -11,18 +11,6 @@ interface EmbedMenuProps {
 
 export const EmbedMenu = React.memo(({ editor }: EmbedMenuProps): JSX.Element => {
   const { t } = useTranslation();
-  const [forceUpdate, setForceUpdate] = useState(0);
-
-  useEffect(() => {
-    const updateHandler = () => {
-      setForceUpdate(prev => prev + 1);
-    };
-
-    editor.on('transaction', updateHandler);
-    return () => {
-      editor.off('transaction', updateHandler);
-    };
-  }, [editor]);
 
   const shouldShow = useCallback(({ state }) => {
     if (!state) return false;

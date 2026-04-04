@@ -34,3 +34,5 @@ export * from "./lib/status";
 export * from "./lib/list-normalization";
 export * from "./lib/node-background";
 export * from "./lib/toc-node";
+export * from "./lib/resizable-nodeview";
+

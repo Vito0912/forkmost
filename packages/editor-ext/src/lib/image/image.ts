@@ -4,11 +4,11 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import {
   mergeAttributes,
   Range,
-  ResizableNodeView,
 } from "@tiptap/core";
 import { NodeSelection } from "@tiptap/pm/state";
+import { ResizableNodeView } from "../resizable-nodeview";
+import type { ResizableNodeViewDirection } from "../resizable-nodeview";
 import { normalizeFileUrl } from "../media-utils";
-import type { ResizableNodeViewDirection } from "@tiptap/core";
 
 export type ImageResizeOptions = {
   enabled: boolean;
@@ -482,12 +482,11 @@ export const TiptapImage = Image.extend<ImageOptions>({
 
       // Show skeleton background while image loads from server
       dom.style.pointerEvents = "none";
-      dom.style.background =
-        "light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))";
+      el.classList.add("media-pulse");
 
       el.onload = () => {
         dom.style.pointerEvents = "";
-        dom.style.background = "";
+        el.classList.remove("media-pulse");
       };
 
       return nodeView;
