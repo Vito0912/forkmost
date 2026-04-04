@@ -20,6 +20,7 @@ import { GroupUserRepo } from '@docmost/db/repos/group/group-user.repo';
 import { WorkspaceService } from '../../workspace/services/workspace.service';
 import { AttachmentType, MAX_AVATAR_SIZE_BYTES, validImageExtensions } from '../../attachment/attachment.constants';
 import { AttachmentService } from '../../attachment/services/attachment.service';
+import {SessionService} from "../../session/session.service";
 
 interface CachedConfig {
   config: client.Configuration;
@@ -50,6 +51,7 @@ export class OidcService {
     private readonly groupUserRepo: GroupUserRepo,
     private readonly workspaceService: WorkspaceService,
     private readonly attachmentService: AttachmentService,
+    private readonly sessionService: SessionService,
   ) { }
 
   private async getCachedConfig(
@@ -459,7 +461,7 @@ export class OidcService {
         }
       }
 
-      const token = await this.tokenService.generateAccessToken(user);
+      const token = await this.sessionService.createSessionAndToken(user);
 
       return { token, user };
     } catch (error) {

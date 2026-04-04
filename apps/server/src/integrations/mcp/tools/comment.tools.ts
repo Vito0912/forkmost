@@ -137,7 +137,7 @@ export function registerCommentTools(
         await pageAccessService.validateCanEdit(page, user);
 
         const comment = await commentService.create(
-          { userId: user.id, page, workspaceId: workspace.id },
+          { user: user, page, workspaceId: workspace.id },
           { pageId, content: normalizeCommentContent(content) } as any,
         );
 
