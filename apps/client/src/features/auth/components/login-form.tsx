@@ -25,6 +25,7 @@ import React, { useEffect } from "react";
 import { OidcButton } from "@/features/auth/components/oidc-button";
 import { useOidcConfigQuery } from "@/features/auth/queries/oidc-query";
 import { useOidcAuth } from "@/features/auth/hooks/use-oidc-auth";
+import { AuthLayout } from "./auth-layout.tsx";
 
 const formSchema = z.object({
   email: z
@@ -77,11 +78,12 @@ export function LoginForm() {
   const hasOidcProvider = data?.authProviders?.some((provider: any) => provider.type === 'oidc');
 
   return (
-    <Container size={420} className={classes.container}>
-      <Box p="xl" className={classes.containerBox}>
-        <Title order={2} ta="center" fw={500} mb="md">
-          {t("Login")}
-        </Title>
+    <AuthLayout>
+      <Container size={420} className={classes.container}>
+        <Box p="xl" className={classes.containerBox}>
+          <Title order={2} ta="center" fw={500} mb="md">
+            {t("Login")}
+          </Title>
 
         <Stack gap="md">
           {hasOidcProvider && (
@@ -129,5 +131,6 @@ export function LoginForm() {
         </Stack>
       </Box>
     </Container>
+    </AuthLayout>
   );
 }
