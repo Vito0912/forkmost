@@ -340,9 +340,6 @@ export const mainExtensions = [
   Embed.configure({
     view: EmbedView,
   }),
-  TiptapPdf.configure({
-    view: PdfView,
-  }),
   Subpages.configure({
     view: SubpagesView,
   }),

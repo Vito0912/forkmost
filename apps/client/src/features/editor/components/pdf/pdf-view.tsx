@@ -133,7 +133,8 @@ export default function PdfView(props: PdfViewProps) {
     if (totalPages !== numPages) {
       updateAttributes({ totalPages: numPages });
     }
-  }, [numPages, totalPages, updateAttributes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numPages, totalPages]);
 
   useEffect(() => {
     return () => {
