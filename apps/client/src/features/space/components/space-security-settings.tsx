@@ -2,7 +2,6 @@ import { Text, Divider } from "@mantine/core";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { ISpace } from "@/features/space/types/space.types.ts";
-import SpaceViewerCommentsToggle from "@/ee/security/components/space-viewer-comments-toggle.tsx";
 
 type SpaceSecuritySettingsProps = {
   space: ISpace;
@@ -24,8 +23,6 @@ export default function SpaceSecuritySettings({
       </Text>
 
       <Divider my="lg" />
-
-      <SpaceViewerCommentsToggle space={space} />
     </div>
   );
 }
