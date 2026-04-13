@@ -96,7 +96,7 @@ export class WorkspaceService {
   async getWorkspacePublicData(workspaceId: string) {
     const workspace = await this.db
       .selectFrom('workspaces')
-      .select(['id', 'name', 'logo', 'hostname', 'enforceSso', 'licenseKey', 'plan'])
+      .select(['id', 'name', 'logo', 'hostname', 'enforceSso', 'settings', 'licenseKey', 'plan'])
       .select((eb) =>
         jsonArrayFrom(
           eb
@@ -446,11 +446,56 @@ export class WorkspaceService {
         );
       }
 
+      if (typeof updateWorkspaceDto.primaryColor !== 'undefined') {
+        const prev = settingsBefore?.appearance?.primaryColor ?? null;
+        if (prev !== updateWorkspaceDto.primaryColor) {
+          before.primaryColor = prev;
+          after.primaryColor = updateWorkspaceDto.primaryColor;
+        }
+        await this.workspaceRepo.updateAppearanceSettings(
+          workspaceId,
+          'primaryColor',
+          updateWorkspaceDto.primaryColor,
+          trx,
+        );
+      }
+
+      if (typeof updateWorkspaceDto.secondaryColor !== 'undefined') {
+        const prev = settingsBefore?.appearance?.secondaryColor ?? null;
+        if (prev !== updateWorkspaceDto.secondaryColor) {
+          before.secondaryColor = prev;
+          after.secondaryColor = updateWorkspaceDto.secondaryColor;
+        }
+        await this.workspaceRepo.updateAppearanceSettings(
+          workspaceId,
+          'secondaryColor',
+          updateWorkspaceDto.secondaryColor,
+          trx,
+        );
+      }
+
+      if (typeof updateWorkspaceDto.faviconUrl !== 'undefined') {
+        const prev = settingsBefore?.appearance?.faviconUrl ?? null;
+        if (prev !== updateWorkspaceDto.faviconUrl) {
+          before.faviconUrl = prev;
+          after.faviconUrl = updateWorkspaceDto.faviconUrl;
+        }
+        await this.workspaceRepo.updateAppearanceSettings(
+          workspaceId,
+          'faviconUrl',
+          updateWorkspaceDto.faviconUrl,
+          trx,
+        );
+      }
+
       delete updateWorkspaceDto.restrictApiToAdmins;
       delete updateWorkspaceDto.aiSearch;
       delete updateWorkspaceDto.generativeAi;
       delete updateWorkspaceDto.disablePublicSharing;
       delete updateWorkspaceDto.mcpEnabled;
+      delete updateWorkspaceDto.primaryColor;
+      delete updateWorkspaceDto.secondaryColor;
+      delete updateWorkspaceDto.faviconUrl;
 
       await this.workspaceRepo.updateWorkspace(
         updateWorkspaceDto,

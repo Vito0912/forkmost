@@ -37,6 +37,7 @@ import { CheckHostnameDto } from '../dto/check-hostname.dto';
 import { RemoveWorkspaceUserDto } from '../dto/remove-workspace-user.dto';
 import { ChangeWorkspaceMemberPasswordDto } from '../../auth/dto/change-password.dto';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
+import { UserRole } from '../../../common/helpers/types/permission';
 
 @UseGuards(JwtAuthGuard)
 @Controller('workspace')
@@ -93,6 +94,15 @@ export class WorkspaceController {
       ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.Settings)
     ) {
       throw new ForbiddenException();
+    }
+
+    const hasAppearanceUpdate =
+      typeof dto.primaryColor !== 'undefined' ||
+      typeof dto.secondaryColor !== 'undefined' ||
+      typeof dto.faviconUrl !== 'undefined';
+
+    if (hasAppearanceUpdate && user.role !== UserRole.OWNER) {
+      throw new ForbiddenException('Only workspace owners can update branding');
     }
 
     const updatedWorkspace = await this.workspaceService.update(

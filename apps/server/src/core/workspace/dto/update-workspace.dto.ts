@@ -3,9 +3,11 @@ import { CreateWorkspaceDto } from './create-workspace.dto';
 import {
   IsArray,
   IsBoolean,
+  IsHexColor,
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Min,
 } from 'class-validator';
 
@@ -50,4 +52,19 @@ export class UpdateWorkspaceDto extends PartialType(CreateWorkspaceDto) {
   @IsInt()
   @Min(1)
   trashRetentionDays: number;
+
+  @IsOptional()
+  @IsHexColor()
+  primaryColor: string;
+
+  @IsOptional()
+  @IsHexColor()
+  secondaryColor: string;
+
+  @IsOptional()
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+  })
+  faviconUrl: string;
 }
