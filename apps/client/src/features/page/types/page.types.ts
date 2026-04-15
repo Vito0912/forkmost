@@ -24,6 +24,7 @@ export interface IPage {
   deletedBy: IDeletedBy;
   contributors?: IContributor[];
   space: Partial<ISpace>;
+  breadcrumbs: string[];
   permissions?: {
     canEdit: boolean;
     hasRestriction: boolean;

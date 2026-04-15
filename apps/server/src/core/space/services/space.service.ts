@@ -9,7 +9,7 @@ import { CreateSpaceDto } from '../dto/create-space.dto';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
 import { SpaceRepo } from '@docmost/db/repos/space/space.repo';
 import { KyselyDB, KyselyTransaction } from '@docmost/db/types/kysely.types';
-import { Space, User } from '@docmost/db/types/entity.types';
+import { Graph, Space, User } from '@docmost/db/types/entity.types';
 import { UpdateSpaceDto } from '../dto/update-space.dto';
 import { executeTx } from '@docmost/db/utils';
 import { InjectKysely } from 'nestjs-kysely';
@@ -134,37 +134,6 @@ export class SpaceService {
       }
     }
 
-    if (
-      typeof updateSpaceDto.disablePublicSharing !== 'undefined' ||
-      typeof updateSpaceDto.allowViewerComments !== 'undefined'
-    ) {
-      const workspace = await this.workspaceRepo.findById(workspaceId, {
-        withLicenseKey: true,
-      });
-
-      if (
-        typeof updateSpaceDto.disablePublicSharing !== 'undefined' &&
-        !this.licenseCheckService.hasFeature(
-          workspace.licenseKey,
-          Feature.SECURITY_SETTINGS,
-          workspace.plan,
-        )
-      ) {
-        throw new ForbiddenException('This feature requires a valid license');
-      }
-
-      if (
-        typeof updateSpaceDto.allowViewerComments !== 'undefined' &&
-        !this.licenseCheckService.hasFeature(
-          workspace.licenseKey,
-          Feature.VIEWER_COMMENTS,
-          workspace.plan,
-        )
-      ) {
-        throw new ForbiddenException('This feature requires a valid license');
-      }
-    }
-
     const spaceBefore = await this.spaceRepo.findById(
       updateSpaceDto.spaceId,
       workspaceId,
@@ -258,6 +227,15 @@ export class SpaceService {
     }
 
     return space;
+  }
+
+  async getSpaceGraph(spaceId: string, workspaceId: string): Promise<Graph[]> {
+    const graph = await this.spaceRepo.getGraph(spaceId, workspaceId);
+    if (!graph) {
+      throw new NotFoundException('Graph not found');
+    }
+
+    return graph;
   }
 
   async getWorkspaceSpaces(

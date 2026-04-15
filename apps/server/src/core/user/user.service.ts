@@ -52,6 +52,14 @@ export class UserService {
         updateUserDto.fullPageWidth,
       );
     }
+    // preference update
+    if (typeof updateUserDto.spellcheck !== 'undefined') {
+      return this.userRepo.updatePreference(
+        userId,
+        'spellcheck',
+        updateUserDto.spellcheck,
+      );
+    }
 
     if (typeof updateUserDto.pageEditMode !== 'undefined') {
       return this.userRepo.updatePreference(

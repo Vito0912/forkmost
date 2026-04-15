@@ -1,5 +1,5 @@
 import type RedisClient from 'ioredis';
-import { EventEmitter } from 'tseep';
+import { EventEmitter } from 'events';
 import type {
   Pack,
   RSAMessageClose,

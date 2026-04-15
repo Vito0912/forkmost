@@ -1,5 +1,4 @@
-import { Text, SimpleGrid, Card, rem, Group, Button } from "@mantine/core";
-import React from "react";
+import { Text, SimpleGrid, Card, rem, Button, Group } from "@mantine/core";
 import {
   prefetchSpace,
   useGetSpacesQuery,
@@ -17,10 +16,9 @@ import { useFavoriteIds } from "@/features/favorite/queries/favorite-query";
 
 export default function SpaceGrid() {
   const { t } = useTranslation();
-  const { data, isLoading } = useGetSpacesQuery({ limit: 10 });
-  const spaceFavoriteIds = useFavoriteIds("space");
+  const { data, isLoading } = useGetSpacesQuery({ limit: 12 });
 
-  const cards = data?.items.slice(0, 6).map((space, index) => (
+  const cards = data?.items.map((space, index) => (
     <Card
       key={space.id}
       p="xs"

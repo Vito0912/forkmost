@@ -41,18 +41,21 @@ import {
 } from "@/features/comment/atoms/comment-atom";
 import CommentDialog from "@/features/comment/components/comment-dialog";
 import { EditorBubbleMenu } from "@/features/editor/components/bubble-menu/bubble-menu";
+import ColumnLayoutMenu from "@/features/editor/components/column-layout/column-layout-menu";
 import { ReadonlyBubbleMenu } from "@/features/editor/components/bubble-menu/readonly-bubble-menu";
 import TableCellMenu from "@/features/editor/components/table/table-cell-menu.tsx";
 import TableMenu from "@/features/editor/components/table/table-menu.tsx";
 import ImageMenu from "@/features/editor/components/image/image-menu.tsx";
 import CalloutMenu from "@/features/editor/components/callout/callout-menu.tsx";
 import VideoMenu from "@/features/editor/components/video/video-menu.tsx";
-import PdfMenu from "@/features/editor/components/pdf/pdf-menu.tsx";
+import AudioMenu from "@/features/editor/components/audio/audio-menu.tsx";
 import SubpagesMenu from "@/features/editor/components/subpages/subpages-menu.tsx";
+import EmbedMenu from "@/features/editor/components/embed/embed-menu.tsx";
 import {
   handleFileDrop,
   handlePaste,
 } from "@/features/editor/components/common/editor-paste-handler.tsx";
+import { EditorLinkMenu } from "@/features/editor/components/link/link-menu";
 import ExcalidrawMenu from "./components/excalidraw/excalidraw-menu";
 import DrawioMenu from "./components/drawio/drawio-menu";
 import { useCollabToken } from "@/features/auth/queries/auth-query.tsx";
@@ -66,11 +69,11 @@ import { extractPageSlugId } from "@/lib";
 import { FIVE_MINUTES } from "@/lib/constants.ts";
 import { PageEditMode } from "@/features/user/types/user.types.ts";
 import { jwtDecode } from "jwt-decode";
-import { searchSpotlight } from "@/features/search/constants.ts";
+import { searchSpotlight } from '@/features/search/constants.ts';
+import { useAnchorScroll } from "./components/heading/use-anchor-scroll";
 import { useEditorScroll } from "./hooks/use-editor-scroll";
-import { EditorAiMenu } from "@/ee/ai/components/editor/ai-menu/ai-menu";
-import { EditorLinkMenu } from "@/features/editor/components/link/link-menu";
 import ColumnsMenu from "@/features/editor/components/columns/columns-menu.tsx";
+import DragContextMenu from "@/features/editor/components/drag-handle/drag-context-menu.tsx";
 
 interface PageEditorProps {
   pageId: string;
@@ -85,6 +88,7 @@ export default function PageEditor({
   content,
   canComment,
 }: PageEditorProps) {
+
   const collaborationURL = useCollaborationUrl();
   const isComponentMounted = useRef(false);
   const editorRef = useRef<Editor | null>(null);
@@ -110,8 +114,12 @@ export default function PageEditor({
   const documentState = useDocumentVisibility();
   const { pageSlug } = useParams();
   const slugId = extractPageSlugId(pageSlug);
+  useAnchorScroll();
   const userPageEditMode =
     currentUser?.user?.settings?.preferences?.pageEditMode ?? PageEditMode.Edit;
+
+  const userSpellcheckPref = currentUser?.user?.settings?.preferences?.spellcheck ?? true;
+
   const canScroll = useCallback(
     () => Boolean(isComponentMounted.current && editorRef.current),
     [isComponentMounted],
@@ -221,6 +229,11 @@ export default function PageEditor({
     ];
   }, [providersReady, currentUser?.user]);
 
+  const debouncedSendSaveCommand = useDebouncedCallback(() => {
+    const payload = 'forceSave';
+    providersRef.current?.remote.sendStateless(payload);
+  }, 300);
+
   const editor = useEditor(
     {
       extensions,
@@ -234,6 +247,7 @@ export default function PageEditor({
           keydown: (_view, event) => {
             if ((event.ctrlKey || event.metaKey) && event.code === "KeyS") {
               event.preventDefault();
+              debouncedSendSaveCommand();
               return true;
             }
             if ((event.ctrlKey || event.metaKey) && event.code === "KeyK") {
@@ -348,7 +362,6 @@ export default function PageEditor({
   useEffect(() => {
     setActiveCommentId(null);
     setShowCommentPopup(false);
-    setAsideState({ tab: "", isAsideOpen: false });
   }, [pageId]);
 
   const isSynced = isLocalSynced && isRemoteSynced;
@@ -405,7 +418,8 @@ export default function PageEditor({
   return (
     <div className="editor-container" style={{ position: "relative" }}>
       <div ref={menuContainerRef}>
-        <EditorContent editor={editor} />
+
+        <EditorContent editor={editor} spellCheck={userSpellcheckPref} />
 
         {editor && (
           <SearchAndReplaceDialog editor={editor} editable={editable} />
@@ -413,19 +427,21 @@ export default function PageEditor({
 
         {editor && editorIsEditable && (
           <div>
-            <EditorAiMenu editor={editor} />
             <EditorLinkMenu editor={editor} />
             <EditorBubbleMenu editor={editor} />
+            <EmbedMenu editor={editor} />
             <TableMenu editor={editor} />
             <TableCellMenu editor={editor} appendTo={menuContainerRef} />
+            <ColumnLayoutMenu editor={editor} appendTo={menuContainerRef} />
             <ImageMenu editor={editor} />
             <VideoMenu editor={editor} />
-            <PdfMenu editor={editor} />
+            <AudioMenu editor={editor} />
             <CalloutMenu editor={editor} />
             <SubpagesMenu editor={editor} />
             <ExcalidrawMenu editor={editor} />
             <DrawioMenu editor={editor} />
             <ColumnsMenu editor={editor} />
+            <DragContextMenu editor={editor} />
           </div>
         )}
         {editor && !editorIsEditable && (editable || canComment) && providersRef.current && (

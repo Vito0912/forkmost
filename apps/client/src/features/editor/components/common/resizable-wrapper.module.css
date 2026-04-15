@@ -2,6 +2,7 @@
   position: relative;
   overflow: visible;
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
 .resizing {

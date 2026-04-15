@@ -1,6 +1,6 @@
 services:
-  docmost:
-    image: docmost/docmost:latest
+  forkmost:
+    image: ghcr.io/vito0912/forkmost:latest
     depends_on:
       - db
       - redis
@@ -13,10 +13,10 @@ services:
       - "3000:3000"
     restart: unless-stopped
     volumes:
-      - docmost:/app/data/storage
+      - forkmost:/app/data/storage
 
   db:
-    image: postgres:18
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: docmost
       POSTGRES_USER: docmost
@@ -26,13 +26,13 @@ services:
       - db_data:/var/lib/postgresql
 
   redis:
-    image: redis:8
+    image: redis:8-alpine
     command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
     restart: unless-stopped
     volumes:
       - redis_data:/data
 
 volumes:
-  docmost:
+  forkmost:
   db_data:
   redis_data:

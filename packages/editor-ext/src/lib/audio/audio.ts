@@ -1,134 +1,95 @@
-import { Node, mergeAttributes } from "@tiptap/core";
+import { Node, mergeAttributes, Range } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { normalizeFileUrl } from "../media-utils";
-import { sanitizeUrl, isInternalFileUrl } from "../utils";
+import { AudioUploadPlugin } from "./audio-upload";
 
 export interface AudioOptions {
-  view: any;
-  HTMLAttributes: Record<string, any>;
+    view: any;
+    HTMLAttributes: Record<string, any>;
 }
 
 export interface AudioAttributes {
-  src?: string;
-  attachmentId?: string;
-  size?: number;
-  placeholder?: {
-    id: string;
-    name: string;
-  };
+    src?: string;
+    title?: string;
+    attachmentId?: string;
+    size?: number;
+    align?: string;
+    width?: number;
 }
 
 declare module "@tiptap/core" {
-  interface Commands<ReturnType> {
-    audioBlock: {
-      setAudio: (attributes: AudioAttributes) => ReturnType;
-    };
-  }
+    interface Commands<ReturnType> {
+        audioBlock: {
+            setAudio: (attributes: AudioAttributes) => ReturnType;
+        };
+    }
 }
 
-export const TiptapAudio = Node.create<AudioOptions>({
-  name: "audio",
+export const Audio = Node.create<AudioOptions>({
+    name: "audio",
 
-  group: "block",
-  isolating: true,
-  atom: true,
-  defining: true,
-  draggable: true,
+    group: "block",
+    inline: false,
+    isolating: true,
+    atom: true,
+    defining: true,
+    draggable: true,
 
-  addOptions() {
-    return {
-      view: null,
-      HTMLAttributes: {},
-    };
-  },
+    addOptions() {
+        return {
+            view: null,
+            HTMLAttributes: {},
+        };
+    },    addAttributes() {
+        return {
+            src: {
+                default: "",
+                parseHTML: (element) => element.getAttribute("src"),
+                renderHTML: (attributes) => ({
+                    src: attributes.src,
+                }),
+            },            
+            attachmentId: {
+                default: undefined,
+                parseHTML: (element) => element.getAttribute("data-attachment-id"),
+                renderHTML: (attributes: AudioAttributes) => ({
+                    "data-attachment-id": attributes.attachmentId,
+                }),
+            },
+            size: {
+                default: null,
+                parseHTML: (element) => element.getAttribute("data-size"),
+                renderHTML: (attributes: AudioAttributes) => ({
+                    "data-size": attributes.size,
+                }),
+            },
+        };
+    },
 
-  addAttributes() {
-    return {
-      src: {
-        default: "",
-        parseHTML: (element) => {
-          const src = element.getAttribute("src");
-          const sanitized = sanitizeUrl(src);
-          return isInternalFileUrl(sanitized) ? sanitized : "";
-        },
-        renderHTML: (attributes) => ({
-          src: isInternalFileUrl(attributes.src)
-            ? sanitizeUrl(attributes.src)
-            : "",
-        }),
-      },
-      attachmentId: {
-        default: undefined,
-        parseHTML: (element) => element.getAttribute("data-attachment-id"),
-        renderHTML: (attributes: AudioAttributes) => ({
-          "data-attachment-id": attributes.attachmentId,
-        }),
-      },
-      size: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-size"),
-        renderHTML: (attributes: AudioAttributes) => ({
-          "data-size": attributes.size,
-        }),
-      },
-      placeholder: {
-        default: null,
-        rendered: false,
-      },
-    };
-  },
+    parseHTML() {
+        return [
+            {
+                tag: "audio",
+            },
+        ];
+    },
 
-  parseHTML() {
-    return [
-      {
-        tag: "audio",
-      },
-    ];
-  },
+    renderHTML({ HTMLAttributes }) {
+        return [
+            "audio",
+            { controls: "true", ...HTMLAttributes },
+            ["source", HTMLAttributes],
+        ];
+    },
 
-  renderHTML({ HTMLAttributes }) {
-    return [
-      "audio",
-      mergeAttributes(
-        { controls: "true", preload: "metadata" },
-        this.options.HTMLAttributes,
-        HTMLAttributes,
-      ),
-      ["source", { src: HTMLAttributes.src }],
-    ];
-  },
+    addNodeView() {
+        return ReactNodeViewRenderer(this.options.view);
+    },
 
-  addCommands() {
-    return {
-      setAudio:
-        (attrs: AudioAttributes) =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: "audio",
-            attrs: attrs,
-          });
-        },
-    };
-  },
-
-  addNodeView() {
-    if (this.options.view) {
-      this.editor.isInitialized = true;
-      return ReactNodeViewRenderer(this.options.view);
-    }
-
-    return ({ node, HTMLAttributes }) => {
-      const dom = document.createElement("div");
-      const audio = document.createElement("audio");
-      const src = node.attrs.src;
-      if (src && isInternalFileUrl(src)) {
-        audio.src = normalizeFileUrl(src);
-      }
-      audio.controls = true;
-      audio.preload = "metadata";
-      audio.style.width = "100%";
-      dom.append(audio);
-      return { dom };
-    };
-  },
+    addProseMirrorPlugins() {
+        return [
+            AudioUploadPlugin({
+                placeholderClass: "audio-upload",
+            }),
+        ];
+    },
 });

@@ -28,6 +28,7 @@ import { PageListener } from '@docmost/db/listeners/page.listener';
 import { PostgresJSDialect } from 'kysely-postgres-js';
 import * as postgres from 'postgres';
 import { normalizePostgresUrl } from '../common/helpers';
+import { ApiKeyRepo } from './repos/api-key/api-key.repo';
 
 @Global()
 @Module({
@@ -83,6 +84,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserSessionRepo,
     BacklinkRepo,
     ShareRepo,
+    ApiKeyRepo,
     NotificationRepo,
     WatcherRepo,
     TemplateRepo,
@@ -105,6 +107,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserSessionRepo,
     BacklinkRepo,
     ShareRepo,
+    ApiKeyRepo,
     NotificationRepo,
     WatcherRepo,
     TemplateRepo,

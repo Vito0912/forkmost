@@ -54,6 +54,7 @@ import { TokenService } from '../auth/services/token.service';
 import { JwtAttachmentPayload, JwtType } from '../auth/dto/jwt-payload';
 import * as path from 'path';
 import { AttachmentInfoDto, RemoveIconDto } from './dto/attachment.dto';
+import { AuthProviderRepo } from '../../database/repos/auth-provider/auth-provider.repo';
 import { PageAccessService } from '../page/page-access/page-access.service';
 import { AuditEvent, AuditResource } from '../../common/events/audit-events';
 import {
@@ -74,6 +75,7 @@ export class AttachmentController {
     private readonly attachmentRepo: AttachmentRepo,
     private readonly environmentService: EnvironmentService,
     private readonly tokenService: TokenService,
+    private readonly authProviderRepo: AuthProviderRepo,
     private readonly pageAccessService: PageAccessService,
     @Inject(AUDIT_SERVICE) private readonly auditService: IAuditService,
   ) {}
@@ -290,6 +292,13 @@ export class AttachmentController {
     const attachmentType = file.fields?.type?.value;
     const spaceId = file.fields?.spaceId?.value;
 
+    if (attachmentType === AttachmentType.Avatar) {
+      const oidcProvider = await this.authProviderRepo.findOidcProvider(workspace.id);
+      if (oidcProvider?.oidcAvatarAttribute) {
+        throw new ForbiddenException('Avatar is managed by your identity provider');
+      }
+    }
+
     if (!attachmentType) {
       throw new BadRequestException('attachment type is required');
     }
@@ -416,6 +425,11 @@ export class AttachmentController {
 
     // remove current user avatar
     if (type === AttachmentType.Avatar) {
+      const oidcProvider = await this.authProviderRepo.findOidcProvider(workspace.id);
+      if (oidcProvider?.oidcAvatarAttribute) {
+        throw new ForbiddenException('Avatar is managed by your identity provider');
+      }
+
       await this.attachmentService.removeUserAvatar(user);
       return;
     }

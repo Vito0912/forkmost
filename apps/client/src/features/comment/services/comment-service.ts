@@ -14,7 +14,7 @@ export async function createComment(
 }
 
 export async function resolveComment(data: IResolveComment): Promise<IComment> {
-  const req = await api.post<IComment>(`/comments/resolve`, data);
+  const req = await api.post<IComment>("/comments/resolve", data);
   return req.data;
 }
 

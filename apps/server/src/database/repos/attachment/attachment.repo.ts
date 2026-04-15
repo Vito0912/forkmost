@@ -8,10 +8,11 @@ import {
   UpdatableAttachment,
 } from '@docmost/db/types/entity.types';
 import { AttachmentType } from '../../../core/attachment/attachment.constants';
+import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
 @Injectable()
 export class AttachmentRepo {
-  constructor(@InjectKysely() private readonly db: KyselyDB) {}
+  constructor(@InjectKysely() private readonly db: KyselyDB) { }
 
   private baseFields: Array<keyof Attachment> = [
     'id',
@@ -160,5 +161,92 @@ export class AttachmentRepo {
       .deleteFrom('attachments')
       .where('filePath', '=', attachmentFilePath)
       .executeTakeFirst();
+  }
+
+  async findByFilePath(filePath: string): Promise<Attachment | undefined> {
+    return this.db
+      .selectFrom('attachments')
+      .select(this.baseFields)
+      .where('filePath', '=', filePath)
+      .executeTakeFirst();
+  }
+
+  async searchByFileName(
+    query: string,
+    workspaceId: string,
+    spaceIds: string[],
+    limit: number = 25,
+  ): Promise<any[]> {
+    if (spaceIds.length === 0) return [];
+
+    return this.db
+      .selectFrom('attachments')
+      .selectAll()
+      .where('attachments.workspaceId', '=', workspaceId)
+      .where('attachments.type', '=', 'file')
+      .where('attachments.deletedAt', 'is', null)
+      .where('attachments.spaceId', 'in', spaceIds)
+      .where('attachments.fileName', 'ilike', `%${query}%`)
+      .orderBy('attachments.createdAt', 'desc')
+      .limit(limit)
+      .execute();
+  }
+
+  async searchByFileNameWithRelations(
+    query: string,
+    workspaceId: string,
+    spaceIds: string[],
+    limit: number = 25,
+  ): Promise<any[]> {
+    if (spaceIds.length === 0) return [];
+
+    const rows = await this.db
+      .selectFrom('attachments')
+      .select([
+        'attachments.id',
+        'attachments.fileName',
+        'attachments.pageId',
+        'attachments.creatorId',
+        'attachments.createdAt',
+        'attachments.updatedAt',
+      ])
+      .select((eb) => [
+        jsonObjectFrom(
+          eb
+            .selectFrom('spaces')
+            .select(['spaces.id', 'spaces.name', 'spaces.slug'])
+            .whereRef('spaces.id', '=', 'attachments.spaceId'),
+        ).as('space'),
+        jsonObjectFrom(
+          eb
+            .selectFrom('pages')
+            .select(['pages.id', 'pages.title', 'pages.slugId'])
+            .whereRef('pages.id', '=', 'attachments.pageId'),
+        ).as('page'),
+      ])
+      .where('attachments.workspaceId', '=', workspaceId)
+      .where('attachments.type', '=', 'file')
+      .where('attachments.deletedAt', 'is', null)
+      .where('attachments.spaceId', 'in', spaceIds)
+      .where('attachments.pageId', 'is not', null)
+      .where('attachments.fileName', 'ilike', `%${query}%`)
+      .orderBy('attachments.createdAt', 'desc')
+      .limit(limit)
+      .execute();
+
+    return rows.map((row: any) => ({
+      id: row.id,
+      fileName: row.fileName,
+      pageId: row.pageId,
+      creatorId: row.creatorId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      highlight: '',
+      rank: '',
+      space: row.space
+        ? { ...row.space, icon: null }
+        : { id: null, name: null, slug: null, icon: null },
+      page: row.page || { id: null, title: null, slugId: null },
+    }));
   }
 }

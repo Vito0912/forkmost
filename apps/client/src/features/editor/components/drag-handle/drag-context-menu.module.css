@@ -1,0 +1,23 @@
+.dropdown {
+  padding: 4px;
+}
+
+.transformTarget {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: var(--mantine-color-text);
+  font-size: var(--mantine-font-size-sm);
+  transition: background-color 150ms ease;
+  cursor: pointer;
+}
+
+.transformTarget:hover {
+  background-color: var(--mantine-color-default-hover);
+}
+
+[data-mantine-color-scheme='dark'] .transformTarget:hover {
+  background-color: var(--mantine-color-dark-6);
+}

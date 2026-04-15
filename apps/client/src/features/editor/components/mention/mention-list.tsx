@@ -14,6 +14,7 @@ import {
   Group,
   Paper,
   ScrollArea,
+  Stack,
   Text,
   UnstyledButton,
 } from "@mantine/core";
@@ -31,16 +32,15 @@ import {
   MentionSuggestionItem,
 } from "@/features/editor/components/mention/mention.type.ts";
 import { IPage } from "@/features/page/types/page.types";
-import {
-  useCreatePageMutation,
-  usePageQuery,
-} from "@/features/page/queries/page-query";
+import { invalidateGraph, useCreatePageMutation, usePageQuery } from "@/features/page/queries/page-query";
 import { treeDataAtom } from "@/features/page/tree/atoms/tree-data-atom";
 import { SimpleTree } from "react-arborist";
 import { SpaceTreeNode } from "@/features/page/tree/types";
 import { useTranslation } from "react-i18next";
 import { useQueryEmit } from "@/features/websocket/use-query-emit";
 import { extractPageSlugId } from "@/lib";
+import { AnchorSelector } from "./anchor-selector";
+import { generateSlug } from "../../utils/heading-extractor";
 import { AutoTooltipText } from "@/components/ui/auto-tooltip-text.tsx";
 
 const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
@@ -71,6 +71,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     return {
       id: null,
       label: label,
+      breadcrumbs: '',
       entityType: "page",
       entityId: null,
       slugId: null,
@@ -89,6 +90,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
           suggestion.users.map((user) => ({
             id: uuid7(),
             label: user.name,
+            email: user.email,
             entityType: "user",
             entityId: user.id,
             avatarUrl: user.avatarUrl,
@@ -96,29 +98,33 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
         );
       }
 
-      if (suggestion?.pages?.length > 0) {
-        items.push({ entityType: "header", label: t("Pages") });
-        items = items.concat(
-          suggestion.pages.map((page) => ({
-            id: uuid7(),
-            label: page.title || t("Untitled"),
-            entityType: "page",
-            entityId: page.id,
-            slugId: page.slugId,
-            icon: page.icon,
-            spaceName: page.space?.name,
-            spaceSlug: page.space?.slug,
-          })),
-        );
-      }
+       if (suggestion?.pages?.length > 0) {
+         items.push({ entityType: "header", label: t("Pages") });
+         items = items.concat(
+           suggestion.pages.map((page) => ({
+             id: uuid7(),
+             label: page.title || t("Untitled"),
+             breadcrumbs: page.breadcrumbs
+               .map(item => item ?? t("Untitled"))
+               .join(' / '),
+             entityType: "page",
+             entityId: page.id,
+             slugId: page.slugId,
+             icon: page.icon,
+              headings: (page.headings || []).map(heading => ({
+                ...heading,
+                slug: heading.slug || generateSlug(heading.text)
+              })),
+            })),
+          );
+        }
       if (!isInCommentContext && props.query) {
         items.push(createPageItem(props.query));
       }
 
       setRenderItems(items);
-      // update editor storage
-      //@ts-ignore
-      props.editor.storage.mentionItems = items;
+      const storage = props.editor.storage as { mentionItems?: MentionSuggestionItem[] };
+      storage.mentionItems = items;
     }
   }, [suggestion, isLoading]);
 
@@ -142,8 +148,10 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             entityType: "page",
             entityId: item.entityId,
             slugId: item.slugId,
+            anchorSlug: item.anchorSlug,
             creatorId: currentUser?.user.id,
           });
+          invalidateGraph();
         }
         if (item.entityType === "page" && item.id === null) {
           createPage(item.label);
@@ -151,6 +159,24 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       }
     },
     [renderItems],
+  );
+
+  const selectPageWithAnchor = useCallback(
+    (pageItem: MentionSuggestionItem, anchorSlug: string, headingText: string) => {
+      if (pageItem.entityType === "page" && pageItem.id !== null) {
+        props.command({
+          id: pageItem.id,
+          label: `${pageItem.label} → ${headingText}`,
+          entityType: "page",
+          entityId: pageItem.entityId,
+          slugId: pageItem.slugId,
+          anchorSlug: anchorSlug,
+          anchorText: headingText,
+          creatorId: currentUser?.user.id,
+        });
+      }
+    },
+    [props.command, currentUser],
   );
 
   const upHandler = () => {
@@ -209,17 +235,17 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     },
   }));
 
-  const createPage = async (title: string) => {
-    const payload: { spaceId: string; parentPageId?: string; title: string } = {
-      spaceId: space.id,
-      parentPageId: page.id || null,
-      title: title,
-    };
+   const createPage = async (title: string) => {
+     const payload = {
+       spaceId: space.id,
+       parentPageId: page.id || null,
+       title: title,
+     };
 
-    let createdPage: IPage;
     try {
-      createdPage = await createPageMutation.mutateAsync(payload);
+      const createdPage = await createPageMutation.mutateAsync(payload);
       const parentId = page.id || null;
+
       const data = {
         id: createdPage.id,
         slugId: createdPage.slugId,
@@ -231,34 +257,33 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       } as any;
 
       const lastIndex = tree.data.length;
-
       tree.create({ parentId, index: lastIndex, data });
       setData(tree.data);
 
       props.command({
         id: uuid7(),
-        label: createdPage.title || "Untitled",
+        label: createdPage.title || t("Untitled"),
         entityType: "page",
         entityId: createdPage.id,
         slugId: createdPage.slugId,
         creatorId: currentUser?.user.id,
       });
 
-      setTimeout(() => {
-        emit({
-          operation: "addTreeNode",
-          spaceId: space.id,
-          payload: {
-            parentId,
-            index: lastIndex,
-            data,
-          },
-        });
-      }, 50);
-    } catch (err) {
-      throw new Error("Failed to create page");
-    }
-  };
+       setTimeout(() => {
+         emit({
+           operation: "addTreeNode",
+           spaceId: space.id,
+           payload: {
+             parentId,
+             index: lastIndex,
+             data,
+           },
+         });
+       }, 50);
+     } catch (err) {
+       throw new Error("Failed to create page");
+     }
+   };
 
   useEffect(() => {
     viewportRef.current
@@ -286,8 +311,8 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     (item) => item.entityType === "page" && item.id === null,
   );
 
-  return (
-    <Paper id="mention" shadow="md" withBorder radius="md" py={6}>
+   return (
+     <Paper id="mention" shadow="md" withBorder radius="md" py={6} className={classes.mentionPanel}>
       <ScrollArea.Autosize
         viewportRef={viewportRef}
         mah={350}
@@ -335,11 +360,14 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                     name={item.label}
                   />
 
-                  <div style={{ flex: 1 }}>
-                    <AutoTooltipText size="sm" fw={500}>
+                  <Stack gap="0">
+                    <Text size="sm" fw={500}>
                       {item.label}
-                    </AutoTooltipText>
-                  </div>
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {item.email}
+                    </Text>
+                  </Stack>
                 </Group>
               </UnstyledButton>
             );
@@ -363,20 +391,55 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
                     size="sm"
                   >
                     {item.icon || (
-                      <IconFileDescription size={18} stroke={1.5} />
+                      <ActionIcon
+                        component="span"
+                        variant="transparent"
+                        color="gray"
+                        size={18}
+                      >
+                        {item.id ? (
+                          <IconFileDescription size={18} stroke={1.5} />
+                        ) : (
+                          <IconPlus size={18} stroke={1.5} />
+                        )}
+                      </ActionIcon>
                     )}
                   </ActionIcon>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <AutoTooltipText size="sm" fw={500} truncate>
-                      {item.label}
-                    </AutoTooltipText>
+                  <Stack gap="0" style={{ flex: 1, minWidth: 0 }}>
+                    <Text size="sm" fw={500} truncate>
+                      {item.id
+                        ? item.label
+                        : t("Create page") + ": " + item.label}
+                    </Text>
+                    {item.breadcrumbs !== "" && (
+                      <Text size="xs" c="dimmed" lineClamp={1}>
+                        {item.breadcrumbs}
+                      </Text>
+                    )}
                     {item.spaceName && (
                       <Text size="xs" c="dimmed" truncate>
                         {item.spaceName}
                       </Text>
                     )}
-                  </div>
+                  </Stack>
+
+                  {item.id &&
+                    item.entityId &&
+                    item.entityType === "page" &&
+                    item.headings && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={classes.anchorSelector}
+                      >
+                        <AnchorSelector
+                          headings={item.headings}
+                          onSelectAnchor={(anchorSlug, headingText) => {
+                            selectPageWithAnchor(item, anchorSlug, headingText);
+                          }}
+                        />
+                      </div>
+                    )}
                 </Group>
               </UnstyledButton>
             );
