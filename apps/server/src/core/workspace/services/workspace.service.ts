@@ -472,28 +472,12 @@ export class WorkspaceService {
         );
       }
 
-      if (typeof updateWorkspaceDto.faviconUrl !== 'undefined') {
-        const prev = settingsBefore?.appearance?.faviconUrl ?? null;
-        if (prev !== updateWorkspaceDto.faviconUrl) {
-          before.faviconUrl = prev;
-          after.faviconUrl = updateWorkspaceDto.faviconUrl;
-        }
-        await this.workspaceRepo.updateAppearanceSettings(
-          workspaceId,
-          'faviconUrl',
-          updateWorkspaceDto.faviconUrl,
-          trx,
-        );
-      }
-
       delete updateWorkspaceDto.restrictApiToAdmins;
       delete updateWorkspaceDto.aiSearch;
       delete updateWorkspaceDto.generativeAi;
       delete updateWorkspaceDto.disablePublicSharing;
       delete updateWorkspaceDto.mcpEnabled;
       delete updateWorkspaceDto.primaryColor;
-
-      delete updateWorkspaceDto.faviconUrl;
 
       await this.workspaceRepo.updateWorkspace(
         updateWorkspaceDto,

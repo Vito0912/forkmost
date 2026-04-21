@@ -7,7 +7,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  IsUrl,
   Min,
 } from 'class-validator';
 
@@ -56,11 +55,4 @@ export class UpdateWorkspaceDto extends PartialType(CreateWorkspaceDto) {
   @IsOptional()
   @IsHexColor()
   primaryColor: string;
-
-  @IsOptional()
-  @IsUrl({
-    require_tld: false,
-    require_protocol: true,
-  })
-  faviconUrl: string;
 }

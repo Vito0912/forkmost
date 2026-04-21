@@ -80,6 +80,22 @@ export async function uploadWorkspaceIcon(file: File): Promise<IAttachment> {
   return uploadIcon(file, AvatarIconType.WORKSPACE_ICON);
 }
 
+export async function uploadWorkspaceFavicon(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await api.post<{ faviconUrl: string }>(
+    "/attachments/upload-favicon",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+  return response.faviconUrl;
+}
+
 async function removeIcon(
   type: AvatarIconType,
   spaceId?: string,
@@ -103,4 +119,8 @@ export async function removeSpaceIcon(spaceId: string): Promise<void> {
 
 export async function removeWorkspaceIcon(): Promise<void> {
   await removeIcon(AvatarIconType.WORKSPACE_ICON);
+}
+
+export async function removeWorkspaceFavicon(): Promise<void> {
+  await removeIcon(AvatarIconType.WORKSPACE_FAVICON);
 }

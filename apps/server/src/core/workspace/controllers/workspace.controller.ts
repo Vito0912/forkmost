@@ -96,11 +96,10 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    const hasAppearanceUpdate =
-      typeof dto.primaryColor !== 'undefined' ||
-      typeof dto.faviconUrl !== 'undefined';
-
-    if (hasAppearanceUpdate && user.role !== UserRole.OWNER) {
+    if (
+      typeof dto.primaryColor !== 'undefined' &&
+      user.role !== UserRole.OWNER
+    ) {
       throw new ForbiddenException('Only workspace owners can update branding');
     }
 

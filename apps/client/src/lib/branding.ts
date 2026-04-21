@@ -1,4 +1,5 @@
 import { IWorkspaceSettings } from "@/features/workspace/types/workspace.types.ts";
+import { getFileUrl } from "@/lib/config.ts";
 
 const DEFAULT_PRIMARY = "#1f1f1f";
 
@@ -62,8 +63,9 @@ export function applyWorkspaceBranding(settings?: IWorkspaceSettings) {
   ) as HTMLLinkElement | null;
 
   if (favicon) {
-    icon32?.setAttribute("href", favicon);
-    icon16?.setAttribute("href", favicon);
+    const faviconFullUrl = getFileUrl(favicon);
+    icon32?.setAttribute("href", faviconFullUrl);
+    icon16?.setAttribute("href", faviconFullUrl);
     return;
   }
 
