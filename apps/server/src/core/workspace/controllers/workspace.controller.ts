@@ -98,7 +98,6 @@ export class WorkspaceController {
 
     const hasAppearanceUpdate =
       typeof dto.primaryColor !== 'undefined' ||
-      typeof dto.secondaryColor !== 'undefined' ||
       typeof dto.faviconUrl !== 'undefined';
 
     if (hasAppearanceUpdate && user.role !== UserRole.OWNER) {
@@ -135,7 +134,11 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    return this.workspaceService.getWorkspaceUsers(user, workspace.id, pagination);
+    return this.workspaceService.getWorkspaceUsers(
+      user,
+      workspace.id,
+      pagination,
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -184,11 +187,7 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    await this.workspaceService.changeUserPassword(
-      dto,
-      user.id,
-      workspace.id,
-    );
+    await this.workspaceService.changeUserPassword(dto, user.id, workspace.id);
   }
 
   @HttpCode(HttpStatus.OK)

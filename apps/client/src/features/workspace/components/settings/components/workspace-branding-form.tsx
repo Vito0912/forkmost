@@ -14,7 +14,6 @@ import { applyWorkspaceBranding } from "@/lib/branding.ts";
 
 const formSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   faviconUrl: z.string().url().or(z.literal("")),
 });
 
@@ -30,8 +29,6 @@ export default function WorkspaceBrandingForm() {
     validate: zod4Resolver(formSchema),
     initialValues: {
       primaryColor: workspace?.settings?.appearance?.primaryColor ?? "#1f1f1f",
-      secondaryColor:
-        workspace?.settings?.appearance?.secondaryColor ?? "#f6f7f9",
       faviconUrl: workspace?.settings?.appearance?.faviconUrl ?? "",
     },
   });
@@ -44,7 +41,6 @@ export default function WorkspaceBrandingForm() {
     try {
       const updatedWorkspace = await updateWorkspace({
         primaryColor: data.primaryColor,
-        secondaryColor: data.secondaryColor,
         faviconUrl: data.faviconUrl || undefined,
       });
       setWorkspace(updatedWorkspace);
@@ -68,11 +64,6 @@ export default function WorkspaceBrandingForm() {
           label={t("Primary theme color")}
           format="hex"
           {...form.getInputProps("primaryColor")}
-        />
-        <ColorInput
-          label={t("Secondary theme color")}
-          format="hex"
-          {...form.getInputProps("secondaryColor")}
         />
         <TextInput
           label={t("Favicon URL")}

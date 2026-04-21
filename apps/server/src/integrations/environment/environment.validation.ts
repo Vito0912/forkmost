@@ -36,6 +36,10 @@ export class EnvironmentVariables {
   REDIS_URL: string;
 
   @IsOptional()
+  @IsString()
+  APP_NAME: string;
+
+  @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_tld: false })
   APP_URL: string;
 

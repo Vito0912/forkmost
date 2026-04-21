@@ -58,10 +58,6 @@ export class UpdateWorkspaceDto extends PartialType(CreateWorkspaceDto) {
   primaryColor: string;
 
   @IsOptional()
-  @IsHexColor()
-  secondaryColor: string;
-
-  @IsOptional()
   @IsUrl({
     require_tld: false,
     require_protocol: true,

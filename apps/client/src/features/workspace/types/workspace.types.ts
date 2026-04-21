@@ -28,7 +28,6 @@ export interface IWorkspace {
   trashRetentionDays?: number;
   restrictApiToAdmins?: boolean;
   primaryColor?: string;
-  secondaryColor?: string;
   faviconUrl?: string;
 }
 
@@ -55,7 +54,6 @@ export interface IWorkspaceSharingSettings {
 
 export interface IWorkspaceAppearanceSettings {
   primaryColor?: string;
-  secondaryColor?: string;
   faviconUrl?: string;
 }
 
