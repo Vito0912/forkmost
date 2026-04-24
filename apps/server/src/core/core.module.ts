@@ -20,6 +20,7 @@ import { AuditContextMiddleware } from '../common/middlewares/audit-context.midd
 import { ShareModule } from './share/share.module';
 import { NotificationModule } from './notification/notification.module';
 import { WatcherModule } from './watcher/watcher.module';
+import { FavoriteModule } from './favorite/favorite.module';
 import { SessionModule } from './session/session.module';
 import { ClsMiddleware } from 'nestjs-cls';
 import { ApiKeyModule } from './api-key/api-key.module';
@@ -32,6 +33,7 @@ import { ApiKeyModule } from './api-key/api-key.module';
     PageModule,
     AttachmentModule,
     CommentModule,
+    FavoriteModule,
     SearchModule,
     SpaceModule,
     GroupModule,

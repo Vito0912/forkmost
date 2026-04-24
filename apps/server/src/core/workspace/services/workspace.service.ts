@@ -52,6 +52,7 @@ import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { WatcherRepo } from '@docmost/db/repos/watcher/watcher.repo';
+import { FavoriteRepo } from '@docmost/db/repos/favorite/favorite.repo';
 import { AuditEvent, AuditResource } from '../../../common/events/audit-events';
 import {
   AUDIT_SERVICE,
@@ -75,6 +76,7 @@ export class WorkspaceService {
     private licenseCheckService: LicenseCheckService,
     private shareRepo: ShareRepo,
     private watcherRepo: WatcherRepo,
+    private favoriteRepo: FavoriteRepo,
     @InjectKysely() private readonly db: KyselyDB,
     @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
     @InjectQueue(QueueName.BILLING_QUEUE) private billingQueue: Queue,
@@ -162,7 +164,7 @@ export class WorkspaceService {
           status = WorkspaceStatus.Active;
           plan = 'standard';
           billingEmail = user.email;
-          settings = { ai: { generative: true } };
+          settings = { ai: { generative: true, chat: true } };
         }
 
         // create workspace
@@ -454,11 +456,41 @@ export class WorkspaceService {
         );
       }
 
+      if (typeof updateWorkspaceDto.allowMemberTemplates !== 'undefined') {
+        const prev = settingsBefore?.templates?.allowMemberTemplates ?? false;
+        if (prev !== updateWorkspaceDto.allowMemberTemplates) {
+          before.allowMemberTemplates = prev;
+          after.allowMemberTemplates = updateWorkspaceDto.allowMemberTemplates;
+        }
+        await this.workspaceRepo.updateTemplateSettings(
+          workspaceId,
+          'allowMemberTemplates',
+          updateWorkspaceDto.allowMemberTemplates,
+          trx,
+        );
+      }
+
+      if (typeof updateWorkspaceDto.aiChat !== 'undefined') {
+        const prev = settingsBefore?.ai?.chat ?? false;
+        if (prev !== updateWorkspaceDto.aiChat) {
+          before.aiChat = prev;
+          after.aiChat = updateWorkspaceDto.aiChat;
+        }
+        await this.workspaceRepo.updateAiSettings(
+          workspaceId,
+          'chat',
+          updateWorkspaceDto.aiChat,
+          trx,
+        );
+      }
+
       delete updateWorkspaceDto.restrictApiToAdmins;
       delete updateWorkspaceDto.aiSearch;
       delete updateWorkspaceDto.generativeAi;
       delete updateWorkspaceDto.disablePublicSharing;
       delete updateWorkspaceDto.mcpEnabled;
+      delete updateWorkspaceDto.allowMemberTemplates;
+      delete updateWorkspaceDto.aiChat;
 
       await this.workspaceRepo.updateWorkspace(
         updateWorkspaceDto,
@@ -788,6 +820,10 @@ export class WorkspaceService {
         .execute();
 
       await this.watcherRepo.deleteByUserAndWorkspace(userId, workspaceId, {
+        trx,
+      });
+
+      await this.favoriteRepo.deleteByUserAndWorkspace(userId, workspaceId, {
         trx,
       });
 

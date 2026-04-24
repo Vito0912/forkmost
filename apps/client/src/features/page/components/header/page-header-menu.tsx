@@ -153,8 +153,16 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
     movePageModalOpened,
     { open: openMovePageModal, close: closeMoveSpaceModal },
   ] = useDisclosure(false);
+  const [
+    verificationOpened,
+    { open: openVerificationModal, close: closeVerificationModal },
+  ] = useDisclosure(false);
   const [pageEditor] = useAtom(pageEditorAtom);
   const pageUpdatedAt = useTimeAgo(page?.updatedAt);
+  const favoriteIds = useFavoriteIds("page", page?.spaceId);
+  const addFavoriteMutation = useAddFavoriteMutation();
+  const removeFavoriteMutation = useRemoveFavoriteMutation();
+  const isFavorited = page?.id ? favoriteIds.has(page.id) : false;
   const { data: watchStatus } = useWatchStatusQuery(page?.id);
   const watchPage = useWatchPageMutation();
   const unwatchPage = useUnwatchPageMutation();
@@ -231,6 +239,19 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             {t("Copy as Markdown")}
           </Menu.Item>
 
+          <Menu.Item
+            leftSection={
+              isFavorited ? (
+                <IconStarFilled size={16} color="var(--mantine-color-yellow-5)" />
+              ) : (
+                <IconStar size={16} />
+              )
+            }
+            onClick={handleToggleFavorite}
+          >
+            {isFavorited ? t("Remove from favorites") : t("Add to favorites")}
+          </Menu.Item>
+
           <Menu.Divider />
 
           <Menu.Item
@@ -287,6 +308,13 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
           >
             {t("Page history")}
           </Menu.Item>
+
+          {!readOnly && (
+            <PageVerificationMenuItem
+              pageId={page?.id}
+              onClick={openVerificationModal}
+            />
+          )}
 
           <Menu.Divider />
 
@@ -376,6 +404,12 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
         currentSpaceSlug={spaceSlug}
         onClose={closeMoveSpaceModal}
         open={movePageModalOpened}
+      />
+
+      <PageVerificationModal
+        pageId={page.id}
+        opened={verificationOpened}
+        onClose={closeVerificationModal}
       />
     </>
   );

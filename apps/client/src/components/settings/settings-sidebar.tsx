@@ -85,6 +85,12 @@ const groupedData: DataGroup[] = [
       { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
       { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
       {
+        label: "Verified pages",
+        icon: IconShieldCheck,
+        path: "/settings/verifications",
+        feature: Feature.PAGE_VERIFICATION,
+      },
+      {
         label: "API management",
         icon: IconKey,
         path: "/settings/api-keys",
