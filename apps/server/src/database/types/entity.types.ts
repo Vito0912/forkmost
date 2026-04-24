@@ -58,11 +58,11 @@ export type Graph = {
   title: string | null;
   parentPageId: string | null;
   backlinks: GraphBacklink[];
-}
+};
 export type GraphBacklink = {
   sourcePageId: string;
   targetPageId: string;
-}
+};
 
 // SpaceMember
 export type SpaceMember = Selectable<SpaceMembers>;

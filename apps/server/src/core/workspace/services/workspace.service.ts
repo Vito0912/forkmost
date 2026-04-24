@@ -41,7 +41,10 @@ import {
   generateRandomSuffixNumbers,
   hashPassword,
 } from '../../../common/helpers';
-import { ChangePasswordDto, ChangeWorkspaceMemberPasswordDto } from '../../auth/dto/change-password.dto';
+import {
+  ChangePasswordDto,
+  ChangeWorkspaceMemberPasswordDto,
+} from '../../auth/dto/change-password.dto';
 import ChangePasswordEmail from '@docmost/transactional/emails/change-password-email';
 import ChangeUserPasswordEmail from '@docmost/transactional/emails/change-user-password-email';
 import { MailService } from '../../../integrations/mail/mail.service';
@@ -96,7 +99,15 @@ export class WorkspaceService {
   async getWorkspacePublicData(workspaceId: string) {
     const workspace = await this.db
       .selectFrom('workspaces')
-      .select(['id', 'name', 'logo', 'hostname', 'enforceSso', 'licenseKey', 'plan'])
+      .select([
+        'id',
+        'name',
+        'logo',
+        'hostname',
+        'enforceSso',
+        'licenseKey',
+        'plan',
+      ])
       .select((eb) =>
         jsonArrayFrom(
           eb
@@ -427,9 +438,6 @@ export class WorkspaceService {
           updateWorkspaceDto.disablePublicSharing,
           trx,
         );
-        if (updateWorkspaceDto.disablePublicSharing) {
-          await this.shareRepo.deleteByWorkspaceId(workspaceId, trx);
-        }
       }
 
       if (typeof updateWorkspaceDto.mcpEnabled !== 'undefined') {
@@ -483,13 +491,7 @@ export class WorkspaceService {
     });
 
     const columnChanges = diffAuditTrackedFields(
-      [
-        'name',
-        'logo',
-        'enforceSso',
-        'enforceMfa',
-        'emailDomains',
-      ],
+      ['name', 'logo', 'enforceSso', 'enforceMfa', 'emailDomains'],
       updateWorkspaceDto,
       workspaceBefore,
       workspace,
@@ -520,7 +522,11 @@ export class WorkspaceService {
     if (user.role === 'owner' || user.role === 'admin') {
       return this.userRepo.getUsersPaginated(workspaceId, pagination);
     }
-    return this.userRepo.getUsersInSpacesOfUser(workspaceId, user.id, pagination);
+    return this.userRepo.getUsersInSpacesOfUser(
+      workspaceId,
+      user.id,
+      pagination,
+    );
   }
 
   async updateWorkspaceUserRole(
@@ -825,9 +831,7 @@ export class WorkspaceService {
       throw new NotFoundException('User not found');
     }
 
-    if (
-      (actorUser.role === UserRole.ADMIN && user.role === UserRole.OWNER)
-    ) {
+    if (actorUser.role === UserRole.ADMIN && user.role === UserRole.OWNER) {
       throw new ForbiddenException();
     }
 
@@ -850,7 +854,10 @@ export class WorkspaceService {
       workspaceId,
     );
 
-    const emailTemplate = ChangeUserPasswordEmail({ username: user.name, actorUsername: actorUser.name });
+    const emailTemplate = ChangeUserPasswordEmail({
+      username: user.name,
+      actorUsername: actorUser.name,
+    });
     await this.mailService.sendToQueue({
       to: user.email,
       subject: 'Your password has been changed',

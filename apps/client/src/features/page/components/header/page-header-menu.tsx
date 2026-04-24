@@ -44,6 +44,7 @@ import { PageStateSegmentedControl } from "@/features/user/components/page-state
 import MovePageModal from "@/features/page/components/move-page-modal.tsx";
 import { useTimeAgo } from "@/hooks/use-time-ago.tsx";
 import ShareModal from "@/features/share/components/share-modal.tsx";
+import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
 import {
   useWatchStatusQuery,
   useWatchPageMutation,
@@ -58,6 +59,9 @@ export default function PageHeaderMenu({ readOnly }: PageHeaderMenuProps) {
   const toggleAside = useToggleAside();
   const [yjsConnectionStatus] = useAtom(yjsConnectionStatusAtom);
   const [editor, setEditor] = useAtom(pageEditorAtom);
+  const [workspace] = useAtom(workspaceAtom);
+  const workspaceSharingDisabled =
+    workspace?.settings?.sharing?.disabled === true;
 
   useHotkeys(
     [
@@ -71,7 +75,10 @@ export default function PageHeaderMenu({ readOnly }: PageHeaderMenuProps) {
       [
         "mod+H",
         () => {
-          const event = new CustomEvent("openFindAndReplaceDialogFromEditor", {});
+          const event = new CustomEvent(
+            "openFindAndReplaceDialogFromEditor",
+            {},
+          );
           document.dispatchEvent(event);
         },
       ],
@@ -100,7 +107,7 @@ export default function PageHeaderMenu({ readOnly }: PageHeaderMenuProps) {
 
       {!readOnly && <PageStateSegmentedControl size="xs" />}
 
-      <ShareModal readOnly={readOnly} />
+      {!workspaceSharingDisabled && <ShareModal readOnly={readOnly} />}
 
       <Tooltip label={t("Comments")} openDelay={250} withArrow>
         <ActionIcon
@@ -186,12 +193,12 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
   const openFindDialog = () => {
     const event = new CustomEvent("openFindDialogFromEditor", {});
     document.dispatchEvent(event);
-  }
+  };
 
   const openFindAndReplaceDialog = () => {
     const event = new CustomEvent("openFindAndReplaceDialogFromEditor", {});
     document.dispatchEvent(event);
-  }
+  };
 
   return (
     <>
@@ -249,7 +256,6 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
           >
             {t("Replace")}
           </Menu.Item>
-
 
           {watchStatus?.watching ? (
             <Menu.Item
