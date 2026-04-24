@@ -480,9 +480,9 @@ export class AttachmentService {
     const oldFaviconUrl =
       (workspace?.settings as any)?.appearance?.faviconUrl ?? null;
 
-    preparedFile.fileName = uuid4() + preparedFile.fileExtension;
+    preparedFile.fileName = `favicon${preparedFile.fileExtension}`;
     const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/${preparedFile.fileName}`;
-    const faviconUrl = `/api/attachments/favicon/${workspaceId}/${preparedFile.fileName}`;
+    const faviconUrl = `/api/attachments/favicon/${workspaceId}`;
 
     await this.uploadToDrive(filePath, preparedFile.buffer);
 
@@ -511,12 +511,15 @@ export class AttachmentService {
       throw new BadRequestException('Failed to upload favicon');
     }
 
-    if (oldFaviconUrl && !oldFaviconUrl.toLowerCase().startsWith('http')) {
-      // Extract filename from stored URL path like /api/attachments/favicon/{workspaceId}/{fileName}
-      const oldFileName = oldFaviconUrl.split('/').pop();
-      if (oldFileName) {
-        const oldFilePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/${oldFileName}`;
-        await this.deleteRedundantFile(oldFilePath);
+    if (oldFaviconUrl) {
+      const commonExtensions = ['.ico', '.png', '.webp', '.svg'];
+      for (const ext of commonExtensions) {
+        try {
+          const oldFilePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/favicon${ext}`;
+          await this.deleteRedundantFile(oldFilePath);
+        } catch {
+          // Ignore errors if file doesn't exist
+        }
       }
     }
 
@@ -528,12 +531,16 @@ export class AttachmentService {
     const faviconUrl =
       (workspace?.settings as any)?.appearance?.faviconUrl ?? null;
 
-    if (faviconUrl && !faviconUrl.toLowerCase().startsWith('http')) {
-      // Extract filename from stored URL path like /api/attachments/favicon/{workspaceId}/{fileName}
-      const fileName = faviconUrl.split('/').pop();
-      if (fileName) {
-        const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/${fileName}`;
-        await this.deleteRedundantFile(filePath);
+    if (faviconUrl) {
+      // Deleting favicon with accepted file names
+      const commonExtensions = ['.ico', '.png', '.webp', '.svg'];
+      for (const ext of commonExtensions) {
+        try {
+          const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/favicon${ext}`;
+          await this.deleteRedundantFile(filePath);
+        } catch {
+          // Ignore errors if file doesn't exist
+        }
       }
     }
 

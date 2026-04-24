@@ -370,7 +370,7 @@ export class AttachmentController {
     } catch (err: any) {
       if (err?.statusCode === 413) {
         throw new BadRequestException(
-          `File too large. Exceeds the 100KB limit`,
+          `File too large. Exceeds the ${maxFileSize / 1024}KB limit`,
         );
       }
     }
@@ -439,37 +439,33 @@ export class AttachmentController {
   }
 
   @Public()
-  @Get('attachments/favicon/:workspaceId/:fileName')
+  @Get('attachments/favicon/:workspaceId')
   async getFavicon(
     @Res() res: FastifyReply,
     @Param('workspaceId') workspaceId: string,
-    @Param('fileName') fileName?: string,
   ) {
     if (!isValidUUID(workspaceId)) {
       throw new BadRequestException('Invalid workspace id');
     }
 
-    if (!fileName) {
-      throw new NotFoundException('File not found');
+    // Try accepted favicon filenames
+    const commonExtensions = ['.ico', '.png', '.webp', '.svg'];
+    for (const ext of commonExtensions) {
+      const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/favicon${ext}`;
+
+      try {
+        const fileStream = await this.storageService.readStream(filePath);
+        res.headers({
+          'Content-Type': getMimeType(filePath),
+          'Cache-Control': 'public, max-age=86400',
+        });
+        return res.send(fileStream);
+      } catch (err) {
+        // Continue to next file if this one doesn't exist
+      }
     }
 
-    const filenameWithoutExt = path.basename(fileName, path.extname(fileName));
-    if (!isValidUUID(filenameWithoutExt)) {
-      throw new BadRequestException('Invalid file name');
-    }
-
-    const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/${fileName}`;
-
-    try {
-      const fileStream = await this.storageService.readStream(filePath);
-      res.headers({
-        'Content-Type': getMimeType(filePath),
-        'Cache-Control': 'public, max-age=86400',
-      });
-      return res.send(fileStream);
-    } catch (err) {
-      throw new NotFoundException('File not found');
-    }
+    throw new NotFoundException('File not found');
   }
 
   @UseGuards(JwtAuthGuard)

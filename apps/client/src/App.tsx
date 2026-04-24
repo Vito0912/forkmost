@@ -44,11 +44,11 @@ export default function App() {
         <Route path={"/forgot-password"} element={<ForgotPassword />} />
         <Route path={"/password-reset"} element={<PasswordReset />} />
         <Route path={"/auth/oidc/callback"} element={<OidcCallbackPage />} />
-        { /* <Route path={"/login/mfa"} element={<MfaChallengePage />} />
+        {/* <Route path={"/login/mfa"} element={<MfaChallengePage />} />
         <Route
           path={"/login/mfa/setup"}
           element={<MfaSetupRequiredPage />}
-        /> */ }
+        /> */}
 
         {!isCloud() && (
           <Route path={"/setup/register"} element={<SetupWorkspace />} />
@@ -71,10 +71,7 @@ export default function App() {
           <Route path={"/s/:spaceSlug"} element={<SpaceHome />} />
           <Route path={"/s/:spaceSlug/graph"} element={<SpaceGraph />} />
           <Route path={"/s/:spaceSlug/trash"} element={<SpaceTrash />} />
-          <Route
-            path={"/s/:spaceSlug/p/:pageSlug"}
-            element={<Page />}
-          />
+          <Route path={"/s/:spaceSlug/p/:pageSlug"} element={<Page />} />
 
           <Route path={"/settings"}>
             <Route path={"account/profile"} element={<AccountSettings />} />

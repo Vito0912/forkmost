@@ -32,7 +32,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const FAVICON_MAX_SIZE = 100 * 1024; // 100KB
+const FAVICON_MAX_SIZE = 10 * 1024; // 10KB - Need to be changed in the backend too (server/core/attachment/attachment.constants.ts)
 const FAVICON_ACCEPTED_TYPES = [
   "image/png",
   "image/x-icon",
@@ -98,7 +98,7 @@ export default function WorkspaceBrandingForm() {
 
     if (file.size > FAVICON_MAX_SIZE) {
       notifications.show({
-        message: t("File size exceeds 100KB limit"),
+        message: t(`File size exceeds ${FAVICON_MAX_SIZE / 1024}KB limit`),
         color: "red",
       });
       if (fileInputRef.current) fileInputRef.current.value = "";
