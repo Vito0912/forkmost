@@ -16,7 +16,13 @@ import {
 import { v4 as uuid4, v7 as uuid7 } from 'uuid';
 import { createHash } from 'crypto';
 import { AttachmentRepo } from '@docmost/db/repos/attachment/attachment.repo';
-import { AttachmentType, validImageExtensions } from '../attachment.constants';
+import {
+  AttachmentType,
+  validImageExtensions,
+  validFaviconExtensions,
+  MAX_FAVICON_SIZE,
+  MAX_FAVICON_SIZE_BYTES,
+} from '../attachment.constants';
 import { KyselyDB, KyselyTransaction } from '@docmost/db/types/kysely.types';
 import { Attachment, User, Workspace } from '@docmost/db/types/entity.types';
 import { InjectKysely } from 'nestjs-kysely';
@@ -40,7 +46,7 @@ export class AttachmentService {
     private readonly spaceRepo: SpaceRepo,
     @InjectKysely() private readonly db: KyselyDB,
     @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
-  ) { }
+  ) {}
 
   async uploadFile(opts: {
     filePromise: Promise<MultipartFile>;
@@ -172,10 +178,18 @@ export class AttachmentService {
       try {
         const currentFilePath = `${getAttachmentFolderPath(type, workspaceId)}/${oldFileName}`;
         const currentFile = await this.storageService.read(currentFilePath);
-        const currentBuffer = Buffer.isBuffer(currentFile) ? currentFile : Buffer.from(currentFile);
+        const currentBuffer = Buffer.isBuffer(currentFile)
+          ? currentFile
+          : Buffer.from(currentFile);
 
-        const newHash = createHash('sha256').update(preparedFile.buffer).digest('hex').substring(0, 16);
-        const currentHash = createHash('sha256').update(currentBuffer).digest('hex').substring(0, 16);
+        const newHash = createHash('sha256')
+          .update(preparedFile.buffer)
+          .digest('hex')
+          .substring(0, 16);
+        const currentHash = createHash('sha256')
+          .update(currentBuffer)
+          .digest('hex')
+          .substring(0, 16);
 
         if (newHash === currentHash) {
           return await this.attachmentRepo.findByFilePath(currentFilePath);
@@ -446,5 +460,94 @@ export class AttachmentService {
     }
 
     await this.workspaceRepo.updateWorkspace({ logo: null }, workspace.id);
+  }
+
+  async uploadWorkspaceFavicon(
+    filePromise: Promise<MultipartFile>,
+    userId: string,
+    workspaceId: string,
+  ): Promise<{ attachment: Attachment; faviconUrl: string }> {
+    const preparedFile: PreparedFile = await prepareFile(filePromise);
+    validateFileType(preparedFile.fileExtension, validFaviconExtensions);
+
+    if (preparedFile.fileSize > MAX_FAVICON_SIZE_BYTES) {
+      throw new BadRequestException(
+        `File too large. Exceeds the ${MAX_FAVICON_SIZE} limit`,
+      );
+    }
+
+    const workspace = await this.workspaceRepo.findById(workspaceId);
+    const oldFaviconUrl =
+      (workspace?.settings as any)?.appearance?.faviconUrl ?? null;
+
+    preparedFile.fileName = `favicon${preparedFile.fileExtension}`;
+    const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/${preparedFile.fileName}`;
+    const faviconUrl = `/api/attachments/favicon/${workspaceId}`;
+
+    await this.uploadToDrive(filePath, preparedFile.buffer);
+
+    let attachment: Attachment = null;
+
+    try {
+      await executeTx(this.db, async (trx) => {
+        attachment = await this.saveAttachment({
+          preparedFile,
+          filePath,
+          type: AttachmentType.WorkspaceFavicon,
+          userId,
+          workspaceId,
+          trx,
+        });
+
+        await this.workspaceRepo.updateAppearanceSettings(
+          workspaceId,
+          'faviconUrl',
+          faviconUrl,
+          trx,
+        );
+      });
+    } catch (err) {
+      await this.deleteRedundantFile(filePath);
+      throw new BadRequestException('Failed to upload favicon');
+    }
+
+    if (oldFaviconUrl) {
+      const commonExtensions = ['.ico', '.png', '.webp', '.svg'];
+      for (const ext of commonExtensions) {
+        try {
+          const oldFilePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/favicon${ext}`;
+          await this.deleteRedundantFile(oldFilePath);
+        } catch {
+          // Ignore errors if file doesn't exist
+        }
+      }
+    }
+
+    return { attachment, faviconUrl };
+  }
+
+  async removeWorkspaceFavicon(workspaceId: string) {
+    const workspace = await this.workspaceRepo.findById(workspaceId);
+    const faviconUrl =
+      (workspace?.settings as any)?.appearance?.faviconUrl ?? null;
+
+    if (faviconUrl) {
+      // Deleting favicon with accepted file names
+      const commonExtensions = ['.ico', '.png', '.webp', '.svg'];
+      for (const ext of commonExtensions) {
+        try {
+          const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/favicon${ext}`;
+          await this.deleteRedundantFile(filePath);
+        } catch {
+          // Ignore errors if file doesn't exist
+        }
+      }
+    }
+
+    await this.workspaceRepo.updateAppearanceSettings(
+      workspaceId,
+      'faviconUrl',
+      null as any,
+    );
   }
 }

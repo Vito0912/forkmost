@@ -3,6 +3,7 @@ import { CreateWorkspaceDto } from './create-workspace.dto';
 import {
   IsArray,
   IsBoolean,
+  IsHexColor,
   IsInt,
   IsOptional,
   IsString,
@@ -50,4 +51,8 @@ export class UpdateWorkspaceDto extends PartialType(CreateWorkspaceDto) {
   @IsInt()
   @Min(1)
   trashRetentionDays: number;
+
+  @IsOptional()
+  @IsHexColor()
+  primaryColor: string;
 }

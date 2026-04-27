@@ -13,6 +13,7 @@ export class RemoveIconDto {
     AttachmentType.Avatar,
     AttachmentType.SpaceIcon,
     AttachmentType.WorkspaceIcon,
+    AttachmentType.WorkspaceFavicon,
   ])
   @IsNotEmpty()
   type: AttachmentType;

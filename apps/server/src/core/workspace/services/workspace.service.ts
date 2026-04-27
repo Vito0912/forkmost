@@ -105,6 +105,7 @@ export class WorkspaceService {
         'logo',
         'hostname',
         'enforceSso',
+        'settings',
         'licenseKey',
         'plan',
       ])
@@ -454,11 +455,26 @@ export class WorkspaceService {
         );
       }
 
+      if (typeof updateWorkspaceDto.primaryColor !== 'undefined') {
+        const prev = settingsBefore?.appearance?.primaryColor ?? null;
+        if (prev !== updateWorkspaceDto.primaryColor) {
+          before.primaryColor = prev;
+          after.primaryColor = updateWorkspaceDto.primaryColor;
+        }
+        await this.workspaceRepo.updateAppearanceSettings(
+          workspaceId,
+          'primaryColor',
+          updateWorkspaceDto.primaryColor,
+          trx,
+        );
+      }
+
       delete updateWorkspaceDto.restrictApiToAdmins;
       delete updateWorkspaceDto.aiSearch;
       delete updateWorkspaceDto.generativeAi;
       delete updateWorkspaceDto.disablePublicSharing;
       delete updateWorkspaceDto.mcpEnabled;
+      delete updateWorkspaceDto.primaryColor;
 
       await this.workspaceRepo.updateWorkspace(
         updateWorkspaceDto,

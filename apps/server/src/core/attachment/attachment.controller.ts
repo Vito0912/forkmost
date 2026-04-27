@@ -35,6 +35,7 @@ import {
   AttachmentType,
   inlineFileExtensions,
   MAX_AVATAR_SIZE,
+  MAX_FAVICON_SIZE_BYTES,
 } from './attachment.constants';
 import {
   SpaceCaslAction,
@@ -61,6 +62,8 @@ import {
   AUDIT_SERVICE,
   IAuditService,
 } from '../../integrations/audit/audit.service';
+import { Public } from '../../common/decorators/public.decorator';
+import { UserRole } from '../../common/helpers/types/permission';
 
 @Controller()
 export class AttachmentController {
@@ -285,9 +288,13 @@ export class AttachmentController {
     const spaceId = file.fields?.spaceId?.value;
 
     if (attachmentType === AttachmentType.Avatar) {
-      const oidcProvider = await this.authProviderRepo.findOidcProvider(workspace.id);
+      const oidcProvider = await this.authProviderRepo.findOidcProvider(
+        workspace.id,
+      );
       if (oidcProvider?.oidcAvatarAttribute) {
-        throw new ForbiddenException('Avatar is managed by your identity provider');
+        throw new ForbiddenException(
+          'Avatar is managed by your identity provider',
+        );
       }
     }
 
@@ -343,6 +350,60 @@ export class AttachmentController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('attachments/upload-favicon')
+  @UseInterceptors(FileInterceptor)
+  async uploadFavicon(
+    @Req() req: any,
+    @Res() res: FastifyReply,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const maxFileSize = MAX_FAVICON_SIZE_BYTES;
+
+    let file = null;
+    try {
+      file = await req.file({
+        limits: { fileSize: maxFileSize, fields: 3, files: 1 },
+      });
+    } catch (err: any) {
+      if (err?.statusCode === 413) {
+        throw new BadRequestException(
+          `File too large. Exceeds the ${maxFileSize / 1024}KB limit`,
+        );
+      }
+    }
+
+    if (!file) {
+      throw new BadRequestException('Invalid file upload');
+    }
+
+    const ability = this.workspaceAbility.createForUser(user, workspace);
+    if (
+      ability.cannot(WorkspaceCaslAction.Manage, WorkspaceCaslSubject.Settings)
+    ) {
+      throw new ForbiddenException();
+    }
+
+    if (user.role !== UserRole.OWNER) {
+      throw new ForbiddenException('Only workspace owners can update branding');
+    }
+
+    try {
+      const result = await this.attachmentService.uploadWorkspaceFavicon(
+        file,
+        user.id,
+        workspace.id,
+      );
+
+      return res.send({ faviconUrl: result.faviconUrl });
+    } catch (err: any) {
+      this.logger.error(err);
+      throw new BadRequestException('Error processing favicon upload.');
+    }
+  }
+
   @Get('attachments/img/:attachmentType/:fileName')
   async getLogoOrAvatar(
     @Res() res: FastifyReply,
@@ -375,6 +436,36 @@ export class AttachmentController {
       // this.logger.error(err);
       throw new NotFoundException('File not found');
     }
+  }
+
+  @Public()
+  @Get('attachments/favicon/:workspaceId')
+  async getFavicon(
+    @Res() res: FastifyReply,
+    @Param('workspaceId') workspaceId: string,
+  ) {
+    if (!isValidUUID(workspaceId)) {
+      throw new BadRequestException('Invalid workspace id');
+    }
+
+    // Try accepted favicon filenames
+    const commonExtensions = ['.ico', '.png', '.webp', '.svg'];
+    for (const ext of commonExtensions) {
+      const filePath = `${getAttachmentFolderPath(AttachmentType.WorkspaceFavicon, workspaceId)}/favicon${ext}`;
+
+      try {
+        const fileStream = await this.storageService.readStream(filePath);
+        res.headers({
+          'Content-Type': getMimeType(filePath),
+          'Cache-Control': 'public, max-age=86400',
+        });
+        return res.send(fileStream);
+      } catch (err) {
+        // Continue to next file if this one doesn't exist
+      }
+    }
+
+    throw new NotFoundException('File not found');
   }
 
   @UseGuards(JwtAuthGuard)
@@ -417,9 +508,13 @@ export class AttachmentController {
 
     // remove current user avatar
     if (type === AttachmentType.Avatar) {
-      const oidcProvider = await this.authProviderRepo.findOidcProvider(workspace.id);
+      const oidcProvider = await this.authProviderRepo.findOidcProvider(
+        workspace.id,
+      );
       if (oidcProvider?.oidcAvatarAttribute) {
-        throw new ForbiddenException('Avatar is managed by your identity provider');
+        throw new ForbiddenException(
+          'Avatar is managed by your identity provider',
+        );
       }
 
       await this.attachmentService.removeUserAvatar(user);
@@ -457,6 +552,28 @@ export class AttachmentController {
         throw new ForbiddenException();
       }
       await this.attachmentService.removeWorkspaceIcon(workspace);
+      return;
+    }
+
+    // remove workspace favicon
+    if (type === AttachmentType.WorkspaceFavicon) {
+      const ability = this.workspaceAbility.createForUser(user, workspace);
+      if (
+        ability.cannot(
+          WorkspaceCaslAction.Manage,
+          WorkspaceCaslSubject.Settings,
+        )
+      ) {
+        throw new ForbiddenException();
+      }
+
+      if (user.role !== UserRole.OWNER) {
+        throw new ForbiddenException(
+          'Only workspace owners can update branding',
+        );
+      }
+
+      await this.attachmentService.removeWorkspaceFavicon(workspace.id);
       return;
     }
   }

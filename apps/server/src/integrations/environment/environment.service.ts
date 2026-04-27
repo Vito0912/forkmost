@@ -14,6 +14,10 @@ export class EnvironmentService {
     return this.getNodeEnv() === 'development';
   }
 
+  getAppName(): string {
+    return this.configService.get<string>('APP_NAME', 'Forkmost');
+  }
+
   getAppUrl(): string {
     const rawUrl =
       this.configService.get<string>('APP_URL') ||

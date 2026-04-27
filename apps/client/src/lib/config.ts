@@ -10,7 +10,7 @@ declare global {
 }
 
 export function getAppName(): string {
-  return "Forkmost";
+  return getConfigValue("APP_NAME", "Forkmost");
 }
 
 export function getAppUrl(): string {
@@ -64,7 +64,7 @@ export function getSpaceGraphUrl(spaceSlug: string) {
 export function getFileUrl(src: string) {
   if (!src) return src;
   if (src.startsWith("http")) return src;
-  
+
   if (src.startsWith("/api/")) {
     // Remove the '/api' prefix
     return getBackendUrl() + src.substring(4);
