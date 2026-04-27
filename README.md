@@ -1,15 +1,12 @@
 # Forkmost
 
-> [!NOTE]
-> This is a custom, updated fork of Docmost, optimized for personal and educational use, especially for sharing with multiple different users. It also includes features that Docmost is either "too" slow to add or chooses not to include, sometimes because they are behind a paywall or because Docmost aims to "keep it simple." (No judgment)
->
-> ~~I cannot promise that I will keep maintaining this fork forever~~. As written below (but I want to bring it up here), I do no plan to maintain Forkmost anymore as I primarily ~~do~~ did it for myself, but I will do so as long as the license allows and I ~~actively~~ (I don't use it anymore) use Docmost. I have also taken out some features that others might find helpful, and I may have added some bugs. As per license this can be forked at any time
->
-> I currently use [Typst](https://typst.app/play/), which is not WYSIWYG but offers many more customization options. There is also an online editor for sharing work, and it has wide community support, including for the web. I use Typst with a self-developed alpha alpha app for Nextcloud (which is not public, sorry), which has basically replaced Forkmost completely for me.\
-> The main reasons for stopping work are not Docmosts functionality, but what Docmost developed to (being mostly closed-source without any clear pricing structure and ignoring big parts of community contributions now - my opinion). I deleted the detailed reasoning, because it does not change this, but they still are in the commit history if anyone is interested.
+> [!IMPORTANT] 
+> This repo is now EOL. No new updates will be added. Anyone is free to fork this software. Thanks to everyone who contributed to this software. I especially thank:
+> - [@hugokindel](https://github.com/hugokindel) for adding many new features, and also helping update this fork
+> - [@Philipinho](https://github.com/Philipinho) for the initial free software
 
-> [!IMPORTANT]
-> If someone wants to further maintain the project, please contact me.
+> [!NOTE]
+> I currently use [Typst](https://typst.app/play/), which is not WYSIWYG but offers many more customization options. There is also an online editor for sharing work, and it has wide community support, including for the web. I use Typst with a self-developed alpha alpha app for Nextcloud (which is not public, sorry), which has basically replaced Forkmost completely for me. There are more reasons viewable in the commit history.\
 
 ## **For added and features merged ahead, see the note under Features.**
 

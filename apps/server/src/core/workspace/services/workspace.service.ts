@@ -439,9 +439,6 @@ export class WorkspaceService {
           updateWorkspaceDto.disablePublicSharing,
           trx,
         );
-        if (updateWorkspaceDto.disablePublicSharing) {
-          await this.shareRepo.deleteByWorkspaceId(workspaceId, trx);
-        }
       }
 
       if (typeof updateWorkspaceDto.mcpEnabled !== 'undefined') {
