@@ -112,7 +112,15 @@ export class TokenService {
       type: JwtType.API_KEY,
     };
 
-    return this.jwtService.sign(payload, expiresIn ? { expiresIn } : {});
+    // Always pass an explicit expiresIn so we override the module-level
+    // signOptions.expiresIn default (currently '90d', intended for short-lived
+    // access tokens). When the API key was created with "no expiration", fall
+    // back to a 100-year window — practically equivalent to never expiring,
+    // and required because jsonwebtoken's option validator rejects an
+    // `expiresIn: undefined` override. The DB's apiKey.expiresAt column
+    // remains the authoritative source of truth for API key expiry, enforced
+    // by ApiKeyService.validateApiKey.
+    return this.jwtService.sign(payload, { expiresIn: expiresIn ?? '100y' });
   }
 
   async verifyJwt(token: string, tokenType: string) {
