@@ -37,6 +37,7 @@ import { CheckHostnameDto } from '../dto/check-hostname.dto';
 import { RemoveWorkspaceUserDto } from '../dto/remove-workspace-user.dto';
 import { ChangeWorkspaceMemberPasswordDto } from '../../auth/dto/change-password.dto';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
+import { UserRole } from '../../../common/helpers/types/permission';
 
 @UseGuards(JwtAuthGuard)
 @Controller('workspace')
@@ -95,6 +96,13 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
+    if (
+      typeof dto.primaryColor !== 'undefined' &&
+      user.role !== UserRole.OWNER
+    ) {
+      throw new ForbiddenException('Only workspace owners can update branding');
+    }
+
     const updatedWorkspace = await this.workspaceService.update(
       workspace.id,
       dto,
@@ -125,7 +133,11 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    return this.workspaceService.getWorkspaceUsers(user, workspace.id, pagination);
+    return this.workspaceService.getWorkspaceUsers(
+      user,
+      workspace.id,
+      pagination,
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -174,11 +186,7 @@ export class WorkspaceController {
       throw new ForbiddenException();
     }
 
-    await this.workspaceService.changeUserPassword(
-      dto,
-      user.id,
-      workspace.id,
-    );
+    await this.workspaceService.changeUserPassword(dto, user.id, workspace.id);
   }
 
   @HttpCode(HttpStatus.OK)

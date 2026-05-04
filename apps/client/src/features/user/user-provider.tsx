@@ -11,6 +11,7 @@ import { useTreeSocket } from "@/features/websocket/use-tree-socket.ts";
 import { useNotificationSocket } from "@/features/notification/hooks/use-notification-socket.ts";
 import { useCollabToken } from "@/features/auth/queries/auth-query.tsx";
 import { Error404 } from "@/components/ui/error-404.tsx";
+import { applyWorkspaceBranding } from "@/lib/branding.ts";
 
 export function UserProvider({ children }: React.PropsWithChildren) {
   const [, setCurrentUser] = useAtom(currentUserAtom);
@@ -50,6 +51,7 @@ export function UserProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     if (data && data.user && data.workspace) {
       setCurrentUser(data);
+      applyWorkspaceBranding(data.workspace.settings);
       i18n.changeLanguage(
         data.user.locale === "en" ? "en-US" : data.user.locale,
       );

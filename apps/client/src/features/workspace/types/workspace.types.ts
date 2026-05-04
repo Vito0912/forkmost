@@ -27,12 +27,15 @@ export interface IWorkspace {
   mcpEnabled?: boolean;
   trashRetentionDays?: number;
   restrictApiToAdmins?: boolean;
+  primaryColor?: string;
+  faviconUrl?: string;
 }
 
 export interface IWorkspaceSettings {
   ai?: IWorkspaceAiSettings;
   sharing?: IWorkspaceSharingSettings;
   api?: IWorkspaceApiSettings;
+  appearance?: IWorkspaceAppearanceSettings;
 }
 
 export interface IWorkspaceApiSettings {
@@ -47,6 +50,11 @@ export interface IWorkspaceAiSettings {
 
 export interface IWorkspaceSharingSettings {
   disabled?: boolean;
+}
+
+export interface IWorkspaceAppearanceSettings {
+  primaryColor?: string;
+  faviconUrl?: string;
 }
 
 export interface ICreateInvite {
@@ -82,6 +90,7 @@ export interface IPublicWorkspace {
   logo: string;
   hostname: string;
   enforceSso: boolean;
+  settings?: IWorkspaceSettings;
   authProviders: IAuthProvider[];
 }
 
