@@ -1,7 +1,3 @@
-// `common/helpers` transitively imports `nanoid` (ESM-only), which the repo's
-// current jest config does not transform. We don't exercise any of those
-// helpers in this spec, so stub the barrel out to keep this file runnable
-// without touching the global jest config.
 jest.mock('../../../common/helpers', () => ({
   isUserDisabled: () => false,
 }));
