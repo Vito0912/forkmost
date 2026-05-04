@@ -75,6 +75,10 @@ export class EnvironmentService {
     return new Date(Date.now() + msUntilExpiry);
   }
 
+  getGotenbergUrl(): string | undefined {
+    return this.configService.get<string>('GOTENBERG_URL');
+  }
+
   getStorageDriver(): string {
     return this.configService.get<string>('STORAGE_DRIVER', 'local');
   }
@@ -250,6 +254,13 @@ export class EnvironmentService {
 
   getAiCompletionModel(): string {
     return this.configService.get<string>('AI_COMPLETION_MODEL');
+  }
+
+  getAiChatModel(): string {
+    return (
+      this.configService.get<string>('AI_CHAT_MODEL') ||
+      this.configService.get<string>('AI_COMPLETION_MODEL')
+    );
   }
 
   getAiEmbeddingDimension(): number {

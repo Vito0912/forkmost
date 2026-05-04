@@ -22,6 +22,7 @@ import PasswordReset from "./pages/auth/password-reset";
 import OidcCallbackPage from "@/pages/auth/oidc-callback.tsx";
 import { isCloud } from "@/lib/config.ts";
 import SharedPage from "@/pages/share/shared-page.tsx";
+import PdfRenderPage from "@/ee/pdf-export/pdf-render-page.tsx";
 import Shares from "@/pages/settings/shares/shares.tsx";
 import ShareLayout from "@/features/share/components/share-layout.tsx";
 import ShareRedirect from "@/pages/share/share-redirect.tsx";
@@ -62,12 +63,21 @@ export default function App() {
           <Route path={"/share/p/:pageSlug"} element={<SharedPage />} />
         </Route>
 
+        <Route path={"/pdf-render/:pageId"} element={<PdfRenderPage />} />
         <Route path={"/share/:shareId"} element={<ShareRedirect />} />
         <Route path={"/p/:pageSlug"} element={<PageRedirect />} />
 
         <Route element={<Layout />}>
           <Route path={"/home"} element={<Home />} />
+          <Route path={"/ai"} element={<AiChat />} />
+          <Route path={"/ai/chat/:chatId"} element={<AiChat />} />
           <Route path={"/spaces"} element={<SpacesPage />} />
+          <Route path={"/favorites"} element={<FavoritesPage />} />
+          <Route path={"/templates"} element={<TemplateList />} />
+          <Route
+            path={"/templates/:templateId"}
+            element={<TemplateEditor />}
+          />
           <Route path={"/s/:spaceSlug"} element={<SpaceHome />} />
           <Route path={"/s/:spaceSlug/graph"} element={<SpaceGraph />} />
           <Route path={"/s/:spaceSlug/trash"} element={<SpaceTrash />} />

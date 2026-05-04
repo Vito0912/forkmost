@@ -153,6 +153,25 @@ export const mainExtensions = [
         }),
       ];
     },
+    addKeyboardShortcuts() {
+      return {
+        Enter: ({ editor }) => {
+          const { from, to } = editor.state.selection;
+          if (from !== to) return false;
+          if (!editor.isActive("code")) return false;
+
+          const $from = editor.state.doc.resolve(from);
+          const codeType = editor.state.schema.marks.code;
+          const nodeAfter = $from.nodeAfter;
+
+          if (nodeAfter && codeType.isInSet(nodeAfter.marks)) {
+            return false;
+          }
+
+          return editor.chain().unsetCode().splitBlock().run();
+        },
+      };
+    },
   }),
   SharedStorage,
   Heading,
@@ -400,6 +419,27 @@ export const mainExtensions = [
 ] as any;
 
 type CollabExtensions = (provider: HocuspocusProvider, user: IUser) => any[];
+
+const TEMPLATE_EXCLUDED_SLASH_ITEMS = new Set([
+  "Image",
+  "Video",
+  "File attachment",
+  "Draw.io (diagrams.net)",
+  "Excalidraw diagram",
+]);
+
+const TemplateSlashCommand = Command.configure({
+  suggestion: {
+    items: ({ query }: { query: string }) =>
+      getSuggestionItems({ query, excludeItems: TEMPLATE_EXCLUDED_SLASH_ITEMS }),
+    render: renderItems,
+  },
+});
+
+export const templateExtensions = [
+  ...mainExtensions.filter((ext: any) => ext !== SlashCommand),
+  TemplateSlashCommand,
+] as any;
 
 export const collabExtensions: CollabExtensions = (provider, user) => [
   Collaboration.configure({

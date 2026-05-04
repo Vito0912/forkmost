@@ -11,6 +11,8 @@ import { useTranslation } from "react-i18next";
 import { IconArrowRight } from "@tabler/icons-react";
 import { CustomAvatar } from "@/components/ui/custom-avatar.tsx";
 import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
+import StarButton from "@/features/favorite/components/star-button";
+import { useFavoriteIds } from "@/features/favorite/queries/favorite-query";
 
 export default function SpaceGrid() {
   const { t } = useTranslation();
@@ -27,7 +29,11 @@ export default function SpaceGrid() {
       className={classes.card}
       withBorder
     >
-      <Card.Section className={classes.cardSection} h={40}></Card.Section>
+      <Card.Section className={classes.cardSection} h={40}>
+        <div className={classes.starButton} data-favorited={spaceFavoriteIds.has(space.id)}>
+          <StarButton type="space" spaceId={space.id} size={16} />
+        </div>
+      </Card.Section>
       <CustomAvatar
         name={space.name}
         avatarUrl={space.logo}
@@ -58,7 +64,7 @@ export default function SpaceGrid() {
 
       <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }}>{cards}</SimpleGrid>
 
-      {data?.items && data.items.length > 9 && (
+      {data?.items && data.items.length > 6 && (
         <Group justify="flex-end" mt="lg">
           <Button
             component={Link}
