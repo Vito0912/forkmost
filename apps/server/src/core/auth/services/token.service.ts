@@ -112,7 +112,9 @@ export class TokenService {
       type: JwtType.API_KEY,
     };
 
-    return this.jwtService.sign(payload, expiresIn ? { expiresIn } : {});
+    // due to the default value of 90 days, if no expiry is provided
+    // 100y are set as a maximum length
+    return this.jwtService.sign(payload, { expiresIn: expiresIn ?? '100y' });
   }
 
   async verifyJwt(token: string, tokenType: string) {
